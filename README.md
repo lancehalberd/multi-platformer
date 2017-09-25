@@ -2,8 +2,12 @@
 Experimenting with creating a multiplayer platformer
 
 # setup
-You will need `node` installed to run the server. I suggest following the instructions for installing `homebrew` and `node` here:
+You will need Node installed to run the server. I suggest following the instructions for installing Homebrew and Node here:
 http://blog.teamtreehouse.com/install-node-js-npm-mac
+
+Note that to check if you already have node installed you can run `which node`, which will do nothing
+if you do not have it installed, and should display where node is located on your machine if it is installed.
+The same thing will also work for Homebrew, just run `which brew` instead.
 
 Once you have `node` installed, you should clone this repository if you haven't already done so:
 
