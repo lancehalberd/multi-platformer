@@ -1,0 +1,8 @@
+body {
+	background: #efe9e9;
+}
+
+.currentPlayer {
+    color: #080;
+    font-weight: bold;
+}

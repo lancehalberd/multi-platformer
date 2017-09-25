@@ -1,0 +1,73 @@
+<html>
+<head>
+    <style type="text/css" >
+        .pagebody {
+            background-color: black;
+            background-repeat: repeat;
+            font-size: 16px;
+            font-family: 'Cormorant SC', Georgia, serif;
+            margin: 0;
+        }
+        .mainGame {
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 2px;
+            width: 800px;
+            min-height: 600px;
+            background-color: black;
+            background-repeat: repeat;
+            top: 0px;
+            -moz-user-select: none;
+            -khtml-user-select: none;
+            -webkit-user-select: none;
+            -o-user-user-select: none;
+            cursor: default;
+        }
+        .loading {
+            font-size: 50px;
+            color: white;
+        }
+        .stat {
+            display: inline-block;
+            width: 200px;
+            margin-right: 20px;
+        }
+    </style>
+    <script>
+        var assetVersion = '{{assetVersion}}';
+    </script>
+    <link href="https://fonts.googleapis.com/css?family=Cormorant+SC:400,700" rel="stylesheet">
+    {{#styleSheets}}
+        <link rel="stylesheet" type="text/css" href="{{{staticPath}}}?v={{fileHash}}"/>
+    {{/styleSheets}}
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/jstorage.min.js"></script>
+    <script src="lib/async.js"></script>
+    <script src="lib/lodash.js"></script>
+    <title>Descent</title>
+</head>
+<body class="pagebody">
+
+<a href="credits.html" target="_blank" style="color: white; font-size: 20px; position: absolute; left: 5px; top: 5px;">Credits</a>
+<div class="js-mainGame js-mouseContainer mainGame">
+    <div class="js-loading loading" style="display: none">
+        Loading...
+    </div>
+    <script>
+        // Only show the loading text if it takes more than .2 seconds to load
+        setTimeout(() => {
+            if (!$('.js-gameContent').is(':visible')) {
+                $('.js-loading').show();
+            }
+        }, 200);
+    </script>
+    <div class="js-gameContent gameContent" style="display: none">
+        <canvas class="js-canvas js-mainCanvas" width="800" height="600"></canvas>
+    </div>
+</div>
+</body>
+{{#scripts}}
+    <script src="{{{staticPath}}}?v={{fileHash}}"></script>
+{{/scripts}}
+</html>

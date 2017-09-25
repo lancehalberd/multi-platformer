@@ -1,0 +1,1514 @@
+.gameContent {
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    white-space: nowrap;
+    height: 600px;
+    background-color: #ccc;
+}
+
+.displayColumn {
+    position: relative;
+    background-color: #ccc;
+    display: inline-block;
+    vertical-align: top;
+    height: 570px;
+}
+
+.pointsBarPadding {
+    height: 25px;
+    background-color: #aaa;
+}
+.pointsBar {
+    height: 30px;
+    box-sizing: border-box;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    pointer-events: none;
+}
+.pointsIcon {
+    display: inline-block;
+    vertical-align: top;
+    padding: 4px;
+    padding-left: 2px;
+    padding-right: 0px;
+}
+.pointsColumn {
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    width: 50px;
+}
+.points {
+    box-sizing: border-box;
+    padding: 2px;
+    display: inline-block;
+    margin-right: 20px;
+    margin-left: 20px;
+    width: 75px;
+    min-height: 30px;
+    background-color: #ccc;
+    border: 2px solid black;
+    border-top: none;
+    pointer-events: auto;
+}
+.inline-points {
+    display: inline-block;
+}
+.charactersBox {
+    position: absolute;
+    width: auto;
+    left: 20px;
+    top: 0px;
+}
+.charactersBox .character {
+    cursor: pointer;
+    vertical-align: top;
+}
+.divinityPoints {
+    display: inline-block;
+}
+.fame {
+    color: #D80;
+}
+.coins {
+    color: white;
+}
+.anima {
+    color: #c4f;
+}
+.divinity {
+    color: #a40;
+}
+.cost {
+    color: red;
+}
+/* With the current font, this looks more balanced than 0 margin. */
+.bottomLine {
+    margin-top: 2px;
+    margin-bottom: -2px;
+}
+.playerColumn {
+    width: 560px;
+    display: inline-block;
+    background-color: grey;
+    box-sizing: border-box;
+    height: 800px;
+    vertical-align: top;
+    padding: 5px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+.playerControlBar {
+    height: 30px;
+    padding: 3px;
+    box-sizing: border-box;
+    background-color: #ccc;
+}
+.controlBarEntry {
+    margin-right: 5px;
+}
+.recallButton {
+    font-size: 8px;
+}
+.playerPanel  {
+    height: 270px;
+    background-color: white;
+    margin-bottom: 5px;
+}
+.playerPanel .infoMode {
+    position: relative;
+    width: 800px;
+}
+.infoPanel {
+    box-sizing: border-box;
+}
+.inventory {
+    padding-top: 4px;
+    padding-left: 4px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    width: 365px;
+    height: 270px;
+    white-space: normal;
+    background-color: #AAA;
+}
+
+.panelTitle {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.mainCanvas {
+    display: block;
+}
+
+.jewelCrafting {
+    position: relative;
+    height: 260px;
+}
+
+.jewelColumn {
+    width: 240px;
+}
+
+.jewelOptions {
+    height: 95px
+}
+.jewel-inventory {
+    padding: 5px;
+    padding-right:0;
+    white-space: normal;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    width: 240px;
+    height: 480px;
+    box-sizing: border-box;
+    background-color: #AAA;
+}
+
+.extraJewelSlots {
+    position: absolute;
+    bottom: 2px;
+}
+
+.jewel, .jewelCraftingSlot {
+    width: 68px;
+    height: 68px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    background-color: white;
+    display: inline-block;
+    /* For some reason drag and drop messes up v-align without this. */
+    vertical-align: middle;
+}
+.mainJewelCraftingSlot {
+    border: 3px solid #888;
+}
+.jewelCraftingSlot.active {
+    background-color: #88ff88;
+}
+.hiddenJewel {
+    display: none;
+}
+
+
+.map {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.item, .inventory > .inventorySlot, .sellItem {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 46px;
+    background-color: white;
+    box-sizing: border-box;
+    cursor: pointer;
+    padding: 2px;
+    vertical-align: top;
+}
+.itemLevel {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    font-weight: bold;
+    background-color: rgba(255,255,255, .6);
+}
+.item.enchanted {
+    background-color: #ffa;
+}
+.item.imbued {
+    background-color: #f8f;
+}
+.item.unique {
+    background-color: #4cf;
+}
+button.item {
+    padding: 0px;
+}
+.inventory > .item, .itemCrafting .item {
+    padding: 1px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+    border: 2px solid #f88;
+}
+.inventory > .item.equipable, .itemCrafting .item.equipable {
+    border: 2px solid #0f0;
+}
+button {
+    cursor: pointer;
+    background-color: #ccc;
+}
+
+.playerBox {
+    font-size: 16px;
+    position: relative;
+    box-sizing: border-box;
+    width: 240px;
+    min-height: 170px;
+    max-height: 270px;
+    vertical-align: top;
+    margin: 2px;
+    margin-right: 1px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    pointer-events: auto;
+}
+.stats {
+    padding-top: 25px; /* Leave space for "Level X Job Name" abs positioned at top */
+    padding-left: 65px; /* Leave space for preview image on the left */
+}
+.triStatBox {
+    position: absolute;
+    top: 130px;
+    left: 0px;
+    width: 64px;
+    height: 30px;
+}
+.triStatBox .dexterity {
+    position: absolute;
+    text-align: right;
+    right: 34px;
+    top: 15px;
+    color: #0A0;
+}
+.triStatBox .strength {
+    position: absolute;
+    color: #f00;
+    text-align: center;
+    width: 64px;
+    left: 0px;
+    top: 0px;
+}
+.triStatBox .intelligence {
+    position: absolute;
+    color: #00f;
+    left: 34px;
+    top: 15px;
+}
+
+.characterPreview {
+    float: left;
+}
+
+.equipment {
+    position: relative;
+    height: 240px;
+}
+
+.jewelBoard {
+    position: relative;
+    background-color: skyblue;
+}
+.augmentConfirmationButtons {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+}
+.augmentConfirmationButtons button {
+    margin-left: 5px;
+}
+
+.equipment > .head {
+    position: absolute;
+    left: 90px;
+    top: 5px;
+}
+.equipment > .body {
+    position: absolute;
+    left: 90px;
+    top: 60px;
+}
+.equipment > .legs {
+    position: absolute;
+    left: 90px;
+    top: 115px;
+}
+.equipment > .feet {
+    position: absolute;
+    left: 90px;
+    top: 170px;
+}
+.equipment > .weapon {
+    position: absolute;
+    left: 35px;
+    top: 90px;
+}
+.equipment > .arms {
+    position: absolute;
+    left: 35px;
+    top: 145px;
+}
+.equipment > .back {
+    position: absolute;
+    left: 145px;
+    top: 35px;
+}
+.equipment > .offhand {
+    position: absolute;
+    left: 145px;
+    top: 90px;
+}
+.equipment > .ring {
+    position: absolute;
+    left: 145px;
+    top: 145px;
+}
+
+.value {
+    vertical-align: middle;
+}
+
+.icon {
+    position: relative;
+    background-image: url('gfx/iconSet.png');
+    background-size: 620px 140px;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+}
+
+.icon.money {
+    background-image: url('gfx/moneyIcon.png');
+    background-size: auto;
+    width: 32px;
+    height: 32px;
+    background-position: -192px -0px;
+}
+
+.icon.coin {
+    background-image: url('gfx/moneyIcon.png');
+    background-size: auto;
+    width: 16px;
+    height: 16px;
+    background-position: -64px -0;
+}
+.icon.anima {
+    background-image: url('gfx/moneyIcon.png');
+    background-size: auto;
+    width: 16px;
+    height: 16px;
+    background-position: -128px -0;
+}
+.icon.crafting {
+    background-image: url('gfx/moneyIcon.png');
+    background-size: auto;
+    width: 32px;
+    height: 32px;
+    background-position: -192px -32px;
+}
+.icon.enchanting {
+    background-image: url('gfx/moneyIcon.png');
+    background-size: 320px 160px;
+    width: 40px;
+    height: 40px;
+    background-position: -240px -80px;
+}
+
+.itemSlot {
+    background-color: #ffffff;
+    height: 50px;
+    width: 50px;
+    padding: 2px;
+    box-sizing: border-box;
+    color: black;
+}
+.itemSlot.active {
+    background-color: #88ff88;
+}
+.itemSlot.active .item {
+    background-color: #ccffcc;
+}
+.itemSlot.invalid {
+    background-color: #ff8888;
+}
+.itemSlot.invalid .item {
+    background-color: #ffcccc;
+}
+.icon.armor {
+    background-position: -20px -20px;
+}
+.icon.club {
+    background-position: -140px -20px;
+}
+.icon.glove {
+    background-position: -200px -20px;
+}
+.icon.dagger {
+    background-position: -380px -20px;
+}
+.icon.bag {
+    background-position: -500px -20px;
+}
+.icon.hat {
+    background-position: -560px -20px;
+}
+.icon.axe {
+    background-position: -20px -80px;
+}
+.icon.wand {
+    background-position: -80px -80px;
+}
+.icon.anvil {
+    background-position: -140px -80px;
+}
+
+.toolTip {
+    position: absolute;
+    padding: 2px;
+    padding-bottom: 5px;
+    width: 240px;
+    text-align: center;
+    color: #AAA;
+    font-size: 16px;
+    border: 1px solid white;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, .8);
+    z-index: 100;
+}
+.toolTip .title {
+    border: 2px solid #999;
+    background-color: rgba(150, 150, 150, .5);
+    color: #EEE;
+    padding: 2px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.toolTip .body {
+    /* Move toolTip padding + margin to this element */
+}
+.title:first-child {
+    margin-top: 0;
+}
+.title:last-child {
+    margin-bottom: -3px;
+}
+.medium {
+    width: 150px;
+}
+.divider {
+    height: 20px;
+    border-style: solid;
+    border-color: #AAA;
+    border-width: 1px 0 0 0;
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: -15px;
+}
+.divider:before { /* Not really supposed to work, but does */
+    display: block;
+    content: "";
+    height: 20px;
+    margin-top: -21px;
+    border-style: solid;
+    border-color: #AAA;
+    border-width: 0 0 1px 0;
+    border-radius: 10px;
+}
+
+
+.centered {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.adventure {
+    display: block;
+    font-size: 12px;
+}
+
+.adventureButton {
+    margin-right: 3px;
+}
+
+select {
+    font-size: 20px;
+}
+button {
+    font-size: 12px;
+    padding: 2px;
+}
+.learnSkill {
+    font-size: 10px;
+}
+.infoPanel {
+    padding: 5px;
+}
+.infoPanel div {
+    margin-bottom: 5px;
+}
+
+.itemPanel {
+    display: inline-block;
+    width: 560px;
+    height: 570px;
+}
+
+.itemCrafting {
+    height: 300px;
+}
+.craftingCanvasContainer {
+    position: relative;
+}
+/* This element covers the crafting canvas when it is display, forcing the player to collect an item before trying to craft again. */
+.craftingSelectOptions {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, .8);
+    padding-top: 10px;
+    text-align: center;
+    font-size: 20px;
+    color: white;
+}
+/* Align the crafted items roughly in the center of the crafting canvas. */
+.craftingSelectOptionsAligner {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    width: 190px;
+}
+.craftingCanvas {
+    cursor: pointer;
+}
+.itemCraftingOption, .enchantingOption {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    background-color: white;
+    box-sizing: border-box;
+    cursor: pointer;
+    vertical-align: top;
+    border-radius: 25px;
+    border: 4px solid #fe0;
+    padding: 1px;
+}
+.itemCraftingOption.disabled, .enchantingOption.disabled {
+    opacity: .5;
+    border-color: #aaa;
+}
+
+.itemPanel .centerSlot {
+    position: absolute;
+    left: 70px;
+    top: 110px;
+}
+.itemPanel .topSlot {
+    position: absolute;
+    left: 70px;
+    top: 50px;
+}
+.itemPanel .bottomLeftSlot {
+    position: absolute;
+    left: 10px;
+    top: 150px;
+}
+.itemPanel .bottomRightSlot {
+    position: absolute;
+    left: 130px;
+    top: 150px;
+}
+
+.itemPanel .topSlot {
+    position: absolute;
+    left: 70px;
+    top: 50px;
+}
+.itemPanel .leftSlot {
+    position: absolute;
+    left: 10px;
+    top: 110px;
+}
+.itemPanel .rightSlot {
+    position: absolute;
+    left: 130px;
+    top: 110px;
+}
+.itemPanel .bottomSlot {
+    position: absolute;
+    left: 70px;
+    top: 170px;
+}
+
+
+.itemCraftingOption .multiplier {
+    display: none;
+    color: #0f0;
+    font-weight: bold;
+    position: absolute;
+    font-size: 20px;
+    right: 5px;
+    bottom: 0px;
+}
+.itemCraftingOption.disabled .multiplier {
+    color: red;
+}
+.itemCraftingOption:hover .multiplier {
+    display: block;
+}
+
+.enchantmentOptions {
+    display: inline-block;
+    position: relative;
+    width: 195px;
+    height: 270px;
+}
+
+
+label {
+    cursor: pointer;
+}
+button.disabled {
+    opacity: .5;
+}
+
+.formulaStat {
+    font-weight: bold;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.effectText {
+    position: relative;
+    padding: 5px;
+    background-color: rgba(100, 100, 0, .9);
+}
+.effectCounter {
+    color: white;
+    font-weight: bold;
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+}
+.abilityText {
+    padding: 5px;
+    background-color: rgba(0, 100, 100, .9);
+}
+.tagText {
+    padding: 5px;
+    background-color: rgba(100, 0, 100, .9);
+}
+
+.uniqueText {
+    padding: 5px;
+    background-color: rgba(0, 100, 150, .9);
+}
+
+select {
+    margin-right: 5px;
+}
+
+.jobSelect {
+    display: block;
+}
+
+.mainViewButton {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+}
+
+.characterColumn {
+    width: 240px;
+    background: transparent;
+}
+
+.icon.treasure {
+    background-image: url('gfx/chest-open.png');
+    background-size: 32px 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.icon.world {
+    background-image: url('gfx/worldIcon.png');
+    background-size: 36px 36px;
+    width: 36px;
+    height: 36px;
+}
+
+.characterBox {
+    position: absolute;
+    pointer-events: auto;
+    bottom: -30px;
+    left: 160px;
+    padding-left: 5px;
+    /* http://subtlepatterns.com/old-map/ */
+    background-image: url(gfx/oldMap.png);
+    border: 3px solid #eda;
+}
+
+.characterBox .character {
+    cursor: pointer;
+}
+
+.jewelBonuses {
+    height: 340px;
+    line-height: 20px;
+    white-space: normal;
+    padding: 5px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.recruitmentColumn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 450px;
+    height: 300px;
+    padding-left: 300px;
+    box-sizing: border-box;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.heroApplication {
+    display: inline-block;
+    margin-left: -230px;
+    margin-right: 120px;
+    border: 5px solid #eda;
+    box-sizing: border-box;
+    pointer-events: auto;
+    box-shadow: -2px -1px 3px black;
+}
+.singleHeroApplication {
+    position: absolute;
+    margin: 0;
+    left: 280px;
+    top: 100px;
+}
+.heroApplicationBody {
+    /* I can't figure out where this 2px gap comes from.*/
+    margin-top: -2px;
+    width: 230px;
+    height: 300px;
+    /* http://subtlepatterns.com/old-map/ */
+    background-image: url('gfx/oldMap.png');
+    background-color: burlywood;
+}
+
+.hideOnBottom {
+    position: relative;
+    bottom: -265px;
+    -webkit-transition: bottom .5s;
+    transition: bottom .5s;
+}
+.hideOnBottom:hover {
+    bottom: -5px;
+}
+
+.heroApplicationButton {
+    margin: 5px;
+}
+
+.mainCanvasContainer {
+    position: absolute;
+    overflow: visible;
+    height: 600px;
+    width: 800px;
+}
+
+.adventureControls {
+    position: absolute;
+    left: 10px;
+    top: 30px;
+}
+
+.adventureControls .adventureButton {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.adventureControls .adventureButton.disabled {
+    opacity: .5;
+}
+
+/* nielsenIcons.png from Søren Nielsen at http://opengameart.org/content/grayscale-icons */
+
+.icon.backButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -32px -128px;
+}
+
+.icon.autoplayButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -32px -96px;
+}
+.icon.repeatButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -224px -64px;
+}
+.icon.fastforwardButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -160px -160px;
+}
+.icon.pauseButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -192px -64px;
+}
+.icon.slowMotionButton {
+    background-image: url('gfx/nielsenIcons.png');
+    background-size: initial;
+    width: 32px;
+    height: 32px;
+    background-position: -192px -160px;
+}
+.icon.shrineButton {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 406px 410px;
+    width: 32px;
+    height: 32px;
+    background-position: -204px -250px;
+}
+
+.icon.health {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -78px -180px;
+}
+.icon.damage {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -52px -180px;
+}
+.icon.range {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -78px -193px;
+}
+.icon.no {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -26px -167px;
+}
+.icon.protection {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -65px -180px;
+}
+.icon.speed {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -65px -167px;
+}
+.icon.magic {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -39px -180px;
+}
+.icon.fame {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: initial;
+    width: 12px;
+    height: 12px;
+    background-position: -13px -180px;
+}
+.icon.divinity {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 151px 150px;
+    width: 12px;
+    height: 12px;
+    background-position: -76px -91px;
+}
+.icon.backpack {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 406px 410px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -374px -45px;
+}
+.icon.ring {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 406px 410px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -136px -81px;
+}
+
+.icon.goldMedal {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 203px 205px;
+    width: 16px;
+    height: 16px;
+    background-position: -68px -40px;
+}
+
+.icon.silverMedal {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 203px 205px;
+    width: 16px;
+    height: 16px;
+    background-position: -85px -40px;
+}
+
+.icon.bronzeMedal {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 203px 205px;
+    width: 16px;
+    height: 16px;
+    background-position: -102px -40px;
+}
+
+.itemSlot .icon.placeholder {
+    opacity: .4;
+    margin: 8px;
+}
+
+.icon.confirm {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 406px 410px;
+    width: 32px;
+    height: 32px;
+    background-position: -136px -182px;
+}
+
+.icon.cancel {
+    background-image: url('gfx/militaryIcons.png');
+    background-size: 406px 410px;
+    width: 32px;
+    height: 32px;
+    background-position: -102px -182px;
+}
+
+/* 'game-icons.png' from http://game-icons.net/about.html */
+
+.icon.mageHat {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px 0px;
+}
+.icon.featherHat {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px 0px;
+}
+.icon.helmet {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px 0px;
+}
+.icon.heavyArmor {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -32px;
+}
+.icon.lightArmor {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -32px;
+}
+.icon.clothArmor {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -96px -32px;
+}
+.icon.cloak {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -64px;
+}
+.icon.quiver {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -64px;
+}
+.icon.scabbard {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -96px -64px;
+}
+.icon.gloves {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -96px;
+}
+.icon.bracers {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -96px;
+}
+.icon.vambracers {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -96px;
+}
+.icon.fists {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -128px;
+}
+.icon.greatSword {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -128px;
+}
+.icon.throwing {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -128px;
+}
+.icon.greatAxe {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -96px -128px;
+}
+.icon.knuckles {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -128px -128px;
+}
+.icon.sword {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -160px -128px;
+}
+.icon.bow {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -192px -128px;
+}
+.icon.staff {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -224px -128px;
+}
+.icon.shuriken {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -256px -128px;
+}
+.icon.cudgel {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -288px -128px;
+}
+.icon.heavyShield {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -160px;
+}
+.icon.magicShield {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -160px;
+}
+.icon.lightShield {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -96px -160px;
+}
+.icon.pants {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -192px;
+}
+.icon.greaves {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -192px;
+}
+.icon.tights {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -192px;
+}
+.icon.amulet {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -224px;
+}
+.icon.band {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -224px;
+}
+.icon.feet {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: 0px -256px;
+}
+.icon.sabatons {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -256px;
+}
+.icon.shoes {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -32px -256px;
+}
+.icon.boots {
+    background-image: url('gfx/game-icons.png');
+    background-size: 320px 288px;
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background-position: -64px -256px;
+}
+
+
+.iconLayer {
+    position: absolute;
+}
+
+.playerStat {
+    display: inline-block;
+    width: 80px;
+    min-height: 25px;
+    vertical-align: top;
+}
+
+
+.sellItem {
+    position: absolute;
+    right: 5px;
+    top: 2px;
+    cursor: default;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.editingControlsTop {
+    position: absolute;
+    left: 5px;
+    top: 332px;
+}
+
+.editingControlsBottom {
+    background-color: #bbb;
+    white-space: normal;
+    overflow-y: scroll;
+    height: 330px;
+}
+.levelEditingSection {
+    margin-bottom: 15px;
+}
+.levelDescriptionInput{
+    vertical-align: top;
+}
+
+.enemySkill, .monster {
+    display: inline-block;
+    border: 1px solid black;
+    background-color: white;
+    margin-right: 5px;
+    margin-bottom: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-radius: 3px;
+}
+
+.editEventButton {
+    margin-right: 5px;
+    min-width: 25px;
+}
+
+.levelSkillSelect {
+    width: 150px;
+}
+
+p {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline
+}
+
+.areaMenu {
+    position: absolute;
+    left: 190px;
+    top: 50px;
+    color: white;
+    width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgba(0, 0, 0, .8);
+    padding: 5px;
+}
+.areaMenu .areaTitle {
+    font-size: 20px;
+    padding: 4px;
+    background-color: #888;
+    border: 2px solid #222;
+    margin-bottom: 5px;
+}
+
+.areaMenu .areaDifficulties {
+    display: inline-block;
+}
+.difficulty {
+    position: relative;
+    border: 2px solid #222;
+    padding: 4px;
+    display: block;
+    font-size: 20px;
+    width: 120px;
+    margin-bottom: 2px;
+    margin-right: 2px;
+    cursor: pointer;
+}
+
+.difficulty.easy {
+    background-color: green;
+}
+.difficulty.normal {
+    background-color: orange;
+}
+.difficulty.hard {
+    background-color: red;
+}
+.difficulty.challenge {
+    background-color: purple;
+}
+.difficulty.endless {
+    background-color: #444;
+}
+.difficulty:hover {
+    border: 2px solid white;
+}
+
+.areaMenu .areaDescription {
+    white-space: pre-line;
+    vertical-align: top;
+    display: inline-block;
+    width: 280px;
+}
+.areaMenu .areaDescription .action {
+    cursor: pointer;
+    color: #0f0;
+    text-decoration: underline;
+}
+
+.areaMedal {
+    display: inline-block;
+    margin-right: 5px;
+    /*position: absolute;
+    top: 3px;
+    right: 0px;*/
+}
+
+.statGrowth {
+    position: absolute;
+    top: 140px;
+    left: 10px;
+}
+.statGrowthBar {
+    box-sizing: border-box;
+    width: 50px;
+    height: 10px;
+    margin-bottom: 4px;
+}
+.statGrowthFill {
+    display: inline-block;
+    width: 9px;
+    height: 8px;
+    box-sizing: border-box;
+    border-right: 1px solid;
+}
+.statGrowthFill:nth-child(5) {
+    width: 8px;
+    border-right: none;
+}
+.statGrowthBar.strength {
+    border: 1px solid #800;
+}
+.statGrowthBar.strength .statGrowthFill {
+    background-color: #f88;
+    border-color: #800;
+}
+.statGrowthBar.intelligence {
+    border: 1px solid #008;
+}
+.statGrowthBar.intelligence .statGrowthFill {
+    background-color: #88f;
+    border-color: #008;
+}
+.statGrowthBar.dexterity {
+    border: 1px solid #080;
+}
+.statGrowthBar.dexterity .statGrowthFill {
+    background-color: #8f8;
+    border-color: #080;
+}
