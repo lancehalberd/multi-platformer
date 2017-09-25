@@ -9,6 +9,7 @@ Once you have `node` installed, you should clone this repository if you haven't 
 
 `git clone git@github.com:lancehalberd/multi-platformer.git`
 
+
 Then move to the new directory and install node packages (this may take a few minutes):
 ```
 cd multi-platformer
@@ -18,10 +19,13 @@ For anyone who may not know, `npm` is "Node Package Manager".
 It comes with `node` and you can use it to track 3rd party libraries.
 It reads from a file called `package.json` which has details about the 3rd party code it should fetch.
 
+
 Now you should be able to run the server using:
-```
-node server
-```
+
+`node server`
+
 If it works it should say something like:
-```App listening on PORT 3000```
+
+`App listening on PORT 3000`
+
 Then you should be able to view the game by visiting `http://localhost:3000` in a browser.
