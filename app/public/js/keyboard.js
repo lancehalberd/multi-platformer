@@ -11,6 +11,11 @@ var KEY_MAPPINGS = {
     ['S'.charCodeAt(0)]: KEY_DOWN,
 };
 
+// This mapping assumes a canonical gamepad setup as seen in:
+// https://w3c.github.io/gamepad/#remapping
+// Which seems to work well with my xbox 360 controller.
+// I based this code on examples from:
+// https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API
 var GAME_PAD_MAPPINGS = {
     [KEY_UP]: 0,// Could change this to KEY_JUMP
     [KEY_SPACE]: 2,
