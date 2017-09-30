@@ -5,21 +5,19 @@ function updateActor(actor) {
     // The player targets the mouse.
     if (actor === mainCharacter){
         // This is the position of the mouse relative to the canvas.
-        targetPosition = relativeMousePosition(mainCanvas);
-        targetPosition[0] += cameraX;
-        targetPosition[1] += cameraY;
+        targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
         // Attack if the mouse is down.
-        if (mouseDown && !actor.attacking) {
+        if ((mouseDown || isKeyDown(KEY_SPACE)) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
         }
         // Main character's movement is controlled with the keyboard.
         if (actor.grounded) {
             var dx = 0;
-            if (keysDown[KEY_LEFT]) dx--;
-            if (keysDown[KEY_RIGHT]) dx++;
-            if (keysDown[KEY_UP]) actor.jump();
+            if (isKeyDown(KEY_LEFT)) dx--;
+            if (isKeyDown(KEY_RIGHT)) dx++;
+            if (isKeyDown(KEY_UP)) actor.jump();
             actor.vx += dx;
         }
     } else {
@@ -75,7 +73,9 @@ function updateActor(actor) {
     if (!actor.attacking) {
         actor.animation = actor.walkAnimation;
         actor.currentFrame = actor.walkFrame;
-        if (actor.grounded) actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
+        if (actor.grounded && actor.x !== targetPosition[0]) {
+            actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
+        }
     } else {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
