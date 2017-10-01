@@ -67,6 +67,10 @@ function broadcast(data) {
     for (var id in connections) connections[id].sendUTF(JSON.stringify(data));
 }
 
+var updatePlayer = (playerId, playerData) => {
+    for (var key in playerData) players[playerId][key] = playerData[key];
+}
+
 wsServer.on('request', function(request) {
     var privateId, publicId;
     if (!originIsAllowed(request.origin)) {
@@ -77,11 +81,11 @@ wsServer.on('request', function(request) {
     }
 
     var connection = request.accept(null, request.origin);
-    console.log((new Date()) + ' Connection accepted.');
+    // console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
         // We only handle utf8 encoded json messages.
         if (message.type !== 'utf8') return;
-        console.log('Received Message: ' + message.utf8Data);
+        // console.log('Received Message: ' + message.utf8Data);
         try {
             var data = JSON.parse(message.utf8Data);
         } catch (e) {
@@ -98,16 +102,16 @@ wsServer.on('request', function(request) {
             privateIdMap[privateId] = publicId;
             players[publicId] = {
                 id: publicId,
-                name: data.name || 'Incognito' + publicId.substring(0, 6),
-                skinToneIndex: data.skinToneIndex,
-                hairIndex: data.hairIndex,
-                x: data.x || 200,
-                y: data.y || 800,
-                vx: data.vx || 0,
-                vy: data.vy || 0,
+                name: data.player.name || 'Incognito' + publicId.substring(0, 6),
+                skin: data.player.skin || 0,
+                hair: data.player.hair || 0,
+                x: data.player.x || 200,
+                y: data.player.y || 800,
+                vx: data.player.vx || 0,
+                vy: data.player.vy || 0,
             };
-            console.log("Added player");
-            console.log(players);
+            // console.log("Added player");
+            // console.log(players);
             // When a player first logs in we send them their public/private ids and the full list of player data.
             connection.sendUTF(JSON.stringify({privateId, publicId, players}));
             // Broadcast to all other players that the new player has joined.
@@ -125,11 +129,16 @@ wsServer.on('request', function(request) {
                 if (connections[privateId]) connections[privateId].close();
                 connections[privateId] = connection;
             }
-            if (data.action === 'score') {
-                players[publicId].score++;
-                broadcast({playerUpdate: {id: publicId, score: players[publicId].score}});
-                console.log(`Player ${publicId} scored`);
-                console.log(players);
+            if (data.action === 'attack') {
+                broadcast({playerAttacked: publicId});
+                // console.log(`Player ${publicId} attacked`);
+                return;
+            }
+            if (data.action === 'move') {
+                updatePlayer(publicId, data.player);
+                broadcast({player: players[publicId]});
+                // console.log(`Player ${publicId} moved`);
+                return;
             }
             return;
         }
@@ -143,7 +152,7 @@ wsServer.on('request', function(request) {
             delete players[publicId];
             delete privateIdMap[privateId];
             console.log(`Player ${publicId} left`);
-            console.log(players);
+            // console.log(players);
             broadcast({playerLeft: publicId});
         }
     });

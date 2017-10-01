@@ -26,7 +26,7 @@ var render = () => {
     draw.fillRectangle(mainContext, rectangle(500 * Math.ceil(cameraX / 500), groundY, 200, areaRectangle.height - groundY), '#504030');
     draw.fillRectangle(mainContext, rectangle(500 * Math.ceil(cameraX / 500 + 1), groundY, 200, areaRectangle.height - groundY), '#504030');*/
     drawMap();
-    for (var actor of [...otherCharacters, mainCharacter]) {
+    for (var actor of [...Object.values(otherCharacters), mainCharacter]) {
         /*draw.fillRectangle(mainContext, rectangle(
             actor.x + actor.hitBox.left,
             actor.y + actor.hitBox.top,

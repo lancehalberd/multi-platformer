@@ -122,7 +122,7 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
 }
 
 class TTCharacter {
-    constructor(actorCanvas) {
+    constructor(actorCanvas, skin, hair) {
         this.canvas = actorCanvas;
         this.x = 200;
         this.y = 800;
@@ -135,6 +135,8 @@ class TTCharacter {
         this.walkAnimation = walkAnimation(actorCanvas);
         this.attackAnimation = attackAnimation(actorCanvas);
         this.animation = this.walkAnimation;
+        this.skin = skin;
+        this.hair = hair;
     }
 
     jump() {
@@ -145,7 +147,7 @@ class TTCharacter {
 }
 
 var mainCharacter;
-var otherCharacters = [];
+var otherCharacters = {};
 function walkAnimation(actorCanvas) {
     var hitBox = rectangle(36, 18, 24, 42);
     var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
@@ -160,15 +162,20 @@ function attackAnimation(actorCanvas) {
     var attackFrame = $.extend(rectangle(96 * 4, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [prepareFrame, attackFrame, prepareFrame, neutralFrame]};
 }
-function initializePersonGraphics() {
-    var baseImage = requireImage('gfx/person/personSprite.png');
-    var skinToneIndex = Random.range(0, ttPersonRows - 1);
-    var hairIndex = Random.range(0, ttHairRows - 1);
-    var actorCanvas = createEquippedActorSource(baseImage, skinToneIndex, hairIndex,
+var humanImage = requireImage('gfx/person/personSprite.png');
+function initializeTTCharacter(playerData) {
+    var actorCanvas = createEquippedActorSource(humanImage, playerData.skin, playerData.hair,
         [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources.sword]
     );
-    mainCharacter = new TTCharacter(actorCanvas);
-    while (otherCharacters.length < 1) {
+    var character = new TTCharacter(actorCanvas, playerData.skin, playerData.hair);
+    for (var i in playerData) character[i] = playerData[i];
+    return character;
+}
+function initializePersonGraphics() {
+    var skin = Random.range(0, ttPersonRows - 1);
+    var hair = Random.range(0, ttHairRows - 1);
+    mainCharacter = initializeTTCharacter({skin, hair});
+    /*while (otherCharacters.length < 1) {
         baseImage = requireImage('gfx/person/monsterPeople.png');
         skinToneIndex = Random.range(0, ttMonsterPersonRows - 1);
         hairIndex = Random.range(0, ttHairRows); // no -1 so they can be bald.
@@ -176,5 +183,6 @@ function initializePersonGraphics() {
             [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources.sword]
         );
         otherCharacters.push(new TTCharacter(actorCanvas));
-    }
+    }*/
+    sendPlayerJoined();
 }

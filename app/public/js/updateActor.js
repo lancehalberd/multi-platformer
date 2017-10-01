@@ -1,16 +1,17 @@
 function updateActor(actor) {
     // Monsters target the player.
     var targetPosition = [mainCharacter.x, mainCharacter.y];
-    if (actor.grounded) actor.vx *= .9;
+    // This is the position of the mouse relative to the canvas.
+    targetPosition = [actor.x + 100 * actor.vx, actor.y];
     // The player targets the mouse.
     if (actor === mainCharacter){
-        // This is the position of the mouse relative to the canvas.
-        targetPosition = [actor.x + 100 * actor.vx, actor.y];
+        if (actor.grounded) actor.vx *= .9;
 
         // Attack if the mouse is down.
         if ((mouseDown || isKeyDown(KEY_SPACE)) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
+            sendPlayerAttacked();
         }
         // Main character's movement is controlled with the keyboard.
         if (actor.grounded) {
