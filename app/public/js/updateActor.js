@@ -37,7 +37,7 @@ function updateActor(actor) {
                 actor.crouched = false;
                 actor.scale = 1.5;
                 actor.hitBox = rectangle(-18, -63, 36, 63);
-                actor.speed = 8;
+                actor.speed = 20; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
                 if (keysDown[KEY_UP] && actor.numberOfJumps === 0) actor.jump();
             }
             actor.vx += dx * 2; //tweak grounded acceleration with multiplier
@@ -47,6 +47,7 @@ function updateActor(actor) {
             if (keysDown[KEY_LEFT]) dxair--;
             if (keysDown[KEY_RIGHT]) dxair++;
             if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
+            actor.speed = 20    //max speed in air
             actor.vx += dxair / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
     } else {
