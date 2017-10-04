@@ -1,25 +1,53 @@
 function updateActor(actor) {
     // Monsters target the player.
     var targetPosition = [mainCharacter.x, mainCharacter.y];
-    // This is the position of the mouse relative to the canvas.
-    targetPosition = [actor.x + 100 * actor.vx, actor.y];
+    if (actor.grounded) {
+        actor.vx *= 0.8;
+    } else { //prevents player from speeding up in the air
+        actor.vx *= 0.9;
+    }
     // The player targets the mouse.
     if (actor === mainCharacter){
-        if (actor.grounded) actor.vx *= .9;
+        // This is the position of the mouse relative to the canvas.
+        targetPosition = relativeMousePosition(mainCanvas);
+        targetPosition[0] += cameraX;
+        targetPosition[1] += cameraY;
 
         // Attack if the mouse is down.
-        if ((mouseDown || isKeyDown(KEY_SPACE)) && !actor.attacking) {
+        if (mouseDown && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
-            sendPlayerAttacked();
         }
         // Main character's movement is controlled with the keyboard.
         if (actor.grounded) {
+            if (!keysDown[KEY_UP]) {
+                actor.numberOfJumps = 0;   //resetting jump on grounding if jump button has been released since last jump
+                actor.jumpKeyReleased = false;
+            }
             var dx = 0;
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
-            if (isKeyDown(KEY_UP)) actor.jump();
-            actor.vx += dx;
+            if (keysDown[KEY_LEFT]) dx--;
+            if (keysDown[KEY_RIGHT]) dx++;
+            if (keysDown[KEY_DOWN]) {   //if the player is crouched
+                //CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so
+                actor.crouched = true;
+                actor.scale = 0.75;
+                actor.hitBox = rectangle(-18, -31, 36, 31);
+                actor.speed = 2.5;
+            } else {    //if the player is standing
+                actor.crouched = false;
+                actor.scale = 1.5;
+                actor.hitBox = rectangle(-18, -63, 36, 63);
+                actor.speed = 8;
+                if (keysDown[KEY_UP] && actor.numberOfJumps === 0) actor.jump();
+            }
+            actor.vx += dx * 2; //tweak grounded acceleration with multiplier
+        } else {    //double jump and limited air control
+            dxair = 0;
+            if (actor.numberOfJumps === 1 && (!keysDown[KEY_UP])) actor.jumpKeyReleased = true;
+            if (keysDown[KEY_LEFT]) dxair--;
+            if (keysDown[KEY_RIGHT]) dxair++;
+            if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //dek double-jump
+            actor.vx += dxair / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
     } else {
         // This player is handled remotely now.
@@ -35,7 +63,7 @@ function updateActor(actor) {
     }
     var maxSpeed = actor.speed;
     if (actor.attacking) maxSpeed /= 2;
-    if (actor.vx * actor.xScale < 0) maxSpeed /= 2;
+    //if (actor.vx * actor.xScale < 0) maxSpeed /= 2; //dek: commented out to let the player move at full speed backwards (i.e. not have basic movement be mouse-dependent)
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
     if (Math.abs(actor.vx) < .5) actor.vx = 0;
 
@@ -66,7 +94,7 @@ function updateActor(actor) {
 
     actor.vy++;
     if (!actor.grounded) {
-        actor.jumpTime = now() + 200;
+        actor.jumpTime = now();
     }
     if (!actor.grounded) {
         actor.walkFrame = 1;
