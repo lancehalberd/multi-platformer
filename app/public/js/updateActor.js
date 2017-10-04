@@ -46,7 +46,7 @@ function updateActor(actor) {
             if (actor.numberOfJumps === 1 && (!keysDown[KEY_UP])) actor.jumpKeyReleased = true;
             if (keysDown[KEY_LEFT]) dxair--;
             if (keysDown[KEY_RIGHT]) dxair++;
-            if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //dek double-jump
+            if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
             actor.vx += dxair / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
     } else {
@@ -63,7 +63,7 @@ function updateActor(actor) {
     }
     var maxSpeed = actor.speed;
     if (actor.attacking) maxSpeed /= 2;
-    //if (actor.vx * actor.xScale < 0) maxSpeed /= 2; //dek: commented out to let the player move at full speed backwards (i.e. not have basic movement be mouse-dependent)
+    //if (actor.vx * actor.xScale < 0) maxSpeed /= 2; //commented out to let the player move at full speed backwards (i.e. not have basic movement be mouse-dependent)
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
     if (Math.abs(actor.vx) < .5) actor.vx = 0;
 
