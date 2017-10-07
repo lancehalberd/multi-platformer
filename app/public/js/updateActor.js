@@ -2,7 +2,6 @@ function updateActor(actor) {
     // Monsters target the player.
     var targetPosition = [mainCharacter.x, mainCharacter.y];
     // This is the position of the mouse relative to the canvas.
-    targetPosition = [actor.x + 100 * actor.vx, actor.y];
     if (actor.grounded) actor.vx *= .8;
     // The player targets the mouse.
     if (actor === mainCharacter && !actor.deathTime){
@@ -34,10 +33,10 @@ function updateActor(actor) {
         actor.vx += dx;*/
     }
     var maxSpeed = actor.speed;
-    if (actor.attacking) maxSpeed /= 2;
     if (actor.vx * actor.xScale < 0) maxSpeed /= 2;
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
     if (Math.abs(actor.vx) < .5) actor.vx = 0;
+    targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
     if (actor.attacking) {
         actor.attackFrame = Math.floor((now() - actor.attackTime) / 200);
