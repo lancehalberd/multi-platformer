@@ -3,9 +3,9 @@ function updateActor(actor) {
     var targetPosition = [mainCharacter.x, mainCharacter.y];
     // This is the position of the mouse relative to the canvas.
     targetPosition = [actor.x + 100 * actor.vx, actor.y];
+    if (actor.grounded) actor.vx *= .8;
     // The player targets the mouse.
-    if (actor === mainCharacter){
-        if (actor.grounded) actor.vx *= .9;
+    if (actor === mainCharacter && !actor.deathTime){
 
         // Attack if the mouse is down.
         if ((mouseDown || isKeyDown(KEY_SPACE)) && !actor.attacking) {
@@ -81,11 +81,17 @@ function updateActor(actor) {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
     }
+    if (actor.health <= 0 && !actor.deathTime) {
+        actor.deathTime = now();
+    }
+    if (!actor.deathComplete && actor.deathTime && actor.deathTime < now() - 2000) {
+        actor.deathComplete = true;
+        if (actor.onDeathComplete) actor.onDeathComplete();
+    }
 }
 
-
-function isTileSolid(row, column) {
-    return _.get(currentMap.composite, [row, column, 'properties']) & TILE_SOLID;
+function isTileX(row, column, property) {
+    return _.get(currentMap.composite, [row, column, 'properties']) & property;
 }
 
 function moveLeft(sprite, amount) {
@@ -101,7 +107,10 @@ function moveLeft(sprite, amount) {
         var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
         var targetColumn = Math.floor(hitBox.left / currentMap.tileSize);
         for (var row = topRow; row <= bottomRow; row++) {
-            if (isTileSolid(row, targetColumn)) {
+            if (isTileX(row, targetColumn, TILE_DAMAGE_LEFT)) {
+                damageSprite(sprite, 1);
+            }
+            if (isTileX(row, targetColumn, TILE_SOLID_LEFT)) {
                 sprite.x = (targetColumn + 1) * currentMap.tileSize - sprite.hitBox.left;
                 return false;
             }
@@ -122,7 +131,10 @@ function moveRight(sprite, amount) {
         var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
         var targetColumn = Math.floor(hitBox.right / currentMap.tileSize);
         for (var row = topRow; row <= bottomRow; row++) {
-            if (isTileSolid(row, targetColumn)) {
+            if (isTileX(row, targetColumn, TILE_DAMAGE_RIGHT)) {
+                damageSprite(sprite, 1);
+            }
+            if (isTileX(row, targetColumn, TILE_SOLID_RIGHT)) {
                 sprite.x = targetColumn * currentMap.tileSize - hitBox.width - sprite.hitBox.left;
                 return false;
             }
@@ -144,7 +156,10 @@ function moveUp(sprite, amount) {
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
         var targetRow = Math.floor(hitBox.top / currentMap.tileSize);
         for (var column = leftColumn; column <= rightColumn; column++) {
-            if (isTileSolid(targetRow, column)) {
+            if (isTileX(targetRow, column, TILE_DAMAGE_UP)) {
+                damageSprite(sprite, 1);
+            }
+            if (isTileX(targetRow, column, TILE_SOLID_UP)) {
                 sprite.vy = 0;
                 sprite.y = (targetRow + 1) * currentMap.tileSize + hitBox.height;
                 return false;
@@ -167,7 +182,10 @@ function moveDown(sprite, amount) {
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
         var targetRow = Math.floor(hitBox.bottom / currentMap.tileSize);
         for (var column = leftColumn; column <= rightColumn; column++) {
-            if (isTileSolid(targetRow, column)) {
+            if (isTileX(targetRow, column, TILE_DAMAGE_DOWN)) {
+                damageSprite(sprite, 1);
+            }
+            if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
                 sprite.vy = 0;
                 sprite.y = targetRow * currentMap.tileSize;
                 sprite.grounded = true;
@@ -176,4 +194,10 @@ function moveDown(sprite, amount) {
         }
     }
     return true;
+}
+
+function damageSprite(sprite, amount) {
+    if (sprite.invulnerableUntil && now() < sprite.invulnerableUntil) return;
+    sprite.health -= amount;
+    sprite.invulnerableUntil = now() + 1000;
 }

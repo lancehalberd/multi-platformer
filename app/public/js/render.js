@@ -32,8 +32,28 @@ var render = () => {
             actor.y + actor.hitBox.top,
             actor.hitBox.width,
             actor.hitBox.height), 'red');*/
+        if (actor.deathTime) {
+            mainContext.globalAlpha = Math.max(0, 1 - (now() - actor.deathTime) / 1000);
+        } else if (actor.invulnerableUntil && actor.invulnerableUntil > now()) {
+            mainContext.globalAlpha = Math.cos((actor.invulnerableUntil - now()) / 10) / 8 + .6;
+        } else {
+            mainContext.globalAlpha = 1;
+        }
         drawSprite(mainContext, actor);
     }
+    mainContext.restore();
+
+    // Draw HUD elements here like the life display for the main character.
+    mainContext.save();
+    mainContext.translate(10, 10);
+    var heartImage = requireImage('gfx/heart.png');
+    var heartRectangle = rectangle(0, 0, 50, 50);
+    for (var i = 0; i < mainCharacter.maxHealth; i++) {
+        if (i < mainCharacter.health) draw.image(mainContext, heartImage, heartRectangle, heartRectangle);
+        else draw.solidTintedImage(mainContext, heartImage, '#444', heartRectangle, heartRectangle);
+        mainContext.translate(60, 0);
+    }
+    mainContext.restore();
 
     // Considering calculating hit box from the animation. But do I want to worry about rotation with this?
     /*var frame = mainCharacter.walkAnimation.frames[0];
@@ -42,7 +62,7 @@ var render = () => {
 
     // Draw a rectangle where we expect the sprite to be displayed for the main character.
     // draw.fillRectangle(mainContext, rectangle(mainCharacter.x - 2, mainCharacter.y - 2, 4, 4), 'white');
-    mainContext.restore();
+
 
 
     window.requestAnimationFrame(render);
@@ -56,16 +76,31 @@ var drawMap = () => {
     var bottomRow = Math.ceil((cameraY + mainCanvas.height) / currentMap.tileSize);
     var leftColumn = Math.floor(cameraX / currentMap.tileSize);
     var rightColumn = Math.ceil((cameraX + mainCanvas.width) / currentMap.tileSize);
+    mainContext.save();
+    mainContext.translate(0, currentMap.tileSize * topRow + currentMap.tileSize / 2);
     for (var row = topRow; row < bottomRow; row++) {
-        if (!currentMap.composite[row]) continue;
+        if (!currentMap.composite[row]) {
+            mainContext.translate(0, currentMap.tileSize);
+            continue;
+        }
+        mainContext.save();
+        mainContext.translate(currentMap.tileSize * leftColumn + currentMap.tileSize / 2, 0);
         for (var col = leftColumn; col < rightColumn; col++) {
             var tile = currentMap.composite[row][col];
-            if (!tile) continue;
-            draw.image(mainContext, tile.image,
-                rectangle(tile.size * tile.x, tile.size * tile.y, tile.size, tile.size),
-                rectangle(currentMap.tileSize * col, currentMap.tileSize * row, currentMap.tileSize, currentMap.tileSize)
-            );
+            if (tile) {
+                mainContext.save();
+                mainContext.scale(tile.xScale, tile.yScale);
+                draw.image(mainContext, tile.image,
+                    rectangle(tile.size * tile.x, tile.size * tile.y, tile.size, tile.size),
+                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
+                );
+                mainContext.restore();
+            }
+            mainContext.translate(currentMap.tileSize, 0);
         }
+        mainContext.restore();
+        mainContext.translate(0, currentMap.tileSize);
     }
+    mainContext.restore();
 }
 render();

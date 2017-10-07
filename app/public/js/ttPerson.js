@@ -175,6 +175,19 @@ function initializePersonGraphics() {
     var skin = Random.range(0, ttPersonRows - 1);
     var hair = Random.range(0, ttHairRows - 1);
     mainCharacter = initializeTTCharacter({skin, hair});
+    mainCharacter.health = 5;
+    mainCharacter.maxHealth = 5;
+    mainCharacter.originalX = mainCharacter.x;
+    mainCharacter.originalY = mainCharacter.y;
+    mainCharacter.onDeathComplete = function () {
+        this.health = this.maxHealth;
+        this.x = this.originalX;
+        this.y = this.originalY;
+        this.vx = this.vy = 0;
+        this.deathComplete = false;
+        this.invulnerableUntil = now() + 2000;
+        delete this.deathTime;
+    };
     /*while (otherCharacters.length < 1) {
         baseImage = requireImage('gfx/person/monsterPeople.png');
         skinToneIndex = Random.range(0, ttMonsterPersonRows - 1);
