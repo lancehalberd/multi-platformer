@@ -1,6 +1,7 @@
 
 var mainCanvas = $('.js-mainCanvas')[0];
 var mainContext = mainCanvas.getContext('2d');
+mainContext.imageSmoothingEnabled = false;
 var bufferCanvas = createCanvas(mainCanvas.width, mainCanvas.height);
 var bufferContext = bufferCanvas.getContext('2d');
 
@@ -20,7 +21,7 @@ var render = () => {
     draw.image(mainContext, requireImage('gfx/backgrounds/yellowMountains.png'), rectangle(0, 0, 1920, 1080), target);
 
     mainContext.save();
-    mainContext.translate(-cameraX, -cameraY);
+    mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
     /*draw.fillRectangle(mainContext, rectangle(cameraX, groundY, mainCanvas.width, areaRectangle.height - groundY), '#403020');
     draw.fillRectangle(mainContext, rectangle(500 * Math.floor(cameraX / 500), groundY, 200, areaRectangle.height - groundY), '#504030');
     draw.fillRectangle(mainContext, rectangle(500 * Math.ceil(cameraX / 500), groundY, 200, areaRectangle.height - groundY), '#504030');

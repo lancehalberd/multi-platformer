@@ -87,6 +87,7 @@ var exampleMap = {
         new StretchNineInstance(spikesRight, rectangle(0, 20, 1, 5)),
         new StretchNineInstance(spikesLeft, rectangle(15, 23, 1, 2)),
         new StretchNineInstance(spikesRight, rectangle(16, 23, 1, 2)),
+        new StretchNineInstance(spikesLeft, rectangle(20, 23, 1, 2)),
     ],
     tileSize: 32,
     width: 50,
