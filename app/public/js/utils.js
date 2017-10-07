@@ -252,6 +252,10 @@ function shrinkRectangle(rectangle, margin) {
     return {'left': rectangle.left + margin, 'width': rectangle.width - 2 * margin,
             'top': rectangle.top + margin, 'height': rectangle.height - 2 * margin};
 }
+function scaleRectangle(rectangle, scale) {
+    return {left: rectangle.left * scale, width: rectangle.width * scale,
+        top: rectangle.top * scale, height: rectangle.height * scale};
+}
 function rectangleCenter(rectangle) {
     return [rectangle.left + rectangle.width / 2, rectangle.top + rectangle.height / 2];
 }

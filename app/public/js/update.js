@@ -32,5 +32,32 @@ setInterval(() => {
             mainCharacterWasMoving = (mainCharacter.vx !== 0 || mainCharacter.vy < 0);
         }
     }
+    // Map editing:
+    var selectedObject = allMapObjects[objectIndex];
+    if (mouseDown) {
+        if (selectedObject) {
+            if (!objectStartCoords) {
+                objectStartCoords = getMouseCoords();
+            }
+            objectLastCoords = getMouseCoords();
+        } else drawTileUnderMouse();
+    } else {
+        if (selectedObject && objectStartCoords) {
+            var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords);
+            new StretchNineInstance(selectedObject, drawnRectangle).applyToMap(exampleMap);
+            objectStartCoords = null;
+        }
+        if (rightMouseDown) selectTileUnderMouse();
+    }
 
 }, frameMilliseconds);
+
+function getDrawnRectangle(startCoords, endCoords) {
+    return rectangle(
+        Math.min(startCoords[0], endCoords[0]), Math.min(startCoords[1], endCoords[1]),
+        Math.abs(startCoords[0] - endCoords[0]) + 1, Math.abs(startCoords[1] - endCoords[1]) + 1
+    );
+}
+
+var objectStartCoords, objectLastCoords;
+var drawingObjectRectangle;

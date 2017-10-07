@@ -7,19 +7,19 @@ function updateActor(actor) {
     if (actor === mainCharacter && !actor.deathTime){
 
         // Attack if the mouse is down.
-        if ((mouseDown || isKeyDown(KEY_SPACE)) && !actor.attacking) {
+        if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
             sendPlayerAttacked();
         }
         // Main character's movement is controlled with the keyboard.
-        if (actor.grounded) {
+        //if (actor.grounded) {
             var dx = 0;
             if (isKeyDown(KEY_LEFT)) dx--;
             if (isKeyDown(KEY_RIGHT)) dx++;
             if (isKeyDown(KEY_UP)) actor.jump();
             actor.vx += dx;
-        }
+        //}
     } else {
         // This player is handled remotely now.
         /*var dx = 0;
@@ -184,7 +184,13 @@ function moveDown(sprite, amount) {
             if (isTileX(targetRow, column, TILE_DAMAGE_DOWN)) {
                 damageSprite(sprite, 1);
             }
-            if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
+            if (isTileX(targetRow, column, TILE_BOUNCE_DOWN)) {
+                if (sprite.vy < 8) sprite.vy = 0;
+                else sprite.vy = Math.min(-13, -1 * sprite.vy);
+                sprite.y = targetRow * currentMap.tileSize;
+                sprite.grounded = true;
+                return false;
+            } else if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
                 sprite.vy = 0;
                 sprite.y = targetRow * currentMap.tileSize;
                 sprite.grounded = true;

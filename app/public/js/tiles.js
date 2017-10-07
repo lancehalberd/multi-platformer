@@ -10,12 +10,23 @@ var TILE_DAMAGE_DOWN = 0x20;
 var TILE_DAMAGE_LEFT = 0x40;
 var TILE_DAMAGE_RIGHT = 0x80;
 var TILE_DAMAGE = TILE_DAMAGE_UP | TILE_DAMAGE_DOWN | TILE_DAMAGE_LEFT | TILE_DAMAGE_RIGHT;
+var TILE_BOUNCE_UP = 0x100;
+var TILE_BOUNCE_DOWN = 0x200;
+var TILE_BOUNCE_LEFT = 0x400;
+var TILE_BOUNCE_RIGHT = 0x800;
+var TILE_BOUNCE = 0xF00;
 
 var stretchNine = {
     image: twilightTiles,
     size: 16,
     x: 7, y:0,
     properties: TILE_SOLID,
+};
+var bouncyBlock = {
+    image: twilightTiles,
+    size: 16,
+    x: 7, y:6,
+    properties: TILE_SOLID | TILE_BOUNCE,
 };
 var spikesUp = {
     image: twilightTiles,
@@ -41,6 +52,8 @@ var spikesRight = {
     x: 4, y: 12, xScale: -1,
     properties: TILE_SOLID | TILE_DAMAGE_LEFT,
 }
+
+var allMapObjects = [stretchNine, bouncyBlock, spikesUp, spikesDown, spikesLeft, spikesRight];
 
 class StretchNineInstance {
     constructor(source, rectangle) {
@@ -78,8 +91,8 @@ var exampleMap = {
         new StretchNineInstance(stretchNine, rectangle(0, 0, 1, 30)),
         new StretchNineInstance(stretchNine, rectangle(49, 0, 1, 30)),
         new StretchNineInstance(stretchNine, rectangle(0, 0, 50, 1)),
-        new StretchNineInstance(stretchNine, rectangle(0, 25, 50, 5)),
-        new StretchNineInstance(stretchNine, rectangle(20, 23, 40, 2)),
+        new StretchNineInstance(bouncyBlock, rectangle(0, 25, 50, 5)),
+        new StretchNineInstance(bouncyBlock, rectangle(20, 23, 40, 2)),
         new StretchNineInstance(stretchNine, rectangle(25, 21, 25, 2)),
         new StretchNineInstance(stretchNine, rectangle(35, 19, 15, 2)),
         new StretchNineInstance(stretchNine, rectangle(42, 17, 8, 2)),
@@ -100,4 +113,34 @@ for (var object of exampleMap.objects) {
 
 var tiles = [];
 
+var tileSource = null;
+var getMouseCoords = () => {
+    var targetPosition = relativeMousePosition(mainCanvas);
+    return [Math.floor((targetPosition[0] + cameraX) / currentMap.tileSize),
+            Math.floor((targetPosition[1] + cameraY) / currentMap.tileSize),
+    ];
+}
+// Disable context menu on the main canvas
+$('.js-mainCanvas').on('contextmenu', event => {
+    return false;
+});
+var selectTileUnderMouse = () => {
+    var coords = getMouseCoords();
+    objectIndex = undefined;
+    tileSource = currentMap.composite[coords[1]][coords[0]];
+}
+var drawTileUnderMouse = () => {
+    var coords = getMouseCoords();
+    currentMap.composite[coords[1]][coords[0]] = tileSource;
+};
+var objectIndex;
+$(document).on('mousewheel', e => {
+    e.preventDefault();
+    if (!objectIndex) objectIndex = 0;
+    if(e.originalEvent.wheelDelta /120 > 0) {
+        objectIndex = (objectIndex + allMapObjects.length - 1) % allMapObjects.length;
+    } else {
+        objectIndex = (objectIndex + 1) % allMapObjects.length;
+    }
+});
 var currentMap = exampleMap;
