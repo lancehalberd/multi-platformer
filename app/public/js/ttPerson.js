@@ -122,7 +122,7 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
 }
 
 class TTCharacter {
-    constructor(actorCanvas) {
+    constructor(actorCanvas, skin, hair) {
         this.canvas = actorCanvas;
         this.x = 200;
         this.y = 800;
@@ -149,7 +149,7 @@ class TTCharacter {
 }
 
 var mainCharacter;
-var otherCharacters = [];
+var otherCharacters = {};
 function walkAnimation(actorCanvas) {
     var hitBox = rectangle(36, 18, 24, 42);
     var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
