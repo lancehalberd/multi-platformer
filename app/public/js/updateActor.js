@@ -1,25 +1,51 @@
 function updateActor(actor) {
-    // Monsters target the player.
-    var targetPosition = [mainCharacter.x, mainCharacter.y];
-    // This is the position of the mouse relative to the canvas.
-    if (actor.grounded) actor.vx *= .8;
-    // The player targets the mouse.
-    if (actor === mainCharacter && !actor.deathTime){
 
-        // Attack if the mouse is down.
+    // Friction. Air Friction is much lower than on the ground.
+    if (actor.grounded) actor.vx *= .8;
+    else actor.vx *= 0.9;
+
+    // Main character's movement is controlled with the keyboard.
+    if (actor === mainCharacter && !actor.deathTime){
+        // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
             sendPlayerAttacked();
         }
-        // Main character's movement is controlled with the keyboard.
-        //if (actor.grounded) {
-            var dx = 0;
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
-            if (isKeyDown(KEY_UP)) actor.jump();
-            actor.vx += dx;
-        //}
+        var dx = 0;
+        if (actor.grounded) {
+            if (!keysDown[KEY_UP]) {
+                // Resetting jump on grounding if jump button has been released since last jump.
+                actor.numberOfJumps = 0;
+                actor.jumpKeyReleased = false;
+            }
+            if (keysDown[KEY_LEFT]) dx--;
+            if (keysDown[KEY_RIGHT]) dx++;
+            if (keysDown[KEY_DOWN]) {
+                // Crouched movement.
+                // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
+                actor.crouched = true;
+                actor.scale = 0.75;
+                actor.hitBox = rectangle(-18, -31, 36, 31);
+                actor.speed = 2.5;
+            } else {
+                // Normal movement.
+                actor.crouched = false;
+                actor.scale = 1.5;
+                actor.hitBox = rectangle(-18, -63, 36, 63);
+                actor.speed = 20; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
+                if (keysDown[KEY_UP] && actor.numberOfJumps === 0) actor.jump();
+            }
+            actor.vx += dx * 2;
+        } else {
+            //double jump and limited air control
+            if (actor.numberOfJumps < 2 && (!keysDown[KEY_UP])) actor.jumpKeyReleased = true;
+            if (keysDown[KEY_LEFT]) dx--;
+            if (keysDown[KEY_RIGHT]) dx++;
+            if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
+            actor.speed = 20;    //max speed in air
+            actor.vx += dx / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
+        }
     } else {
         // This player is handled remotely now.
         /*var dx = 0;
@@ -33,10 +59,9 @@ function updateActor(actor) {
         actor.vx += dx;*/
     }
     var maxSpeed = actor.speed;
-    if (actor.vx * actor.xScale < 0) maxSpeed /= 2;
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
     if (Math.abs(actor.vx) < .5) actor.vx = 0;
-    targetPosition = [actor.x + 100 * actor.vx, actor.y];
+    var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
     if (actor.attacking) {
         actor.attackFrame = Math.floor((now() - actor.attackTime) / 200);
@@ -65,7 +90,7 @@ function updateActor(actor) {
 
     actor.vy++;
     if (!actor.grounded) {
-        actor.jumpTime = now() + 200;
+        actor.jumpTime = now();
     }
     if (!actor.grounded) {
         actor.walkFrame = 1;
@@ -188,7 +213,7 @@ function moveDown(sprite, amount) {
                 if (sprite.vy < 8) sprite.vy = 0;
                 else sprite.vy = Math.min(-13, -1 * sprite.vy);
                 sprite.y = targetRow * currentMap.tileSize;
-                sprite.grounded = true;
+                sprite.numberOfJumps = 0;
                 return false;
             } else if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
                 sprite.vy = 0;
