@@ -36,6 +36,10 @@ class StretchNineInstance {
 var exampleMap = {
     objects: [
         new StretchNineInstance(stretchNine, rectangle(10, 14, 30, 2)),
+        new StretchNineInstance(stretchNine, rectangle(10, 6, 2, 2)),
+        new StretchNineInstance(stretchNine, rectangle(15, 9, 2, 2)),
+        new StretchNineInstance(stretchNine, rectangle(1, 18, 2, 2)),
+        new StretchNineInstance(stretchNine, rectangle(3, 22, 2, 2)),
         new StretchNineInstance(stretchNine, rectangle(0, 0, 1, 30)),
         new StretchNineInstance(stretchNine, rectangle(49, 0, 1, 30)),
         new StretchNineInstance(stretchNine, rectangle(0, 0, 50, 1)),
