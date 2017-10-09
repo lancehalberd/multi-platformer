@@ -135,6 +135,8 @@ class TTCharacter {
         this.walkAnimation = walkAnimation(actorCanvas);
         this.attackAnimation = attackAnimation(actorCanvas);
         this.animation = this.walkAnimation;
+        this.skin = skin;
+        this.hair = hair;
         this.numberOfJumps = 0; //to count jumps to make double-jumping work
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
         this.crouched = false; //is crouched or not
