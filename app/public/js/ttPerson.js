@@ -122,32 +122,34 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
 }
 
 class TTCharacter {
-    constructor(actorCanvas, skin, hair) {
+    constructor(actorCanvas) {
         this.canvas = actorCanvas;
         this.x = 200;
         this.y = 800;
         this.currentFrame = 0;
-        this.scale = 2;
-        this.speed = 5;
+        this.scale = 1.5;
+        this.speed = 8;
         this.vx = this.vy = 0;
         this.grounded = false;
-        this.hitBox = rectangle(-24, -84, 48, 84);
+        this.hitBox = rectangle(-18, -63, 36, 63);
         this.walkAnimation = walkAnimation(actorCanvas);
         this.attackAnimation = attackAnimation(actorCanvas);
         this.animation = this.walkAnimation;
-        this.skin = skin;
-        this.hair = hair;
+        this.numberOfJumps = 0; //to count jumps to make double-jumping work
+        this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
+        this.crouched = false; //is crouched or not
     }
 
     jump() {
-        if (this.grounded && (this.jumpTime || 0) < now()) {
-            this.vy = -15;
+        if (/*this.grounded*/(this.jumpTime || 0) < now()) {
+            this.vy = -14;
+            this.numberOfJumps++;
         }
     }
 }
 
 var mainCharacter;
-var otherCharacters = {};
+var otherCharacters = [];
 function walkAnimation(actorCanvas) {
     var hitBox = rectangle(36, 18, 24, 42);
     var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
