@@ -14,14 +14,14 @@ function updateActor(actor) {
         }
         var dx = 0;
         if (actor.grounded) {
-            if (!keysDown[KEY_UP]) {
+            if (!isKeyDown(KEY_UP)) {
                 // Resetting jump on grounding if jump button has been released since last jump.
                 actor.numberOfJumps = 0;
                 actor.jumpKeyReleased = false;
             }
-            if (keysDown[KEY_LEFT]) dx--;
-            if (keysDown[KEY_RIGHT]) dx++;
-            if (keysDown[KEY_DOWN]) {
+            if (isKeyDown(KEY_LEFT)) dx--;
+            if (isKeyDown(KEY_RIGHT)) dx++;
+            if (isKeyDown(KEY_DOWN)) {
                 // Crouched movement.
                 // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
                 actor.crouched = true;
@@ -34,15 +34,15 @@ function updateActor(actor) {
                 actor.scale = 1.5;
                 actor.hitBox = rectangle(-18, -63, 36, 63);
                 actor.speed = 20; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
-                if (keysDown[KEY_UP] && actor.numberOfJumps === 0) actor.jump();
+                if (isKeyDown(KEY_UP) && actor.numberOfJumps === 0) actor.jump();
             }
             actor.vx += dx * 2;
         } else {
             //double jump and limited air control
-            if (actor.numberOfJumps < 2 && (!keysDown[KEY_UP])) actor.jumpKeyReleased = true;
-            if (keysDown[KEY_LEFT]) dx--;
-            if (keysDown[KEY_RIGHT]) dx++;
-            if (keysDown[KEY_UP] && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
+            if (actor.numberOfJumps < 2 && (!isKeyDown(KEY_UP))) actor.jumpKeyReleased = true;
+            if (isKeyDown(KEY_LEFT)) dx--;
+            if (isKeyDown(KEY_RIGHT)) dx++;
+            if (isKeyDown(KEY_UP) && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
             actor.speed = 20;    //max speed in air
             actor.vx += dx / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
@@ -98,7 +98,7 @@ function updateActor(actor) {
     if (!actor.attacking) {
         actor.animation = actor.walkAnimation;
         actor.currentFrame = actor.walkFrame;
-        if (actor.grounded && actor.x !== targetPosition[0]) {
+        if (actor.x !== targetPosition[0]) {
             actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
         }
     } else {
