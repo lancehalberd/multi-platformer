@@ -36,7 +36,7 @@ function updateActor(actor) {
                 actor.scale = 1.5;
                 actor.hitBox = rectangle(-18, -63, 36, 63);
                 actor.speed = 7.5; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
-                if (keysDown[KEY_UP] && actor.currentNumberOfJumps === 0 && actor.grounded && actor.currentNumberOfJumps < actor.maxJumps) actor.jump(); //jump from grounded
+                if (keysDown[KEY_UP]) actor.jump(); //jump from grounded
             }
             actor.vx += dx * 1;
         } else {    //player is in the air/not grounded

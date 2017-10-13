@@ -149,7 +149,7 @@ class TTCharacter {
     }
 
     jump() {
-        if (/*this.grounded*/(this.jumpTime || 0) < now() && this.currentNumberOfJumps < this.maxJumps) {
+        if (/*this.grounded*/(this.jumpTime || 0) < now() && this.currentNumberOfJumps < this.maxJumps && this.currentJumpDuration <= this.maxJumpDuration) {
             //this.vy = this.jumpMagnitude;
             this.jumping = true;
             this.currentNumberOfJumps++;
