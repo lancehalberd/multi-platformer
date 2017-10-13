@@ -6,6 +6,11 @@ var crypto = require('crypto');
 var mustache = require('mustache');
 
 
+var exampleMap = require('./src/map.js');
+var tiles = require('./app/public/js/tiles.js');
+//console.log(rectangle);
+//console.log(exampleMap);
+
 var app = express();
 // needed for heroku to work right
 var PORT = process.env.PORT || 3000;
@@ -113,7 +118,7 @@ wsServer.on('request', function(request) {
             // console.log("Added player");
             // console.log(players);
             // When a player first logs in we send them their public/private ids and the full list of player data.
-            connection.sendUTF(JSON.stringify({privateId, publicId, players}));
+            connection.sendUTF(JSON.stringify({privateId, publicId, players, map: exampleMap}));
             // Broadcast to all other players that the new player has joined.
             broadcast({playerJoined: players[publicId]});
             connections[privateId] = connection;
@@ -138,6 +143,16 @@ wsServer.on('request', function(request) {
                 updatePlayer(publicId, data.player);
                 broadcast({player: players[publicId]});
                 // console.log(`Player ${publicId} moved`);
+                return;
+            }
+            if (data.action === 'updateTile') {
+                tiles.applyTileToMap(exampleMap, data.tileData, data.position);
+                broadcast({tileData: data.tileData, position: data.position});
+                return;
+            }
+            if (data.action === 'createMapObject') {
+                tiles.applyObjectToMap(exampleMap, data.mapObject, data.position);
+                broadcast({mapObject: data.mapObject, position: data.position});
                 return;
             }
             return;

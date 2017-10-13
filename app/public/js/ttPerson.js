@@ -191,6 +191,7 @@ function initializePersonGraphics() {
         this.deathComplete = false;
         this.invulnerableUntil = now() + 2000;
         delete this.deathTime;
+        sendPlayerMoved();
     };
     /*while (otherCharacters.length < 1) {
         baseImage = requireImage('gfx/person/monsterPeople.png');

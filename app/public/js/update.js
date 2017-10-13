@@ -6,9 +6,10 @@ var cameraX = areaRectangle.width / 2 - 400, cameraY = areaRectangle.height / 2 
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
     if (!gameHasBeenInitialized) {
-        if (!numberOfImagesLeftToLoad)initializeGame();
+        if (!numberOfImagesLeftToLoad && connected)initializeGame();
         return;
     }
+    if (!currentMap) return;
     areaRectangle.width = currentMap.width * currentMap.tileSize;
     areaRectangle.height = currentMap.height * currentMap.tileSize;
 
@@ -40,11 +41,13 @@ setInterval(() => {
                 objectStartCoords = getMouseCoords();
             }
             objectLastCoords = getMouseCoords();
-        } else drawTileUnderMouse();
+        } else {
+            sendTileUpdate(tileSource, getMouseCoords());
+        }
     } else {
         if (selectedObject && objectStartCoords) {
             var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords);
-            new StretchNineInstance(selectedObject, drawnRectangle).applyToMap(exampleMap);
+            sendMapObject(selectedObject, drawnRectangle);
             objectStartCoords = null;
         }
         if (rightMouseDown) selectTileUnderMouse();
@@ -61,3 +64,35 @@ function getDrawnRectangle(startCoords, endCoords) {
 
 var objectStartCoords, objectLastCoords;
 var drawingObjectRectangle;
+
+var tileSource = null;
+var getMouseCoords = () => {
+    var targetPosition = relativeMousePosition(mainCanvas);
+    return [Math.floor((targetPosition[0] + cameraX) / currentMap.tileSize),
+            Math.floor((targetPosition[1] + cameraY) / currentMap.tileSize),
+    ];
+}
+// Disable context menu on the main canvas
+$('.js-mainCanvas').on('contextmenu', event => {
+    return false;
+});
+var selectTileUnderMouse = () => {
+    var coords = getMouseCoords();
+    objectIndex = undefined;
+    tileSource = currentMap.composite[coords[1]][coords[0]];
+}
+var drawTileUnderMouse = () => {
+    var coords = getMouseCoords();
+    currentMap.composite[coords[1]][coords[0]] = tileSource;
+};
+var objectIndex;
+$(document).on('mousewheel', e => {
+    e.preventDefault();
+    if (!objectIndex) objectIndex = 0;
+    if(e.originalEvent.wheelDelta /120 > 0) {
+        objectIndex = (objectIndex + allMapObjects.length - 1) % allMapObjects.length;
+    } else {
+        objectIndex = (objectIndex + 1) % allMapObjects.length;
+    }
+});
+

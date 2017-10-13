@@ -7,7 +7,7 @@ var bufferContext = bufferCanvas.getContext('2d');
 
 var render = () => {
     try {
-    if (!gameHasBeenInitialized) {
+    if (!gameHasBeenInitialized || !currentMap) {
         window.requestAnimationFrame(render);
         return;
     }
@@ -67,14 +67,14 @@ var render = () => {
     draw.fillRectangle(mainContext, rectangle(-34, -34, 68, 68), 'red');
     if (selectedObject) {
         mainContext.scale((selectedObject.xScale || 1) * 2, (selectedObject.yScale || 1) * 2);
-        draw.image(mainContext, selectedObject.image,
+        draw.image(mainContext, requireImage(selectedObject.image),
             rectangle(selectedObject.size * selectedObject.x, selectedObject.size * selectedObject.y,
                 selectedObject.size * 3, selectedObject.size * 3),
             rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
         );
     } else if (tileSource) {
         mainContext.scale(2 * tileSource.xScale, 2 * tileSource.yScale);
-        draw.image(mainContext, tileSource.image,
+        draw.image(mainContext, requireImage(tileSource.image),
             rectangle(tileSource.size * tileSource.x, tileSource.size * tileSource.y, tileSource.size, tileSource.size),
             rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
         );
@@ -114,9 +114,10 @@ var drawMap = () => {
         for (var col = leftColumn; col < rightColumn; col++) {
             var tile = currentMap.composite[row][col];
             if (tile) {
+                var image = requireImage(tile.image);
                 mainContext.save();
                 mainContext.scale(tile.xScale, tile.yScale);
-                draw.image(mainContext, tile.image,
+                draw.image(mainContext, image,
                     rectangle(tile.size * tile.x, tile.size * tile.y, tile.size, tile.size),
                     rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
                 );

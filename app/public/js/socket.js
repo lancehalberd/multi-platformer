@@ -19,6 +19,7 @@ socket.addEventListener('message', event => {
             if (id === publicId) continue;
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
+        currentMap = data.map;
         return;
     }
     if (data.playerJoined) {
@@ -42,9 +43,18 @@ socket.addEventListener('message', event => {
         }
         return;
     }
+    if (typeof(data.tileData) !== 'undefined') {
+        applyTileToMap(currentMap, data.tileData, data.position);
+    }
+    if (data.mapObject) {
+        applyObjectToMap(currentMap, data.mapObject, data.position);
+    }
 });
+var currentMap = null;
 var sendData = data => socket.readyState === socket.OPEN && socket.send(JSON.stringify(data));
 var serializePlayer = player => ({x: player.x, y: player.y, vx: player.vx, vy: player.vy, hair: player.hair, skin: player.skin});
 var sendPlayerJoined = () => connected && sendData({privateId, action: 'join', player: serializePlayer(mainCharacter)});
 var sendPlayerMoved = () => privateId && sendData({privateId, action: 'move', player: _.omit(serializePlayer(mainCharacter), ['hair','skin'])});
 var sendPlayerAttacked = () => privateId && sendData({privateId, action: 'attack'});
+var sendTileUpdate = (tileData, position) => privateId && sendData({privateId, action: 'updateTile', tileData, position});
+var sendMapObject = (mapObject, position) => privateId && sendData({privateId, action: 'createMapObject', mapObject, position});
