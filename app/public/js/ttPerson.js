@@ -140,11 +140,6 @@ class TTCharacter {
         this.currentJumpDuration = 0; //to track how long the jump button has been held down, and so how high to jump
         this.maxJumpDuration = 8; //how long holding the jump button down will keep providing "upward thrust" during a jump. In frames.
         this.jumpMagnitude = -9; //how much upward thrust, per frame, the jump button produces.
-        /*CURRENNUMBEROFJUMPS AND MAX JUMPS AREN'T WORKING how they should!
-         *Often currentNumberOfJumps is 3 when it should never exceed 2.
-         *currentNumberOfJumps is often 1 while grounded when it should be 0.
-         *You have to make maxJump10-ish before you can triple jump.
-         *This doesn't seem to be impairing function, but might in some cases, and it's not easy to just throw in a triple jump the way it should be.*/
         this.currentNumberOfJumps = 0; //to count jumps to make double-jumping work
         this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
         this.jumpScaling = [1, 0.67]; //jumps after the first have jumpMagnitude * jumpScaling
@@ -166,7 +161,8 @@ class TTCharacter {
         // The jumpScaling value gets smaller for jumps in the air.
         // We use the Math.min here because holding/pressing jump should never slow your ascent. For example,
         // if you are bouncing very quickly up, holding up should not slow you down.
-        this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[Math.max(0, this.currentNumberOfJumps - 1)]);
+        var scalingIndex = Math.min(Math.max(0, this.currentNumberOfJumps - 1), this.jumpScaling.length - 1);
+        this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[scalingIndex]);
     }
 }
 
