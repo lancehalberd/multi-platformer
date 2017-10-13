@@ -159,9 +159,9 @@ class TTCharacter {
     // Apply the jump velocity to the actor for a single frame.
     applyJumpVelocity() {
         // The jumpScaling value gets smaller for jumps in the air.
+        var scalingIndex = Math.min(Math.max(0, this.currentNumberOfJumps - 1), this.jumpScaling.length - 1);
         // We use the Math.min here because holding/pressing jump should never slow your ascent. For example,
         // if you are bouncing very quickly up, holding up should not slow you down.
-        var scalingIndex = Math.min(Math.max(0, this.currentNumberOfJumps - 1), this.jumpScaling.length - 1);
         this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[scalingIndex]);
     }
 }
