@@ -2,10 +2,6 @@ function updateActor(actor) {
     // Friction. Air Friction is much lower than on the ground.
     if (actor.grounded) actor.vx *= 0.8;
     else actor.vx *= 0.9;
-    if (!isKeyDown(KEY_UP)) {
-        actor.currentJumpDuration = 0;
-        actor.jumping = false;
-    }
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -15,14 +11,15 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         var dx = 0;
-        if (actor.grounded) {   //player is on the ground
-            if (!isKeyDown(KEY_UP)) {
-                // Resetting jump on grounding if jump button has been released since last jump.
-                actor.currentNumberOfJumps = 0;
-                actor.jumpKeyReleased = false;
-            }
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
+        if (isKeyDown(KEY_LEFT)) dx--;
+        if (isKeyDown(KEY_RIGHT)) dx++;
+        // Initially each frame assumes the player is standing:
+        actor.crouched = false;
+        actor.scale = 1.5;
+        actor.hitBox = rectangle(-18, -63, 36, 63);
+        actor.speed = 7.5;
+        if (actor.grounded) {
+            // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 // Crouched movement.
                 // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
@@ -30,48 +27,37 @@ function updateActor(actor) {
                 actor.scale = 0.75;
                 actor.hitBox = rectangle(-18, -31, 36, 31);
                 actor.speed = 2;
-            } else {
-                // Standing up movement.
-                actor.crouched = false;
-                actor.scale = 1.5;
-                actor.hitBox = rectangle(-18, -63, 36, 63);
-                actor.speed = 7.5; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
-                if (isKeyDown(KEY_UP)) actor.jump(); //jump from grounded
+            } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
+                // The player will attempt to jump in if they press the
+                // jump key while on the ground and not crouching.
+                actor.jump();
             }
             actor.vx += dx * 1;
-        } else {    //player is in the air/not grounded
+        } else {
+            //player is in the air/not grounded
             //double jump and limited air control
-            if (actor.currentNumberOfJumps < actor.maxJumps && (!isKeyDown(KEY_UP))) {
-                actor.jumpKeyReleased = true;
+            if (actor.jumpKeyReleased) {
+                // Once the actor releases the jump key while jumping, they can no longer
+                // boost their current jump, so we set the current jump duration to the max duration.
+                actor.currentJumpDuration = actor.maxJumpDuration;
+                // If the actor has released the jump key since they started jumping,
+                // they will attempt to jump again the next time they press the jump key.
+                if (isKeyDown(KEY_UP)) actor.jump();
+            } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
+                // If the actor has not released the jump key since they started jumping,
+                // there velocity will continue to increase as long as they hold the jump key
+                // until they hit the maxJumpDuration.
+                actor.applyJumpVelocity();
+                actor.currentJumpDuration++;
             }
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
-            if (isKeyDown(KEY_UP) && actor.jumpKeyReleased) actor.jump(); //double-jump/air jump
-            actor.speed = 7.5;    //max speed in air
             actor.vx += dx / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
-        if (actor.jumping === true && actor.currentJumpDuration <= actor.maxJumpDuration && (isKeyDown(KEY_UP))) {
-            if (actor.currentNumberOfJumps <= 1) { //1st jump's magnitude isn't scaled down
-                actor.vy = actor.jumpMagnitude;
-            } else {
-                actor.vy = actor.jumpMagnitude * actor.jumpScaling; //this implementation could be changed to trigger different jump magnitudes from grounded or air rather than from 1st and > 1st.
-            }
-            actor.currentJumpDuration++;
-        }
-    } else {
-        // This player is handled remotely now.
-        /*var dx = 0;
-        if (targetPosition[0] + mainCharacter.hitBox.width < actor.x) dx--;
-        else if (actor.x + actor.hitBox.width < targetPosition[0]) dx++;
-        else if (!actor.attacking) {
-            actor.attacking = true;
-            actor.attackTime = now();
-        }
-        if (actor.y > targetPosition[1]) actor.jump();
-        actor.vx += dx;*/
+        actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
     var maxSpeed = actor.speed;
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
+    // Rather than have the player get imperceptibly slower and slower, we just bring
+    // them to a full stop once their speed is less than .5.
     if (Math.abs(actor.vx) < .5) actor.vx = 0;
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -97,13 +83,11 @@ function updateActor(actor) {
         actor.grounded = false;
         moveUp(actor, -actor.vy);
     } else if (actor.vy > 0) {
+        actor.grounded = false;
         moveDown(actor, actor.vy);
     }
 
     actor.vy++;
-    if (!actor.grounded) {
-        actor.jumpTime = now();
-    }
     if (!actor.grounded) {
         actor.walkFrame = 1;
     }
@@ -222,15 +206,25 @@ function moveDown(sprite, amount) {
                 damageSprite(sprite, 1);
             }
             if (isTileX(targetRow, column, TILE_BOUNCE_DOWN)) {
-                if (sprite.vy < 8) sprite.vy = 0;
-                else sprite.vy = Math.min(-13, -1 * sprite.vy);
+                if (sprite.vy < 8) {
+                    // If the sprite lands softly on a bouncy tile, then
+                    // it acts just like a solid tile would.
+                    sprite.vy = 0;
+                    sprite.y = targetRow * currentMap.tileSize;
+                    sprite.grounded = true;
+                    sprite.currentNumberOfJumps = 0;
+                    return;
+                } else sprite.vy = Math.min(-13, -1 * sprite.vy);
                 sprite.y = targetRow * currentMap.tileSize;
-                sprite.numberOfJumps = 0;
+                // We count the bounce as a jump.
+                sprite.currentNumberOfJumps = 1;
+                sprite.currentJumpDuration = 0;
                 return false;
             } else if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
                 sprite.vy = 0;
                 sprite.y = targetRow * currentMap.tileSize;
                 sprite.grounded = true;
+                sprite.currentNumberOfJumps = 0;
                 return false;
             }
         }

@@ -142,18 +142,26 @@ class TTCharacter {
         this.jumpMagnitude = -9; //how much upward thrust, per frame, the jump button produces.
         this.currentNumberOfJumps = 0; //to count jumps to make double-jumping work
         this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
-        this.jumpScaling = 0.67; //jumps after the first have jumpMagnitude * jumpScaling
+        this.jumpScaling = [1, 0.67]; //jumps after the first have jumpMagnitude * jumpScaling
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
-        this.jumping = false;
         this.crouched = false; //is crouched or not
     }
 
     jump() {
-        if (/*this.grounded*/(this.jumpTime || 0) < now() && this.currentNumberOfJumps < this.maxJumps && this.currentJumpDuration <= this.maxJumpDuration) {
-            //this.vy = this.jumpMagnitude;
+        if (this.currentNumberOfJumps < this.maxJumps) {
             this.jumping = true;
             this.currentNumberOfJumps++;
+            this.currentJumpDuration = 0;
+            this.applyJumpVelocity();
         }
+    }
+
+    // Apply the jump velocity to the actor for a single frame.
+    applyJumpVelocity() {
+        // The jumpScaling value gets smaller for jumps in the air.
+        // We use the Math.min here because holding/pressing jump should never slow your ascent. For example,
+        // if you are bouncing very quickly up, holding up should not slow you down.
+        this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[Math.max(0, this.currentNumberOfJumps - 1)]);
     }
 }
 
