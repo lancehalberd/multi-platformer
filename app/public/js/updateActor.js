@@ -1,9 +1,11 @@
 function updateActor(actor) {
-
     // Friction. Air Friction is much lower than on the ground.
-    if (actor.grounded) actor.vx *= .8;
+    if (actor.grounded) actor.vx *= 0.8;
     else actor.vx *= 0.9;
-
+    if (!keysDown[KEY_UP]) {
+        actor.currentJumpDuration = 0;
+        actor.jumping = false;
+    }
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -13,38 +15,48 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         var dx = 0;
-        if (actor.grounded) {
-            if (!isKeyDown(KEY_UP)) {
+        if (actor.grounded) {   //player is on the ground
+            if (!keysDown[KEY_UP]) {
                 // Resetting jump on grounding if jump button has been released since last jump.
-                actor.numberOfJumps = 0;
+                actor.currentNumberOfJumps = 0;
                 actor.jumpKeyReleased = false;
             }
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
-            if (isKeyDown(KEY_DOWN)) {
+            if (keysDown[KEY_LEFT]) dx--;
+            if (keysDown[KEY_RIGHT]) dx++;
+            if (keysDown[KEY_DOWN]) {
                 // Crouched movement.
                 // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
                 actor.crouched = true;
                 actor.scale = 0.75;
                 actor.hitBox = rectangle(-18, -31, 36, 31);
-                actor.speed = 2.5;
+                actor.speed = 2;
             } else {
-                // Normal movement.
+                // Standing up movement.
                 actor.crouched = false;
                 actor.scale = 1.5;
                 actor.hitBox = rectangle(-18, -63, 36, 63);
-                actor.speed = 20; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
-                if (isKeyDown(KEY_UP) && actor.numberOfJumps === 0) actor.jump();
+                actor.speed = 7.5; //speed doesn't seem to scale how I'd expect it to. "8" wasn't really very slow, and "20" doesn't feel anywhere near 2.5 times that.
+                if (keysDown[KEY_UP] && actor.currentNumberOfJumps === 0 && actor.grounded && actor.currentNumberOfJumps < actor.maxJumps) actor.jump(); //jump from grounded
             }
-            actor.vx += dx * 2;
-        } else {
+            actor.vx += dx * 1;
+        } else {    //player is in the air/not grounded
             //double jump and limited air control
-            if (actor.numberOfJumps < 2 && (!isKeyDown(KEY_UP))) actor.jumpKeyReleased = true;
-            if (isKeyDown(KEY_LEFT)) dx--;
-            if (isKeyDown(KEY_RIGHT)) dx++;
-            if (isKeyDown(KEY_UP) && actor.numberOfJumps <= 1 && actor.jumpKeyReleased) actor.jump(); //double-jump
-            actor.speed = 20;    //max speed in air
+            if (actor.currentNumberOfJumps < actor.maxJumps && (!keysDown[KEY_UP])) {
+                actor.jumpKeyReleased = true;
+            }
+            if (keysDown[KEY_LEFT]) dx--;
+            if (keysDown[KEY_RIGHT]) dx++;
+            if (keysDown[KEY_UP] && actor.jumpKeyReleased) actor.jump(); //double-jump/air jump
+            actor.speed = 7.5;    //max speed in air
             actor.vx += dx / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
+        }
+        if (actor.jumping === true && actor.currentJumpDuration <= actor.maxJumpDuration && (keysDown[KEY_UP])) {
+            if (actor.currentNumberOfJumps <= 1) { //1st jump's magnitude isn't scaled down
+                actor.vy = actor.jumpMagnitude;
+            } else {
+                actor.vy = actor.jumpMagnitude * actor.jumpScaling; //this implementation could be changed to trigger different jump magnitudes from grounded or air rather than from 1st and > 1st.
+            }
+            actor.currentJumpDuration++;
         }
     } else {
         // This player is handled remotely now.
