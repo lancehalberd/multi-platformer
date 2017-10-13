@@ -149,7 +149,6 @@ class TTCharacter {
 
     jump() {
         if (this.currentNumberOfJumps < this.maxJumps) {
-            this.jumping = true;
             this.currentNumberOfJumps++;
             this.currentJumpDuration = 0;
             this.applyJumpVelocity();
