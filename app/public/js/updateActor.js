@@ -28,14 +28,13 @@ function updateActor(actor) {
                 actor.hitBox = rectangle(-18, -31, 36, 31);
                 actor.speed = 2;
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
-                // The player will attempt to jump in if they press the
+                // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
                 actor.jump();
             }
             actor.vx += dx * 1;
         } else {
-            //player is in the air/not grounded
-            //double jump and limited air control
+            // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer
                 // boost their current jump, so we set the current jump duration to the max duration.
@@ -45,7 +44,7 @@ function updateActor(actor) {
                 if (isKeyDown(KEY_UP)) actor.jump();
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
-                // there velocity will continue to increase as long as they hold the jump key
+                // the jump velocity will continue to be applied as long as they hold the jump key
                 // until they hit the maxJumpDuration.
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
