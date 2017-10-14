@@ -127,8 +127,8 @@ class TTCharacter {
         this.x = 200;
         this.y = 800;
         this.currentFrame = 0;
-        this.scale = 1.5;
-        this.speed = 8;
+        this.scale = 1.5; //this is defined in the input area of updateActor.js, regarding crouching and standing.
+        this.speed = 0; //this is defined in the input area of updateActor.js, regarding crouching and standing.
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = rectangle(-18, -63, 36, 63);
@@ -137,16 +137,33 @@ class TTCharacter {
         this.animation = this.walkAnimation;
         this.skin = skin;
         this.hair = hair;
-        this.numberOfJumps = 0; //to count jumps to make double-jumping work
+        this.currentJumpDuration = 0; //to track how long the jump button has been held down, and so how high to jump
+        this.maxJumpDuration = 8; //how long holding the jump button down will keep providing "upward thrust" during a jump. In frames.
+        this.jumpMagnitude = -9; //how much upward thrust, per frame, the jump button produces.
+        this.currentNumberOfJumps = 0; //to count jumps to make double-jumping work
+        this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
+        this.jumpScaling = [1, 0.67]; //jumps after the first have jumpMagnitude * jumpScaling
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
         this.crouched = false; //is crouched or not
     }
 
     jump() {
-        if (/*this.grounded*/(this.jumpTime || 0) < now()) {
-            this.vy = -14;
-            this.numberOfJumps++;
+        if (this.currentNumberOfJumps < this.maxJumps) {
+            this.currentNumberOfJumps++;
+            this.currentJumpDuration = 0;
+            // jumping resets vertical velocity.
+            this.vy = 0;
+            this.applyJumpVelocity();
         }
+    }
+
+    // Apply the jump velocity to the actor for a single frame.
+    applyJumpVelocity() {
+        // The jumpScaling value gets smaller for jumps in the air.
+        var scalingIndex = Math.min(Math.max(0, this.currentNumberOfJumps - 1), this.jumpScaling.length - 1);
+        // We use the Math.min here because holding/pressing jump should never slow your ascent. For example,
+        // if you are bouncing very quickly up, holding up should not slow you down.
+        this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[scalingIndex]);
     }
 }
 
