@@ -151,6 +151,8 @@ class TTCharacter {
         if (this.currentNumberOfJumps < this.maxJumps) {
             this.currentNumberOfJumps++;
             this.currentJumpDuration = 0;
+            // jumping resets vertical velocity.
+            this.vy = 0;
             this.applyJumpVelocity();
         }
     }
