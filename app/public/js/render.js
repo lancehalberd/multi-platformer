@@ -42,6 +42,9 @@ var render = () => {
         }
         drawSprite(mainContext, actor);
     }
+    for (var localSprite of localSprites) {
+        drawSprite(mainContext, localSprite);
+    }
     var selectedObject = allMapObjects[objectIndex];
     if (selectedObject && objectStartCoords) {
         mainContext.globalAlpha = .5
