@@ -26,10 +26,12 @@ setInterval(() => {
     cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
 
     // If the character is moving or was moving at last update, send an update to inform the server.
-    if (mainCharacter.vx !== 0 || mainCharacter.vy < 0 || mainCharacterWasMoving) {
+    if (mainCharacter.vx !== 0 || mainCharacter.vy < 0 || mainCharacterWasMoving ||
+        mainCharacter.wasCrouching !== mainCharacter.isCrouching) {
         if (now() - lastUpdate > 50) {
             sendPlayerMoved();
             lastUpdate = now();
+            mainCharacter.wasCrouching = mainCharacter.isCrouching;
             mainCharacterWasMoving = (mainCharacter.vx !== 0 || mainCharacter.vy < 0);
         }
     }

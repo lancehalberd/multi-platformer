@@ -62,12 +62,12 @@ var equipmentSources = {
 var weaponSource = row => ({slot: 'weapon', yOffset: row * 64});
 var weaponSources = {
     // Weapons
-    'wand': weaponSource(0),
-    'bow': weaponSource(1),
+    //'wand': weaponSource(0),
+    //'bow': weaponSource(1),
     'sword': weaponSource(2),
     'greatSword': weaponSource(3),
     'dagger': weaponSource(4),
-    'ball': weaponSource(5),
+    //'ball': weaponSource(5),
     'rock': weaponSource(6),
     'staff': weaponSource(7),
     'axe': weaponSource(8),
@@ -122,7 +122,7 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
 }
 
 class TTCharacter {
-    constructor(actorCanvas, skin, hair) {
+    constructor(actorCanvas, skin, hair, weapon) {
         this.canvas = actorCanvas;
         this.x = 200;
         this.y = 800;
@@ -144,7 +144,8 @@ class TTCharacter {
         this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
         this.jumpScaling = [1, 0.67]; //jumps after the first have jumpMagnitude * jumpScaling
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
-        this.crouched = false; //is crouched or not
+        this.isCrouching = false; //is crouched or not
+        this.weapon = weapon;
     }
 
     jump() {
@@ -186,16 +187,17 @@ function attackAnimation(actorCanvas) {
 var humanImage = requireImage('gfx/person/personSprite.png');
 function initializeTTCharacter(playerData) {
     var actorCanvas = createEquippedActorSource(humanImage, playerData.skin, playerData.hair,
-        [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources.sword]
+        [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources[playerData.weapon]]
     );
-    var character = new TTCharacter(actorCanvas, playerData.skin, playerData.hair);
+    var character = new TTCharacter(actorCanvas, playerData.skin, playerData.hair, playerData.weapon);
     for (var i in playerData) character[i] = playerData[i];
     return character;
 }
 function initializePersonGraphics() {
     var skin = Random.range(0, ttPersonRows - 1);
     var hair = Random.range(0, ttHairRows - 1);
-    mainCharacter = initializeTTCharacter({skin, hair});
+    var weapon = Random.element(Object.keys(weaponSources));
+    mainCharacter = initializeTTCharacter({skin, hair, weapon});
     mainCharacter.health = 5;
     mainCharacter.maxHealth = 5;
     mainCharacter.originalX = mainCharacter.x;

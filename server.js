@@ -110,10 +110,12 @@ wsServer.on('request', function(request) {
                 name: data.player.name || 'Incognito' + publicId.substring(0, 6),
                 skin: data.player.skin || 0,
                 hair: data.player.hair || 0,
+                weapon: data.player.weapon || 'sword',
                 x: data.player.x || 200,
                 y: data.player.y || 800,
                 vx: data.player.vx || 0,
                 vy: data.player.vy || 0,
+                isCrouching: data.player.isCrouching || false,
             };
             // console.log("Added player");
             // console.log(players);

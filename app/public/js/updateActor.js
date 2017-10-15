@@ -14,19 +14,11 @@ function updateActor(actor) {
         if (isKeyDown(KEY_LEFT)) dx--;
         if (isKeyDown(KEY_RIGHT)) dx++;
         // Initially each frame assumes the player is standing:
-        actor.crouched = false;
-        actor.scale = 1.5;
-        actor.hitBox = rectangle(-18, -63, 36, 63);
-        actor.speed = 7.5;
+        actor.isCrouching = false;
         if (actor.grounded) {
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
-                // Crouched movement.
-                // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
-                actor.crouched = true;
-                actor.scale = 0.75;
-                actor.hitBox = rectangle(-18, -31, 36, 31);
-                actor.speed = 2;
+                actor.isCrouching = true;
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
@@ -53,7 +45,16 @@ function updateActor(actor) {
         }
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
-    var maxSpeed = actor.speed;
+    var maxSpeed = 7.5;
+    if (actor.isCrouching) {
+        // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
+        actor.scale = 0.75;
+        actor.hitBox = rectangle(-18, -31, 36, 31);
+        maxSpeed = 2;
+    } else {
+        actor.scale = 1.5;
+        actor.hitBox = rectangle(-18, -63, 36, 63);
+    }
     actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
     // Rather than have the player get imperceptibly slower and slower, we just bring
     // them to a full stop once their speed is less than .5.
