@@ -61,7 +61,7 @@ function updateActor(actor) {
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
     if (actor.attacking) {
-        actor.attackFrame = Math.floor((now() - actor.attackTime) / 200);
+        actor.attackFrame = Math.floor((now() - actor.attackTime) / 100);
         // Autojump when the mouse is higher than the character.
         // if (actor.attackFrame === 1 && targetPosition[1] < groundY - 100) actor.jump();
         if (actor.attackFrame >= actor.animation.frames.length) {
@@ -93,12 +93,12 @@ function updateActor(actor) {
     if (!actor.attacking) {
         actor.animation = actor.walkAnimation;
         actor.currentFrame = actor.walkFrame;
-        if (actor.x !== targetPosition[0]) {
-            actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
-        }
     } else {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
+    }
+    if (actor.x !== targetPosition[0]) {
+        actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
     if (actor.health <= 0 && !actor.deathTime) {
         actor.deathTime = now();
