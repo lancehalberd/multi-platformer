@@ -46,7 +46,7 @@ setInterval(() => {
         }
     } else {
         if (selectedObject && objectStartCoords) {
-            var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords);
+            var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, selectedObject);
             sendMapObject(selectedObject, drawnRectangle);
             objectStartCoords = null;
         }
@@ -55,11 +55,26 @@ setInterval(() => {
 
 }, frameMilliseconds);
 
-function getDrawnRectangle(startCoords, endCoords) {
-    return rectangle(
+function getDrawnRectangle(startCoords, endCoords, selectedObject) {
+    var drawnRectangle = rectangle(
         Math.min(startCoords[0], endCoords[0]), Math.min(startCoords[1], endCoords[1]),
         Math.abs(startCoords[0] - endCoords[0]) + 1, Math.abs(startCoords[1] - endCoords[1]) + 1
     );
+    if (selectedObject.maxWidth) {
+        var right = drawnRectangle.right;
+        // adjust the left hand side to include the start coord and be at most max width wide.
+        drawnRectangle.left = Math.max(drawnRectangle.left, Math.min(startCoords[0], right - selectedObject.maxWidth));
+        drawnRectangle.width = Math.min(selectedObject.maxWidth, right - drawnRectangle.left);
+        drawnRectangle.right = drawnRectangle.left + drawnRectangle.width;
+    }
+    if (selectedObject.maxHeight) {
+        var bottom = drawnRectangle.bottom;
+        // adjust the left hand side to include the start coord and be at most max width wide.
+        drawnRectangle.top = Math.max(drawnRectangle.top, Math.min(startCoords[1], bottom - selectedObject.maxHeight));
+        drawnRectangle.height = Math.min(selectedObject.maxHeight, bottom - drawnRectangle.top);
+        drawnRectangle.bottom = drawnRectangle.top + drawnRectangle.height;
+    }
+    return drawnRectangle;
 }
 
 var objectStartCoords, objectLastCoords;

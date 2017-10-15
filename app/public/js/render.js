@@ -45,7 +45,7 @@ var render = () => {
     var selectedObject = allMapObjects[objectIndex];
     if (selectedObject && objectStartCoords) {
         mainContext.globalAlpha = .5
-        var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords);
+        var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, selectedObject);
         draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), 'red');
     }
     mainContext.restore();

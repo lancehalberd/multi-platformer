@@ -31,24 +31,28 @@ var spikesUp = {
     image: twilightTiles,
     size: 16,
     x: 1, y: 14,
+    maxHeight: 1,
     properties: TILE_SOLID | TILE_DAMAGE_DOWN,
 }
 var spikesDown = {
     image: twilightTiles,
     size: 16,
     x: 1, y: 14, yScale: -1,
+    maxHeight: 1,
     properties: TILE_SOLID | TILE_DAMAGE_UP,
 }
 var spikesLeft = {
     image: twilightTiles,
     size: 16,
     x: 4, y: 12,
+    maxWidth: 1,
     properties: TILE_SOLID | TILE_DAMAGE_RIGHT,
 }
 var spikesRight = {
     image: twilightTiles,
     size: 16,
     x: 4, y: 12, xScale: -1,
+    maxWidth: 1,
     properties: TILE_SOLID | TILE_DAMAGE_LEFT,
 }
 
@@ -62,6 +66,9 @@ function applyObjectToMap(map, object, coordinates) {
     new StretchNine(object, coordinates).applyToMap(map);
 }
 function applyTileToMap(map, tile, position) {
+    if (position[1] < 0 || position[1] >= map.height) return;
+    if (!map.composite[position[1]]) map.composite[position[1]] = [];
+    if (position[0] < 0 || position[0] >= map.width) return;
     map.composite[position[1]][position[0]] = tile;
 }
 
