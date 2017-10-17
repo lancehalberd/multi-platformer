@@ -3,6 +3,8 @@ var KEY_RIGHT = 39;
 var KEY_UP = 38;
 var KEY_DOWN = 40;
 var KEY_SPACE = 32;
+var KEY_SHIFT = 16;
+var KEY_E = 'E'.charCodeAt(0);
 
 var KEY_MAPPINGS = {
     ['A'.charCodeAt(0)]: KEY_LEFT,

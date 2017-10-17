@@ -42,12 +42,6 @@ var render = () => {
         }
         drawSprite(mainContext, actor);
     }
-    var selectedObject = allMapObjects[objectIndex];
-    if (selectedObject && objectStartCoords) {
-        mainContext.globalAlpha = .5
-        var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, selectedObject);
-        draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), 'red');
-    }
     mainContext.restore();
 
     // Draw HUD elements here like the life display for the main character.
@@ -62,24 +56,7 @@ var render = () => {
     }
     mainContext.restore();
 
-    mainContext.save();
-    mainContext.translate(mainCanvas.width - 10 - 32, 10 + 32);
-    draw.fillRectangle(mainContext, rectangle(-34, -34, 68, 68), 'red');
-    if (selectedObject) {
-        mainContext.scale((selectedObject.xScale || 1) * 2, (selectedObject.yScale || 1) * 2);
-        draw.image(mainContext, requireImage(selectedObject.image),
-            rectangle(selectedObject.size * selectedObject.x, selectedObject.size * selectedObject.y,
-                selectedObject.size * 3, selectedObject.size * 3),
-            rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
-        );
-    } else if (tileSource) {
-        mainContext.scale(2 * tileSource.xScale, 2 * tileSource.yScale);
-        draw.image(mainContext, requireImage(tileSource.image),
-            rectangle(tileSource.size * tileSource.x, tileSource.size * tileSource.y, tileSource.size, tileSource.size),
-            rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
-        );
-    }
-    mainContext.restore();
+    renderEditor();
 
     // Considering calculating hit box from the animation. But do I want to worry about rotation with this?
     /*var frame = mainCharacter.walkAnimation.frames[0];
