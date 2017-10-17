@@ -1,6 +1,6 @@
 'use strict';
 
-requireImage('gfx/jetrel/twilight-tiles.png');
+requireImage('/gfx/jetrel/twilight-tiles.png');
 var gameHasBeenInitialized = false;
 // Load any graphic assets needed by the game here.
 function initializeGame() {

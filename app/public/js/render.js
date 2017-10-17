@@ -18,7 +18,7 @@ var render = () => {
     target.left = - xPercent * (target.width - mainCanvas.width);
     target.top = - yPercent * (target.height - mainCanvas.height);
     //console.log(target.x);
-    draw.image(mainContext, requireImage('gfx/backgrounds/yellowMountains.png'), rectangle(0, 0, 1920, 1080), target);
+    draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), rectangle(0, 0, 1920, 1080), target);
 
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
@@ -53,7 +53,7 @@ var render = () => {
     // Draw HUD elements here like the life display for the main character.
     mainContext.save();
     mainContext.translate(10, 10);
-    var heartImage = requireImage('gfx/heart.png');
+    var heartImage = requireImage('/gfx/heart.png');
     var heartRectangle = rectangle(0, 0, 50, 50);
     for (var i = 0; i < mainCharacter.maxHealth; i++) {
         if (i < mainCharacter.health) draw.image(mainContext, heartImage, heartRectangle, heartRectangle);

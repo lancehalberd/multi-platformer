@@ -14,8 +14,8 @@ function requireImage(imageFile) {
 }
 var initialImagesToLoad = [
     // Original images from project contributors:
-    'gfx/person/personSprite.png', 'gfx/person/monsterPeople.png', 'gfx/person/hair.png', 'gfx/person/equipment.png', 'gfx/person/weapons.png',
-    'gfx/backgrounds/yellowMountains.png'
+    '/gfx/person/personSprite.png', '/gfx/person/monsterPeople.png', '/gfx/person/hair.png', '/gfx/person/equipment.png', '/gfx/person/weapons.png',
+    '/gfx/backgrounds/yellowMountains.png'
 ];
 for (var initialImageToLoad of initialImagesToLoad) {
     requireImage(initialImageToLoad);

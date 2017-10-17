@@ -74,9 +74,9 @@ var weaponSources = {
     'bigAxe': weaponSource(9),
 };
 
-var hairImageSource = requireImage('gfx/person/hair.png'),
-    equipmentImageSource = requireImage('gfx/person/equipment.png'),
-    weaponsImageSource = requireImage('gfx/person/weapons.png');
+var hairImageSource = requireImage('/gfx/person/hair.png'),
+    equipmentImageSource = requireImage('/gfx/person/equipment.png'),
+    weaponsImageSource = requireImage('/gfx/person/weapons.png');
 
 // Create an actor sprite given the specified base image, row(usually skin tone), hair type and equipment set.
 function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesArray) {
@@ -184,7 +184,7 @@ function attackAnimation(actorCanvas) {
     var attackFrame = $.extend(rectangle(96 * 4, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [prepareFrame, attackFrame, prepareFrame, neutralFrame]};
 }
-var humanImage = requireImage('gfx/person/personSprite.png');
+var humanImage = requireImage('/gfx/person/personSprite.png');
 function initializeTTCharacter(playerData) {
     var actorCanvas = createEquippedActorSource(humanImage, playerData.skin, playerData.hair,
         [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources[playerData.weapon]]
@@ -212,8 +212,10 @@ function initializePersonGraphics() {
         delete this.deathTime;
         sendPlayerMoved();
     };
+    // zoneId is set globally on page load by the server based on the current route. For instance /zones/spikePit will set zoneId to 'spikePit'.
+    mainCharacter.zoneId = zoneId;
     /*while (otherCharacters.length < 1) {
-        baseImage = requireImage('gfx/person/monsterPeople.png');
+        baseImage = requireImage('/gfx/person/monsterPeople.png');
         skinToneIndex = Random.range(0, ttMonsterPersonRows - 1);
         hairIndex = Random.range(0, ttHairRows); // no -1 so they can be bald.
         actorCanvas = createEquippedActorSource(baseImage, skinToneIndex, hairIndex,

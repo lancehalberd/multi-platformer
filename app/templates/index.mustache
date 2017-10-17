@@ -33,23 +33,34 @@
             width: 200px;
             margin-right: 20px;
         }
+        .link-bar{
+            font-size: 20px; position: absolute; left: 5px; top: 5px;
+        }
+        .link-bar a {
+            color: white;
+            display: block;
+        }
     </style>
     <script>
         var assetVersion = '{{assetVersion}}';
+        var zoneId = '{{zoneId}}';
     </script>
     <link href="https://fonts.googleapis.com/css?family=Cormorant+SC:400,700" rel="stylesheet">
     {{#styleSheets}}
         <link rel="stylesheet" type="text/css" href="{{{staticPath}}}?v={{fileHash}}"/>
     {{/styleSheets}}
-    <script src="lib/jquery.min.js"></script>
-    <script src="lib/jstorage.min.js"></script>
-    <script src="lib/async.js"></script>
-    <script src="lib/lodash.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/jstorage.min.js"></script>
+    <script src="/lib/async.js"></script>
+    <script src="/lib/lodash.js"></script>
     <title>Descent</title>
 </head>
 <body class="pagebody">
 
-<a href="credits.html" target="_blank" style="color: white; font-size: 20px; position: absolute; left: 5px; top: 5px;">Credits</a>
+<div class="link-bar">
+    <a href="/zones">Zones</a>
+    <a href="/credits.html" target="_blank" >Credits</a>
+</div>
 <div class="js-mainGame js-mouseContainer mainGame">
     <div class="js-loading loading" style="display: none">
         Loading...

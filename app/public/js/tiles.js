@@ -14,7 +14,7 @@ var TILE_BOUNCE_LEFT = 0x400;
 var TILE_BOUNCE_RIGHT = 0x800;
 var TILE_BOUNCE = 0xF00;
 
-var twilightTiles = 'gfx/jetrel/twilight-tiles.png';
+var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var stretchNine = {
     image: twilightTiles,
     size: 16,

@@ -4,12 +4,12 @@ var bodyParser = require(`body-parser`);
 var WebSocketServer = require('websocket').server;
 var crypto = require('crypto');
 var mustache = require('mustache');
+var _ = require('lodash');
+var fs = require('fs');
 
 
-var exampleMap = require('./src/map.js');
+var makeEmptyMap = require('./src/map.js');
 var tiles = require('./app/public/js/tiles.js');
-//console.log(rectangle);
-//console.log(exampleMap);
 
 var app = express();
 // needed for heroku to work right
@@ -17,15 +17,101 @@ var PORT = process.env.PORT || 3000;
 
 // All dynamic routes need to be added before any static routes.
 
+function sendResponse(response, responseString) {
+    response.set("Connection", "close");
+    response.write(responseString);
+    response.end();
+}
+
+var lastActiveZoneId = 'main';
+
 // This route creates the index page from views/index.js and templates/index.mustache.
 app.get('/', (request, response, next) => {
     var indexView = require('./app/views/index.js');
-    var mustacheData = indexView.getMustacheData();
-    var markup = mustache.render(indexView.getTemplate(), indexView.getMustacheData());
-    response.set("Connection", "close");
-    response.write(markup);
-    response.end();
+    var markup = mustache.render(indexView.getTemplate(), indexView.getMustacheData(lastActiveZoneId));
+    sendResponse(response, markup);
 });
+
+app.get('/zones', (request, response, next) => {
+    var listZonesView = require('./app/views/listZones.js');
+    var markup = mustache.render(listZonesView.getTemplate(), listZonesView.getMustacheData());
+    sendResponse(response, markup);
+});
+
+var zonesInMemory = {};
+
+var writeZoneToFile = (zoneId, map) => {
+    if (!fs.existsSync('data')) fs.mkdirSync('data','0777', true);
+    if (!fs.existsSync('data/zones')) fs.mkdirSync('data/zones','0777', true);
+    // Make sure we can't just write files infinitely to the disk.
+    var files = fs.readdirSync('data/zones');
+    if (files.length > 100) {
+        return;
+    }
+    fs.writeFile(`data/zones/${zoneId}.json`, JSON.stringify(map.composite), function(err) {
+        if(err) {
+            return console.log(err);
+        }
+    });
+};
+
+var readZoneFromFile = zoneId => {
+    if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
+        return makeEmptyMap();
+    }
+    var grid = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
+    return {
+        objects: [],
+        tileSize: 32,
+        width: grid[0].length,
+        height: grid.length,
+        composite: grid
+    };
+}
+
+// Every ten seconds, write all updated files to disk and mark them as not updated.
+setInterval(() => {
+    for (var zoneId in zonesInMemory) {
+        var map = zonesInMemory[zoneId]
+        if (map.isDirty) {
+            writeZoneToFile(zoneId, map);
+            map.isDirty = false;
+        }
+    }
+}, 10000);
+
+var getZone = zoneId => {
+    if (!zonesInMemory[zoneId]) {
+        zonesInMemory[zoneId] = readZoneFromFile(zoneId);
+        zonesInMemory[zoneId].id = zoneId;
+        // Remove zones once we hit 20. This may remove an active zone,
+        // but active zones will be reloaded so only the inactive ones
+        // will stay culled. This obviously won't work well if more
+        // than 20 zones are active at once.
+        var allLoadedIds = Object.keys(zonesInMemory);
+        while (allLoadedIds.length > 20) {
+            var idToRemove = allLoadedIds.shift();
+            var map = zonesInMemory[idToRemove];
+            // Write zone to file before deleting it from memory.
+            if (map.isDirty) {
+                writeZoneToFile(idToRemove, map);
+            }
+            delete zonesInMemory[idToRemove];
+        }
+    }
+    return zonesInMemory[zoneId];
+}
+
+app.get('/zones/:zoneId', (request, response, next) => {
+    var zoneId = request.params.zoneId;
+    if (zoneId.length > 32) {
+        return sendResponse(response, 'Zone Id must be less than 32 characters.');
+    }
+    var indexView = require('./app/views/index.js');
+    lastActiveZoneId = zoneId;
+    var markup = mustache.render(indexView.getTemplate(), indexView.getMustacheData(zoneId));
+    sendResponse(response, markup);
+})
 
 // local external files
 app.use(express.static('app/public'));
@@ -68,8 +154,13 @@ var players = {};
 // Maps privateId => web socket connection (used for broadcasting to all players).
 var connections = {};
 
-function broadcast(data) {
-    for (var id in connections) connections[id].sendUTF(JSON.stringify(data));
+function broadcast(zoneId, data) {
+    for (var id in connections) {
+        // Only broadcast messages to players in the same zone.
+        var player = players[privateIdMap[id]];
+        if (player.zoneId !== zoneId) continue;
+        connections[id].sendUTF(JSON.stringify(data));
+    }
 }
 
 var updatePlayer = (playerId, playerData) => {
@@ -116,19 +207,22 @@ wsServer.on('request', function(request) {
                 vx: data.player.vx || 0,
                 vy: data.player.vy || 0,
                 isCrouching: data.player.isCrouching || false,
+                zoneId: data.player.zoneId,
             };
             // console.log("Added player");
             // console.log(players);
-            // When a player first logs in we send them their public/private ids and the full list of player data.
-            connection.sendUTF(JSON.stringify({privateId, publicId, players, map: exampleMap}));
+            // When a player first logs in we send them their public/private ids and the full list of player data for the current zone.
+            var playersInZone = _.pickBy(players, player => player.zoneId === data.player.zoneId);
+            connection.sendUTF(JSON.stringify({privateId, publicId, players: playersInZone, map: getZone(data.player.zoneId)}));
             // Broadcast to all other players that the new player has joined.
-            broadcast({playerJoined: players[publicId]});
+            broadcast(data.player.zoneId, {playerJoined: players[publicId]});
             connections[privateId] = connection;
             return;
         }
         if (privateIdMap[data.privateId]) {
             privateId = data.privateId;
             publicId = privateIdMap[data.privateId];
+            player = players[publicId];
             // If a new connection is opened for an existing player, close the
             // old connection and store the new one.
             if (connections[privateId] !== connection) {
@@ -137,24 +231,27 @@ wsServer.on('request', function(request) {
                 connections[privateId] = connection;
             }
             if (data.action === 'attack') {
-                broadcast({playerAttacked: publicId});
+                broadcast(player.zoneId, {playerAttacked: publicId});
                 // console.log(`Player ${publicId} attacked`);
                 return;
             }
             if (data.action === 'move') {
                 updatePlayer(publicId, data.player);
-                broadcast({player: players[publicId]});
+                broadcast(player.zoneId, {player: players[publicId]});
                 // console.log(`Player ${publicId} moved`);
                 return;
             }
+            var map = getZone(player.zoneId);
             if (data.action === 'updateTile') {
-                tiles.applyTileToMap(exampleMap, data.tileData, data.position);
-                broadcast({tileData: data.tileData, position: data.position});
+                tiles.applyTileToMap(map, data.tileData, data.position);
+                broadcast(player.zoneId, {tileData: data.tileData, position: data.position});
+                map.isDirty = true;
                 return;
             }
             if (data.action === 'createMapObject') {
-                tiles.applyObjectToMap(exampleMap, data.mapObject, data.position);
-                broadcast({mapObject: data.mapObject, position: data.position});
+                tiles.applyObjectToMap(map, data.mapObject, data.position);
+                broadcast(player.zoneId, {mapObject: data.mapObject, position: data.position});
+                map.isDirty = true;
                 return;
             }
             return;
