@@ -1,0 +1,58 @@
+<html>
+<head>
+    <style type="text/css" >
+        .pagebody {
+            background-color: black;
+            background-repeat: repeat;
+            font-size: 16px;
+            font-family: 'Cormorant SC', Georgia, serif;
+            margin: 0;
+        }
+        .mainGame {
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 2px;
+            width: 800px;
+            min-height: 600px;
+            background-color: black;
+            background-repeat: repeat;
+            top: 0px;
+            -moz-user-select: none;
+            -khtml-user-select: none;
+            -webkit-user-select: none;
+            -o-user-user-select: none;
+            cursor: default;
+        }
+        .zones {
+            font-size: 50px;
+            color: white;
+        }
+        .zones a {
+            color: white;
+            text-decoration: none;
+        }
+        .stat {
+            display: inline-block;
+            width: 200px;
+            margin-right: 20px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css?family=Cormorant+SC:400,700" rel="stylesheet">
+    {{#styleSheets}}
+        <link rel="stylesheet" type="text/css" href="{{{staticPath}}}?v={{fileHash}}"/>
+    {{/styleSheets}}
+    <title>Descent</title>
+</head>
+<body class="pagebody">
+
+<a href="credits.html" target="_blank" style="color: white; font-size: 20px; position: absolute; left: 5px; top: 5px;">Credits</a>
+<div class="js-mainGame js-mouseContainer mainGame">
+    <div class="zones">
+        {{#zones}}
+        <div><a href="{{url}}">{{name}}</a></div>
+        {{/zones}}
+    </div>
+</div>
+</body>
+</html>
