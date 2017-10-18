@@ -66,7 +66,7 @@ function updateLocalSprite(localSprite) {
             if (homerToTargetY < 0) {
                 normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetX));
             } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetX);            
+                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetX);
             }
         }
         if (Math.abs(homerToTargetX) < Math.abs(homerToTargetY)) {
@@ -78,11 +78,11 @@ function updateLocalSprite(localSprite) {
             if (homerToTargetY < 0) {
                 normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetY));
             } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetY);            
+                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetY);
             }
         }
         dx = normalizedHomerToTargetXRatio * localSprite.acceleration;    //scale the normalized ratio for the desired acceleration
-        dy = normalizedHomerToTargetYRatio * localSprite.acceleration;    
+        dy = normalizedHomerToTargetYRatio * localSprite.acceleration;
         localSprite.vx += dx;   //add the scaled vector to the homer's velocity
         localSprite.vy += dy;
     }
@@ -135,8 +135,8 @@ function removeFinishedLocalSprites() {
 }
 
 var localSprites = [];
-var twilightTilesImage = requireImage('gfx/jetrel/twilight-tiles.png'),
-fireballBImage = requireImage('gfx/fireball/fireballB.png');
+var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
+fireballBImage = requireImage('/gfx/fireball/fireballB.png');
 
 function addLocalFallingSpikesSprite() {
     var hitBox = rectangle(0, 0, 16, 16);
