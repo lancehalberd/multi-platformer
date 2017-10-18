@@ -9,7 +9,9 @@ function drawSprite(context, sprite) {
 }
 function drawFrameTo(context, frame, x, y, xScale, yScale, rotation) {
     context.save();
-    var hitBox = frame.hitBox || frame;
+    // If the frame does not have an explicit hitbox, just assume the hitbox
+    // is the size of the box with origin at (0, 0).
+    var hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
     context.translate(x, y - hitBox.height * yScale / 2);
     if (rotation) context.rotate(rotation * Math.PI/180);
     if (xScale !== 1 || yScale !== 1) context.scale(xScale, yScale);
