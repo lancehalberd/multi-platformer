@@ -5,6 +5,8 @@ class SimpleSprite {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
+        this.rotation = 0;
+        this.rotationPerFrame = 0;
         this.homing = false;
         this.target = {x: 0, y: 0};
         this.acceleration = 0;
@@ -16,6 +18,15 @@ class SimpleSprite {
         // which I can get by using yScale = -1
         this.xScale = xScale;
         this.yScale = yScale;
+        this.xScaleMax = xScale;
+        this.xScaleMin = xScale;
+        this.yScaleMax = yScale;
+        this.yScaleMin = yScale;
+        this.xScalePerFrame = 0;
+        this.yScalePerFrame = 0;
+        this.scaleOscillation = false;
+        this.xScaleWaxing = false;
+        this.yScaleWaxing = false;
     }
 }
 
@@ -75,6 +86,27 @@ function updateLocalSprite(localSprite) {
         localSprite.vx += dx;   //add the scaled vector to the homer's velocity
         localSprite.vy += dy;
     }
+    //rotation. Should there be an "isRotating" flag, ond only do this if it's true?
+    localSprite.rotation += localSprite.rotationPerFrame;
+    //scale oscillator
+    if (localSprite.scaleOscillation === true) {
+        if (localSprite.xScaleWaxing === true) {
+            if (localSprite.xScale <= localSprite.xScaleMax) localSprite.xScale += localSprite.xScalePerFrame;
+            if (localSprite.xScale > localSprite.xScaleMax) localSprite.xScaleWaxing = false;
+        }
+        if (localSprite.xScaleWaxing === false) {
+            if (localSprite.xScale >= localSprite.xScaleMin) localSprite.xScale -= localSprite.xScalePerFrame;
+            if (localSprite.xScale < localSprite.xScaleMin) localSprite.xScaleWaxing = true;
+        }
+        if (localSprite.yScaleWaxing === true) {
+            if (localSprite.yScale <= localSprite.yScaleMax) localSprite.yScale += localSprite.yScalePerFrame;
+            if (localSprite.yScale > localSprite.yScaleMax) localSprite.yScaleWaxing = false;
+        }
+        if (localSprite.yScaleWaxing === false) {
+            if (localSprite.yScale >= localSprite.yScaleMin) localSprite.yScale -= localSprite.yScalePerFrame;
+            if (localSprite.yScale < localSprite.yScaleMin) localSprite.yScaleWaxing = true;
+        }
+    }
     localSprite.x += localSprite.vx;
     localSprite.y += localSprite.vy;
     //max speed limit:
@@ -120,13 +152,13 @@ function addLocalFallingSpikesSprite() {
 }
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
-    var hitbox = rectangle(0, -16, 32, 32); //the -16 is trying to make the sprites origin at its center, but I don't know if that's what that number does.
+    var hitBox = rectangle(0, 0, 32, 32);
     var frames = [
-        $.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitbox}),
-        //$.extend(rectangle(1 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitbox}),
-        //$.extend(rectangle(2 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitbox}),
-        //$.extend(rectangle(3 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitbox}),
-        //$.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitbox}),
+        $.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
+        $.extend(rectangle(1 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
+        $.extend(rectangle(2 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
+        $.extend(rectangle(3 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
+        $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
     ];
     var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.homing = true;
@@ -135,6 +167,14 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.acceleration = 0.8;
     homingFireballSprite.framesToLive = 32767;
     homingFireballSprite.msBetweenFrames = 50;
+    homingFireballSprite.rotationPerFrame = 5;
+    homingFireballSprite.scaleOscillation = true;
+    homingFireballSprite.xScaleMax = 1.75;
+    homingFireballSprite.xScaleMin = 1.25;
+    homingFireballSprite.yScaleMax = 1.75;
+    homingFireballSprite.yScaleMin = 1.25;
+    homingFireballSprite.xScalePerFrame = 0.01;
+    homingFireballSprite.yScalePerFrame = 0.01;
     localSprites.push(homingFireballSprite);
 }
 
