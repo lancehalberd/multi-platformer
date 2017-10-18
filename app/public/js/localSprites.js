@@ -15,7 +15,7 @@ class SimpleSprite {
         this.framesToLive = 200;
         this.msBetweenFrames = 200;
         this.hasContrail = false;
-        this.framesBetweenContrailParticles = 0;
+        this.framesBetweenContrailParticles = 0; //game frames, not animation frames.
         this.contrailTimer = 0;
         this.contrailParticles = [];
         // I needed these because the graphic I wanted to use faced up and I need it to face down,
@@ -217,13 +217,14 @@ function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize,
     } else {
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
-    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 1.25);
+    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 0.5, 1.5);
     fireballContrailParticle.framesToLive = decayFrames;
     fireballContrailParticle.scaleOscillation = true;
     fireballContrailParticle.xScalePerFrame = fireballContrailParticle.xScale / fireballContrailParticle.framesToLive;
     fireballContrailParticle.yScalePerFrame = fireballContrailParticle.yScale / fireballContrailParticle.framesToLive;
     fireballContrailParticle.xScaleMin = 0;
     fireballContrailParticle.yScaleMin = 0;
+    fireballContrailParticle.rotationPerFrame = 20;
     //fireballContrailParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(fireballContrailParticle);
     localSprites.push(fireballContrailParticle); //BROKEN: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
