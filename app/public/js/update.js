@@ -20,7 +20,7 @@ setInterval(() => {
     /*if (!localSprites.isArray(fallingSpikesSprite)) {   //this doesn't work. Trying to just check in a fallingSpikesSprite object is in the localSprites array, and if not, add one. Then we can always have one fireball and one set of falling spikes.
         addLocalFallingSpikesSprite();
     }*/
-    if (localSprites.length === 0) {
+    if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
         //addLocalFallingSpikesSprite();
         addHomingFireballSprite(350, 700, mainCharacter);
     }

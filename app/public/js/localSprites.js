@@ -115,7 +115,7 @@ function updateLocalSprite(localSprite) {
     //TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
     if (localSprite.hasContrail === true) {
         if (localSprite.contrailTimer >= localSprite.framesBetweenContrailParticles) {
-            addFireballContrailParticle(localSprite, 75, 32, 32);
+            addFireballContrailParticle(localSprite, 30, 32, 32);
             localSprite.contrailTimer = 0;
         } else {
             localSprite.contrailTimer++;
@@ -180,7 +180,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.target = target;
     homingFireballSprite.maxSpeed = 3.5;
     homingFireballSprite.acceleration = 0.8;
-    homingFireballSprite.framesToLive = 32767;
+    homingFireballSprite.framesToLive = 1000;
     homingFireballSprite.msBetweenFrames = 50;
     homingFireballSprite.rotationPerFrame = 5;
     homingFireballSprite.scaleOscillation = true;
