@@ -16,6 +16,18 @@ setInterval(() => {
     for (var actor of [mainCharacter, ...Object.values(otherCharacters)]) {
         updateActor(actor);
     }
+    // Example code for adding a new local sprite. We add a new one any time the existing one is removed.
+    /*if (!localSprites.isArray(fallingSpikesSprite)) {   //this doesn't work. Trying to just check in a fallingSpikesSprite object is in the localSprites array, and if not, add one. Then we can always have one fireball and one set of falling spikes.
+        addLocalFallingSpikesSprite();
+    }*/
+    if (localSprites.length === 0) {
+        //addLocalFallingSpikesSprite();
+        addHomingFireballSprite(350, 700, mainCharacter);
+    }
+    for (var localSprite of localSprites) {
+        updateLocalSprite(localSprite);
+    }
+    removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
     if (cameraX > mainCharacter.x - 300) cameraX = (cameraX + (mainCharacter.x - 300)) / 2;

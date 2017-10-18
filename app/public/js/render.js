@@ -42,6 +42,9 @@ var render = () => {
         }
         drawSprite(mainContext, actor);
     }
+    for (var localSprite of localSprites) {
+        drawSprite(mainContext, localSprite);
+    }
     mainContext.restore();
 
     // Draw HUD elements here like the life display for the main character.
