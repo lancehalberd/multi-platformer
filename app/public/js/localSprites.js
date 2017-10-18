@@ -224,7 +224,7 @@ function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize,
     fireballContrailParticle.yScalePerFrame = fireballContrailParticle.yScale / fireballContrailParticle.framesToLive;
     fireballContrailParticle.xScaleMin = 0;
     fireballContrailParticle.yScaleMin = 0;
-    fireballContrailParticle.rotationPerFrame = 20;
+    fireballContrailParticle.rotationPerFrame = 50;
     //fireballContrailParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(fireballContrailParticle);
     localSprites.push(fireballContrailParticle); //BROKEN: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
