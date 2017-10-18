@@ -14,6 +14,10 @@ class SimpleSprite {
         this.currentFrame = 0;
         this.framesToLive = 200;
         this.msBetweenFrames = 200;
+        this.hasContrail = false;
+        this.framesBetweenContrailParticles = 0; //game frames, not animation frames.
+        this.contrailTimer = 0;
+        this.contrailParticles = [];
         // I needed these because the graphic I wanted to use faced up and I need it to face down,
         // which I can get by using yScale = -1
         this.xScale = xScale;
@@ -107,6 +111,16 @@ function updateLocalSprite(localSprite) {
             if (localSprite.yScale < localSprite.yScaleMin) localSprite.yScaleWaxing = true;
         }
     }
+    //contrail generation
+    //TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
+    if (localSprite.hasContrail === true) {
+        if (localSprite.contrailTimer >= localSprite.framesBetweenContrailParticles) {
+            addFireballContrailParticle(localSprite, 75, 32, 32);
+            localSprite.contrailTimer = 0;
+        } else {
+            localSprite.contrailTimer++;
+        }
+    }
     localSprite.x += localSprite.vx;
     localSprite.y += localSprite.vy;
     //max speed limit:
@@ -136,7 +150,8 @@ function removeFinishedLocalSprites() {
 
 var localSprites = [];
 var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
-fireballBImage = requireImage('/gfx/fireball/fireballB.png');
+fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
+fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png');
 
 function addLocalFallingSpikesSprite() {
     var hitBox = rectangle(0, 0, 16, 16);
@@ -147,7 +162,7 @@ function addLocalFallingSpikesSprite() {
         $.extend(rectangle(3 * 16, 14 * 16, 16, 16), {image: twilightTilesImage, hitBox}),
         $.extend(rectangle(2 * 16, 14 * 16, 16, 16), {image: twilightTilesImage, hitBox}),
     ];
-    var fallingSpikesSprite = new SimpleSprite({frames}, mainCharacter.x, cameraY - 32, 0, 5, 2, -2);
+    var fallingSpikesSprite = new SimpleSprite({frames}, mainCharacter.x, cameraY - 32, 0, 5, 2, -2); //what is this '5' in here?
     localSprites.push(fallingSpikesSprite);
 }
 
@@ -175,8 +190,44 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.yScaleMin = 1.25;
     homingFireballSprite.xScalePerFrame = 0.01;
     homingFireballSprite.yScalePerFrame = 0.01;
+    homingFireballSprite.hasContrail = true;
+    homingFireballSprite.framesBetweenContrailParticles = 3;
     localSprites.push(homingFireballSprite);
 }
 
+function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize) {
+    var hitBox = rectangle(0, 0, 8, 8);
+    var frames = [
+        $.extend(rectangle(0 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(1 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(2 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(3 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(4 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+    ];
+    var randomX,    //distance particle spawns from parent's origin
+    randomY;
+    //random spawn location of particles in vicinity of parent sprite
+    if (Math.random() > 0.5) {
+        randomX = Math.round(parent.x + ((Math.random() * parent.xScale * parentPreScalingXSize) / 2));  //divide by 2 to keep the particles spawning completely within the bounds of the parent's hitbox
+    } else {
+        randomX = Math.round(parent.x - ((Math.random() * parent.xScale * parentPreScalingXSize) / 2));
+    }
+    if (Math.random() < 0.5) {
+        randomY = Math.round(parent.y + ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
+    } else {
+        randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
+    }
+    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 0.5, 1.5);
+    fireballContrailParticle.framesToLive = decayFrames;
+    fireballContrailParticle.scaleOscillation = true;
+    fireballContrailParticle.xScalePerFrame = fireballContrailParticle.xScale / fireballContrailParticle.framesToLive;
+    fireballContrailParticle.yScalePerFrame = fireballContrailParticle.yScale / fireballContrailParticle.framesToLive;
+    fireballContrailParticle.xScaleMin = 0;
+    fireballContrailParticle.yScaleMin = 0;
+    fireballContrailParticle.rotationPerFrame = 50;
+    //fireballContrailParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
+    //parent.contrailParticles.push(fireballContrailParticle);
+    localSprites.push(fireballContrailParticle); //BROKEN: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+}
 
 
