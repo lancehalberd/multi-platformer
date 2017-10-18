@@ -22,7 +22,7 @@ exports.getMustacheData = () => {
     };
     addScripts([
         'utils', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'main', 'ttPerson', 'tiles',
-        'update', 'updateActor', 'render', 'socket', 'StretchNine',
+        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'localSprites',
     ]);
     var addStyleSheets = fileNames => {
         for (var fileName of fileNames) {
