@@ -33,6 +33,7 @@ var render = () => {
             actor.y + actor.hitBox.top,
             actor.hitBox.width,
             actor.hitBox.height), 'red');*/
+        mainContext.save();
         if (actor.deathTime) {
             mainContext.globalAlpha = Math.max(0, 1 - (now() - actor.deathTime) / 1000);
         } else if (actor.invulnerableUntil && actor.invulnerableUntil > now()) {
@@ -41,6 +42,7 @@ var render = () => {
             mainContext.globalAlpha = 1;
         }
         drawSprite(mainContext, actor);
+        mainContext.restore();
     }
     for (var localSprite of localSprites) {
         drawSprite(mainContext, localSprite);
