@@ -7,10 +7,14 @@ var TILE_ALL = 0xF;
 var TILE_SOLID = 0x1;
 var TILE_DAMAGE = 0x10;
 var TILE_BOUNCE = 0x100;
+var TILE_STICKY = 0x1000;
+var TILE_SLIPPERY = 0x10000;
 
 var TILE_SOLID_ALL = TILE_SOLID * TILE_ALL;
 var TILE_DAMAGE_ALL = TILE_DAMAGE * TILE_ALL;
 var TILE_BOUNCE_ALL = TILE_BOUNCE * TILE_ALL;
+var TILE_STICKY_ALL = TILE_STICKY * TILE_ALL;
+var TILE_SLIPPERY_ALL = TILE_SLIPPERY * TILE_ALL;
 
 var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var stretchNine = {
@@ -37,24 +41,32 @@ var spikesDown = {
     size: 16,
     x: 1, y: 14, yScale: -1,
     maxHeight: 1,
-    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP),
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP) | (TILE_SLIPPERY * TILE_DOWN),
 }
 var spikesLeft = {
     image: twilightTiles,
     size: 16,
     x: 4, y: 12,
     maxWidth: 1,
-    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_RIGHT),
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_RIGHT) | (TILE_SLIPPERY * TILE_DOWN),
 }
 var spikesRight = {
     image: twilightTiles,
     size: 16,
     x: 4, y: 12, xScale: -1,
     maxWidth: 1,
-    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_LEFT),
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_LEFT) | (TILE_SLIPPERY * TILE_DOWN),
+}
+var stickyTile = {
+    image: twilightTiles,
+    size: 16,
+    x: 4, y: 2,
+    maxWidth: 1,
+    maxHeight: 1,
+    properties: TILE_SOLID_ALL | TILE_STICKY_ALL,
 }
 
-var allMapObjects = [stretchNine, bouncyBlock, spikesUp, spikesDown, spikesLeft, spikesRight];
+var allMapObjects = [stickyTile, stretchNine, bouncyBlock, spikesUp, spikesDown, spikesLeft, spikesRight];
 
 
 function applyObjectToMap(map, object, coordinates) {

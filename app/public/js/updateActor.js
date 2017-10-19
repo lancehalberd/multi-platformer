@@ -1,7 +1,10 @@
 function updateActor(actor) {
     // Friction. Air Friction is much lower than on the ground.
-    if (actor.grounded) actor.vx *= 0.8;
-    else actor.vx *= 0.9;
+    if (!actor.slipping) {
+        if (actor.isCrouching) actor.vx *= 0.75;
+        else if (actor.grounded) actor.vx *= .8;
+        else actor.vx *= 0.9;
+    }
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -10,9 +13,6 @@ function updateActor(actor) {
             actor.attackTime = now();
             sendPlayerAttacked();
         }
-        var dx = 0;
-        if (isKeyDown(KEY_LEFT)) dx--;
-        if (isKeyDown(KEY_RIGHT)) dx++;
         // Initially each frame assumes the player is standing:
         actor.isCrouching = false;
         if (actor.grounded) {
@@ -24,7 +24,6 @@ function updateActor(actor) {
                 // jump key while on the ground and not crouching.
                 actor.jump();
             }
-            actor.vx += dx * 1;
         } else {
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
@@ -33,7 +32,14 @@ function updateActor(actor) {
                 actor.currentJumpDuration = actor.maxJumpDuration;
                 // If the actor has released the jump key since they started jumping,
                 // they will attempt to jump again the next time they press the jump key.
-                if (isKeyDown(KEY_UP)) actor.jump();
+                if (isKeyDown(KEY_UP)) {
+                    // Make the actor jump away from the wall if they are stuck to it.
+                    if (actor.stuck) {
+                        if (isKeyDown(KEY_RIGHT)) actor.vx -= 5;
+                        if (isKeyDown(KEY_LEFT))  actor.vx += 5;
+                    }
+                    actor.jump();
+                }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
                 // the jump velocity will continue to be applied as long as they hold the jump key
@@ -41,24 +47,26 @@ function updateActor(actor) {
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
             }
-            actor.vx += dx / 1.5; //i.e. dx / 2 grants 1/2 of normal movement response in air control, 1.5 grants 2/3 of normal movement response in air control
         }
+        var dx = 0;
+        if (isKeyDown(KEY_LEFT)) dx--;
+        if (isKeyDown(KEY_RIGHT)) dx++;
+        if (actor.slipping || actor.stuck) actor.vx += .1 * dx;
+        else if (actor.isCrouching) actor.vx += dx / 2;
+        else if (actor.grounded) actor.vx += dx;
+        else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
-    var maxSpeed = 7.5;
+
+    // Horizontal controls
     if (actor.isCrouching) {
         // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
         actor.scale = 0.75;
         actor.hitBox = rectangle(-18, -31, 36, 31);
-        maxSpeed = 2;
     } else {
         actor.scale = 1.5;
         actor.hitBox = rectangle(-18, -63, 36, 63);
     }
-    actor.vx = Math.min(Math.max(actor.vx, -maxSpeed), maxSpeed);
-    // Rather than have the player get imperceptibly slower and slower, we just bring
-    // them to a full stop once their speed is less than .5.
-    if (Math.abs(actor.vx) < .5) actor.vx = 0;
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
     if (actor.attacking) {
@@ -69,16 +77,18 @@ function updateActor(actor) {
             actor.attacking = false;
         }
     }
+    actor.stuck = false;
     if (actor.vx) {
         if (actor.vx < 0) {
             moveSpriteInDirection(actor, actor.vx, TILE_LEFT);
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / 200) % actor.animation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
+    actor.slipping = false;
     if (actor.vy < 0) {
         actor.grounded = false;
         moveSpriteInDirection(actor, actor.vy, TILE_UP);
@@ -86,6 +96,10 @@ function updateActor(actor) {
         actor.grounded = false;
         moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
     }
+
+    // Rather than have the player get imperceptibly slower and slower, we just bring
+    // them to a full stop once their speed is less than .5.
+    if (!actor.slipping && Math.abs(actor.vx) < .5) actor.vx = 0;
 
     actor.vy++;
     if (!actor.grounded) {
@@ -153,6 +167,8 @@ function moveSpriteInDirection(sprite, amount, direction) {
         // Flag indicating that the player was bounced back. Will only stay true
         // if every tile hit is bouncy
         var bounced = true;
+        var slipping = true;
+        var stuck = false;
         for (var row = topRow; row <= bottomRow; row++) {
             for (var column = leftColumn; column <= rightColumn; column++) {
                 var isDamaging = false;
@@ -169,7 +185,29 @@ function moveSpriteInDirection(sprite, amount, direction) {
                     if (!isTileX(row, column, TILE_BOUNCE * direction)) {
                         bounced = false;
                     }
+                    if (!isTileX(row, column, TILE_SLIPPERY * direction)) {
+                        slipping = false;
+                    }
                 }
+                if (isTileX(row, column, TILE_STICKY * direction)) {
+                    stuck = true;
+                }
+            }
+        }
+        // If the character is standing only on slippery surfaces, mark them as slipping.
+        if (stopped && slipping && direction === TILE_DOWN) sprite.slipping = !stuck;
+        if (stuck) {
+            sprite.stuck = stuck;
+            switch(direction) {
+                case TILE_UP:
+                case TILE_DOWN:
+                    sprite.vx *= .3;
+                    break;
+                case TILE_LEFT:
+                case TILE_RIGHT:
+                    sprite.vy *= .3;
+                    sprite.currentNumberOfJumps = 1;
+                    sprite.currentJumpDuration = sprite.maxJumpDuration;
             }
         }
         if (movementDamage) {
@@ -221,13 +259,15 @@ function moveSpriteInDirection(sprite, amount, direction) {
                     return false;
                 case TILE_UP:
                     alignToTile(false);
-                    sprite.vy = -sprite.vy;
+                    sprite.vy = Math.max(13, -1 * sprite.vy);
                     sprite.currentJumpDuration = sprite.maxJumpDuration;
                     return false;
                 case TILE_LEFT:
                 case TILE_RIGHT:
                     alignToTile(false);
                     sprite.vx = -sprite.vx;
+                    if (sprite.vx < 0) sprite.vx = Math.min(-13, sprite.vx);
+                    else if(sprite.vx > 0) sprite.vx = Math.max(13, sprite.vx);
                     return false;
             }
         }
