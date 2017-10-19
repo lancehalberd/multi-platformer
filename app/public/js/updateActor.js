@@ -71,9 +71,9 @@ function updateActor(actor) {
     }
     if (actor.vx) {
         if (actor.vx < 0) {
-            moveLeft(actor, -actor.vx);
+            moveSpriteInDirection(actor, actor.vx, TILE_LEFT);
         } else {
-            moveRight(actor, actor.vx);
+            moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
         actor.walkFrame = Math.floor(now() / 200) % actor.animation.frames.length;
     } else {
@@ -81,10 +81,10 @@ function updateActor(actor) {
     }
     if (actor.vy < 0) {
         actor.grounded = false;
-        moveUp(actor, -actor.vy);
+        moveSpriteInDirection(actor, actor.vy, TILE_UP);
     } else if (actor.vy > 0) {
         actor.grounded = false;
-        moveDown(actor, actor.vy);
+        moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
     }
 
     actor.vy++;
@@ -117,119 +117,123 @@ function isTileX(row, column, property) {
     return _.get(currentMap.composite, [row, column, 'properties']) & property;
 }
 
-function moveLeft(sprite, amount) {
-    var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
-    var amount = amount / splits;
-    for (var i = 0; i < splits; i++) {
-        sprite.x -= amount;
-        var hitBox = rectangle(
-            sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-            sprite.hitBox.width, sprite.hitBox.height
-        );
-        var topRow = Math.floor(hitBox.top / currentMap.tileSize);
-        var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
-        var targetColumn = Math.floor(hitBox.left / currentMap.tileSize);
-        for (var row = topRow; row <= bottomRow; row++) {
-            if (isTileX(row, targetColumn, TILE_DAMAGE_LEFT)) {
-                damageSprite(sprite, 1);
-            }
-            if (isTileX(row, targetColumn, TILE_SOLID_LEFT)) {
-                sprite.x = (targetColumn + 1) * currentMap.tileSize - sprite.hitBox.left;
-                return false;
-            }
-        }
-    }
-    return true;
-}
-function moveRight(sprite, amount) {
-    var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
-    var amount = amount / splits;
-    for (var i = 0; i < splits; i++) {
-        sprite.x += amount;
-        var hitBox = rectangle(
-            sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-            sprite.hitBox.width, sprite.hitBox.height
-        );
-        var topRow = Math.floor(hitBox.top / currentMap.tileSize);
-        var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
-        var targetColumn = Math.floor(hitBox.right / currentMap.tileSize);
-        for (var row = topRow; row <= bottomRow; row++) {
-            if (isTileX(row, targetColumn, TILE_DAMAGE_RIGHT)) {
-                damageSprite(sprite, 1);
-            }
-            if (isTileX(row, targetColumn, TILE_SOLID_RIGHT)) {
-                sprite.x = targetColumn * currentMap.tileSize - hitBox.width - sprite.hitBox.left;
-                return false;
-            }
-        }
-    }
-    return true;
+var directionToBoundary = {
+    [TILE_UP]: 'top', [TILE_DOWN]: 'bottom', [TILE_LEFT]: 'left', [TILE_RIGHT]: 'right'
+};
+var directionToCoordinate = {
+    [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
-function moveUp(sprite, amount) {
+
+function moveSpriteInDirection(sprite, amount, direction) {
     var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
     var amount = amount / splits;
     for (var i = 0; i < splits; i++) {
-        sprite.y -= amount;
+        sprite[directionToCoordinate[direction]] += amount;
         var hitBox = rectangle(
             sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
             sprite.hitBox.width, sprite.hitBox.height
         );
         var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
-        var targetRow = Math.floor(hitBox.top / currentMap.tileSize);
-        for (var column = leftColumn; column <= rightColumn; column++) {
-            if (isTileX(targetRow, column, TILE_DAMAGE_UP)) {
-                damageSprite(sprite, 1);
-            }
-            if (isTileX(targetRow, column, TILE_SOLID_UP)) {
-                sprite.vy = 0;
-                sprite.y = (targetRow + 1) * currentMap.tileSize + hitBox.height;
-                return false;
+        var topRow = Math.floor(hitBox.top / currentMap.tileSize);
+        var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
+        // When moving vertically, we only care about the row we are moving into.
+        if (direction === TILE_UP || direction === TILE_DOWN) {
+            topRow = bottomRow = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+        }
+        // When moving horizontally, we only care about the column we are moving into.
+        if (direction === TILE_LEFT || direction === TILE_RIGHT) {
+            leftColumn = rightColumn = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+        }
+        // Damage that will be taken if not prevented
+        var movementDamage = 0;
+        // Flag indicating that movement in this direction is blocked by the next tile.
+        var stopped = false;
+        // Flag indicating that the player was bounced back. Will only stay true
+        // if every tile hit is bouncy
+        var bounced = true;
+        for (var row = topRow; row <= bottomRow; row++) {
+            for (var column = leftColumn; column <= rightColumn; column++) {
+                var isDamaging = false;
+                if (isTileX(row, column, TILE_DAMAGE * direction)) {
+                    // If we have already been stopped, don't update the movement damage.
+                    if (!stopped) movementDamage = 1;
+                    isDamaging = true;
+                }
+                if (isTileX(row, column, TILE_SOLID * direction)) {
+                    stopped = true;
+                    // If we are stopped by a tile that doesn't damage us, then we take no damage.
+                    if (!isDamaging) movementDamage = 0;
+                    // You only bounce if every tile you hit is bouncy.
+                    if (!isTileX(row, column, TILE_BOUNCE * direction)) {
+                        bounced = false;
+                    }
+                }
             }
         }
-    }
-    return true;
-}
-
-function moveDown(sprite, amount) {
-    var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
-    var amount = amount / splits;
-    for (var i = 0; i < splits; i++) {
-        sprite.y += amount;
-        var hitBox = rectangle(
-            sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-            sprite.hitBox.width, sprite.hitBox.height
-        );
-        var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
-        var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
-        var targetRow = Math.floor(hitBox.bottom / currentMap.tileSize);
-        for (var column = leftColumn; column <= rightColumn; column++) {
-            if (isTileX(targetRow, column, TILE_DAMAGE_DOWN)) {
-                damageSprite(sprite, 1);
+        if (movementDamage) {
+            damageSprite(sprite, movementDamage);
+        }
+        // This function aligns the character to the tile they are entering,
+        // which is used to press them up against solid tiles they run into.
+        var alignToTile = (stop) => {
+            switch(direction) {
+                case TILE_UP:
+                    if (stop) {
+                        sprite.vy = 0;
+                        sprite.currentJumpDuration = sprite.maxJumpDuration;
+                    }
+                    sprite.y = (topRow + 1) * currentMap.tileSize + hitBox.height;
+                    break;
+                case TILE_DOWN:
+                    if (stop) {
+                        sprite.vy = 0;
+                        sprite.grounded = true;
+                        sprite.currentNumberOfJumps = 0;
+                    }
+                    sprite.y = bottomRow * currentMap.tileSize;
+                    break;
+                case TILE_LEFT:
+                    if (stop) sprite.vx = 0;
+                    sprite.x = (leftColumn + 1) * currentMap.tileSize - sprite.hitBox.left;
+                    break;
+                case TILE_RIGHT:
+                    if (stop) sprite.vx = 0;
+                    sprite.x = rightColumn * currentMap.tileSize - hitBox.width - sprite.hitBox.left;
+                    break;
             }
-            if (isTileX(targetRow, column, TILE_BOUNCE_DOWN)) {
-                if (sprite.vy < 8) {
-                    // If the sprite lands softly on a bouncy tile, then
-                    // it acts just like a solid tile would.
-                    sprite.vy = 0;
-                    sprite.y = targetRow * currentMap.tileSize;
-                    sprite.grounded = true;
-                    sprite.currentNumberOfJumps = 0;
-                    return;
-                } else sprite.vy = Math.min(-13, -1 * sprite.vy);
-                sprite.y = targetRow * currentMap.tileSize;
-                // We count the bounce as a jump.
-                sprite.currentNumberOfJumps = 1;
-                sprite.currentJumpDuration = 0;
-                return false;
-            } else if (isTileX(targetRow, column, TILE_SOLID_DOWN)) {
-                sprite.vy = 0;
-                sprite.y = targetRow * currentMap.tileSize;
-                sprite.grounded = true;
-                sprite.currentNumberOfJumps = 0;
-                return false;
+        }
+        if (stopped && bounced) {
+            // Currently bouncing is only implemented while moving down.
+            switch(direction) {
+                case TILE_DOWN:
+                    if (sprite.vy < 8) {
+                        alignToTile(true);
+                        return false;
+                    }
+                    // Snap them to the tile, but don't stop them when they bounce.
+                    alignToTile(false);
+                    sprite.vy = Math.min(-13, -1 * sprite.vy);
+                    // We count the bounce as a jump.
+                    sprite.currentNumberOfJumps = 1;
+                    sprite.currentJumpDuration = 0;
+                    return false;
+                case TILE_UP:
+                    alignToTile(false);
+                    sprite.vy = -sprite.vy;
+                    sprite.currentJumpDuration = sprite.maxJumpDuration;
+                    return false;
+                case TILE_LEFT:
+                case TILE_RIGHT:
+                    alignToTile(false);
+                    sprite.vx = -sprite.vx;
+                    return false;
             }
+        }
+        if (stopped) {
+            alignToTile(true);
+            return false;
         }
     }
     return true;
