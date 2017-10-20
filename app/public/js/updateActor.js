@@ -17,14 +17,13 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         // Initially each frame assumes the player is standing:
-        var playerCrouchingUnderCeiling = false;
-        if (isPlayerUnderCeiling(actor) && actor.isCrouching) playerCrouchingUnderCeiling = true;
+        //var playerCrouchingUnderCeiling = false;
+        //if ( && actor.isCrouching) playerCrouchingUnderCeiling = true;
         actor.isCrouching = false;
         if (actor.grounded) {
             // The player can crouch by pressing down while standing on solid ground.
-            if (isKeyDown(KEY_DOWN) || playerCrouchingUnderCeiling) {
+            if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
-                console.log(playerCrouchingUnderCeiling);
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
@@ -63,9 +62,10 @@ function updateActor(actor) {
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
+    actor.isCrouching = actor.isCrouching || isPlayerUnderCeiling(actor);
 
     // Horizontal controls
-    if (actor.isCrouching) {
+    if (actor.isCrouching ) {
         actor.scale = 0.75; //normal scale is 1.5, so this is half normal size. This affects visual representation only.
         actor.hitBox = rectangle(-18, -31, 36, 31); //this represents collision. Only yScale is halved. xScale is normal.
     } else {
