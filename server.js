@@ -167,6 +167,15 @@ var updatePlayer = (playerId, playerData) => {
     for (var key in playerData) players[playerId][key] = playerData[key];
 }
 
+var tagPlayer = (id) => {
+    var player = players[id];
+    for (var key in players) {
+        if (players[key].zoneId !== player.zoneId) continue;
+        players[key].isIt = false;
+    }
+    player.isIt = true;
+}
+
 wsServer.on('request', function(request) {
     var privateId, publicId;
     if (!originIsAllowed(request.origin)) {
@@ -208,6 +217,7 @@ wsServer.on('request', function(request) {
                 vy: data.player.vy || 0,
                 isCrouching: data.player.isCrouching || false,
                 zoneId: data.player.zoneId,
+                isIt: true,
             };
             // console.log("Added player");
             // console.log(players);
@@ -254,6 +264,11 @@ wsServer.on('request', function(request) {
                 map.isDirty = true;
                 return;
             }
+            if (data.action === 'tagged') {
+                tagPlayer(data.id);
+                broadcast(player.zoneId, {tagged: data.id});
+                return;
+            }
             return;
         }
         connection.sendUTF(JSON.stringify({errorMessage: `Player id ${data.privateId} not found.`}));
@@ -262,12 +277,24 @@ wsServer.on('request', function(request) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         // If the most recent connection for a private id closes, purge it from memory
         if (connections[privateId] === connection) {
+            var player = players[publicId];
             delete connections[privateId];
             delete players[publicId];
             delete privateIdMap[privateId];
             console.log(`Player ${publicId} left`);
             // console.log(players);
-            broadcast({playerLeft: publicId});
+            if (player) {
+                var message = {playerLeft: publicId}
+                // Tag a random player if the player who is it leaves.
+                if (player.isIt) {
+                    var key = _.sample(Object.keys(players))
+                    if(key) {
+                        tagPlayer(key);
+                        message.tagged = key;
+                    }
+                }
+                broadcast(player.zoneId, message);
+            }
         }
     });
 });

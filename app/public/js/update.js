@@ -48,4 +48,15 @@ setInterval(() => {
         }
     }
     updateEditor();
+    if (mainCharacter.isIt) {
+        for (var id in otherCharacters) {
+            var target = otherCharacters[id];
+            if (target.untaggableUntil > now()) continue;
+            if (rectanglesOverlap(getSpriteHitBox(mainCharacter), getSpriteHitBox(target))) {
+                mainCharacter.isIt = false;
+                sendTaggedPlayer(id);
+                break;
+            }
+        }
+    }
 }, frameMilliseconds);

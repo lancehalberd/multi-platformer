@@ -1,4 +1,7 @@
 function updateActor(actor) {
+    if (actor.stuckUntil > now()) {
+        return;
+    }
     // Friction. Air Friction is much lower than on the ground.
     if (!actor.slipping) {
         if (actor.isCrouching) actor.vx *= 0.75;
@@ -138,16 +141,17 @@ var directionToCoordinate = {
     [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
+var getSpriteHitBox = (sprite) => rectangle(
+    sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
+    sprite.hitBox.width, sprite.hitBox.height
+);
 
 function moveSpriteInDirection(sprite, amount, direction) {
     var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
     var amount = amount / splits;
     for (var i = 0; i < splits; i++) {
         sprite[directionToCoordinate[direction]] += amount;
-        var hitBox = rectangle(
-            sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-            sprite.hitBox.width, sprite.hitBox.height
-        );
+        var hitBox = getSpriteHitBox(sprite);
         var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
         var topRow = Math.floor(hitBox.top / currentMap.tileSize);
