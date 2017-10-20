@@ -217,7 +217,7 @@ function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize,
     } else {
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
-    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 0.5, 1.5);
+    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
     fireballContrailParticle.framesToLive = decayFrames;
     fireballContrailParticle.scaleOscillation = true;
     fireballContrailParticle.xScalePerFrame = fireballContrailParticle.xScale / fireballContrailParticle.framesToLive;

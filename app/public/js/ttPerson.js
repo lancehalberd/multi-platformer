@@ -127,7 +127,7 @@ class TTCharacter {
         this.x = 200;
         this.y = 800;
         this.currentFrame = 0;
-        this.scale = 1.5; //this is defined in the input area of updateActor.js, regarding crouching and standing.
+        this.scale = 1.5; //this is defined in the input area of updateActor.js, regarding crouching and standing. It might be good to separate xScale and yScale.
         this.speed = 0; //this is defined in the input area of updateActor.js, regarding crouching and standing.
         this.vx = this.vy = 0;
         this.grounded = false;
