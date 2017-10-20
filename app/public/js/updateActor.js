@@ -21,7 +21,6 @@ function updateActor(actor) {
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN) || playerCrouchingUnderCeiling) {
                 actor.isCrouching = true;
-                console.log(playerCrouchingUnderCeiling);
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.

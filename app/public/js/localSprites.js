@@ -31,6 +31,7 @@ class SimpleSprite {
         this.scaleOscillation = false;
         this.xScaleWaxing = false;
         this.yScaleWaxing = false;
+        this.name = 'name';
     }
 }
 
@@ -112,10 +113,10 @@ function updateLocalSprite(localSprite) {
         }
     }
     //contrail generation
-    //TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
+    //WRONG: TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
     if (localSprite.hasContrail === true) {
         if (localSprite.contrailTimer >= localSprite.framesBetweenContrailParticles) {
-            addFireballContrailParticle(localSprite, 30, 32, 32);
+            addFireballParticle(localSprite, 30, 32, 32, 0); //for last argument, 0 = contrail, 1 = detonation
             localSprite.contrailTimer = 0;
         } else {
             localSprite.contrailTimer++;
@@ -123,7 +124,7 @@ function updateLocalSprite(localSprite) {
     }
     localSprite.x += localSprite.vx;
     localSprite.y += localSprite.vy;
-    //max speed limit:
+    //max speed limit: Chris is replacing max speed with just friction vs. acceleration in some places, but here accel affects maneuverability and speed needs to be carefully controlled, so maybe use max speed in this case? Or maybe it would work out otherwise.
     if (localSprite.vx < 0) {
         localSprite.vx = Math.max(-localSprite.maxSpeed, localSprite.vx);
     } else {
@@ -176,6 +177,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
         $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
     ];
     var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
+    homingFireballSprite.name = 'homingFireball';
     homingFireballSprite.homing = true;
     homingFireballSprite.target = target;
     homingFireballSprite.maxSpeed = 3.5;
@@ -195,7 +197,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     localSprites.push(homingFireballSprite);
 }
 
-function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize) {
+function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) { //types: 0 = contrail, 1 = detonation
     var hitBox = rectangle(0, 0, 8, 8);
     var frames = [
         $.extend(rectangle(0 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
@@ -217,17 +219,47 @@ function addFireballContrailParticle(parent, decayFrames, parentPreScalingXSize,
     } else {
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
-    var fireballContrailParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
-    fireballContrailParticle.framesToLive = decayFrames;
-    fireballContrailParticle.scaleOscillation = true;
-    fireballContrailParticle.xScalePerFrame = fireballContrailParticle.xScale / fireballContrailParticle.framesToLive;
-    fireballContrailParticle.yScalePerFrame = fireballContrailParticle.yScale / fireballContrailParticle.framesToLive;
-    fireballContrailParticle.xScaleMin = 0;
-    fireballContrailParticle.yScaleMin = 0;
-    fireballContrailParticle.rotationPerFrame = 50;
-    //fireballContrailParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
-    //parent.contrailParticles.push(fireballContrailParticle);
-    localSprites.push(fireballContrailParticle); //BROKEN: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+    var fireballParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
+    if (type === 0) fireballParticle.name = 'fireballContrailParticle';
+    if (type === 1) fireballParticle.name = 'fireballDetonationParticle';
+    fireballParticle.framesToLive = decayFrames;
+    fireballParticle.scaleOscillation = true;
+    fireballParticle.xScalePerFrame = fireballParticle.xScale / fireballParticle.framesToLive;
+    fireballParticle.yScalePerFrame = fireballParticle.yScale / fireballParticle.framesToLive;
+    fireballParticle.xScaleMin = 0;
+    fireballParticle.yScaleMin = 0;
+    fireballParticle.rotationPerFrame = 50;
+    //fireballParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
+    //parent.contrailParticles.push(fireballParticle);
+    if (fireballParticle.name === 'fireballContrailParticle') localSprites.push(fireballParticle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+    if (fireballParticle.name === 'fireballDetonationParticle') {
+        var randomVX,
+        randomVY;
+        if (Math.random() < 0.5) {
+            randomVX = -(Math.random() * 50);
+        } else {
+            randomVX = Math.random() * 50;
+        }
+        if (Math.random() < 0.5) {
+            randomVY = -(Math.random() * 50);
+        } else {
+            randomVY = Math.random() * 50;
+        }
+        fireballParticle.vx = randomVX;
+        fireballParticle.vy = randomVY;
+        localSprites.push(fireballParticle);
+    }
+}
+
+function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
+    var detonationParticles = [];
+    for (var i = 0; i < numberOfFragments; i++) {
+        var newParticle = addFireballParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, 1);
+        detonationParticles.push(newParticle);
+    }
+    for (var j = 0; j < detonationParticles.length; j++) {
+
+    }
 }
 
 

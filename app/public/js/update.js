@@ -24,6 +24,23 @@ setInterval(() => {
         //addLocalFallingSpikesSprite();
         addHomingFireballSprite(350, 700, mainCharacter);
     }
+    //updating homing fireballs, specifically
+    for (var i = 0; i < localSprites.length; i++) {
+        if (localSprites[i].name === 'homingFireball') {
+            var fireballHitBox = rectangle(
+                localSprites[i].x + 0, localSprites[i].y + 0,   //WRONG: should read the hitBox dimensions from the object's animation, but I couldn't figure out the syntax.
+                32, 32),
+            targetHitBox = rectangle(
+                localSprites[i].target.x + localSprites[i].target.hitBox.left, localSprites[i].target.y + localSprites[i].target.hitBox.top,
+                localSprites[i].target.hitBox.width, localSprites[i].target.hitBox.height
+            );
+            if (rectanglesOverlap(fireballHitBox, targetHitBox)) {   //WRONG: should detonate on any impact, not just with its target
+                localSprites[i].target.health--;
+                localSprites[i].shouldBeRemoved = true;
+            }
+            if (localSprites[i].shouldBeRemoved) addFireballDetonation(localSprites[i], 10, 32, 32); //32's should be something like "localSprites[i].hitbox.height and ...width, but haven't been able to grasp the syntax to access the animation frame's hitBox.
+        }
+    }
     for (var localSprite of localSprites) {
         updateLocalSprite(localSprite);
     }
