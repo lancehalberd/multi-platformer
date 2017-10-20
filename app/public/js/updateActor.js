@@ -62,15 +62,16 @@ function updateActor(actor) {
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
+
+    // User normal scaling when checking if player is under ceiling.
+    actor.scale = 1.5;
+    actor.hitBox = rectangle(-18, -62, 36, 62);
     actor.isCrouching = actor.isCrouching || isPlayerUnderCeiling(actor);
 
     // Horizontal controls
     if (actor.isCrouching ) {
         actor.scale = 0.75; //normal scale is 1.5, so this is half normal size. This affects visual representation only.
         actor.hitBox = rectangle(-18, -31, 36, 31); //this represents collision. Only yScale is halved. xScale is normal.
-    } else {
-        actor.scale = 1.5;
-        actor.hitBox = rectangle(-18, -62, 36, 62);
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -150,8 +151,8 @@ var getSpriteHitBox = (sprite) => rectangle(
 
 function isPlayerUnderCeiling(player) {
     var hitBox = getSpriteHitBox(player),
-        topRow = Math.floor(hitBox.top / currentMap.tileSize) - 1,
-        leftColumn = Math.floor(hitBox.left / currentMap.tilesize),
+        topRow = Math.floor(hitBox.top / currentMap.tileSize),
+        leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
         rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
     if (isTileX(topRow, leftColumn, TILE_SOLID * TILE_UP) || isTileX(topRow, rightColumn, TILE_SOLID * TILE_UP)) return true;
     else return false;
