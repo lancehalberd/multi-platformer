@@ -1,10 +1,35 @@
 let isEditing = false;
+var cloneStartCoords, cloneLastCoords;
 const updateEditor = () => {
     if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E)) {
         isEditing = true;
     }
     if (!isEditing) return;
-    if (!mouseDown && rightMouseDown) selectTileUnderMouse();
+    if (!mouseDown) {
+        if (rightMouseDown) {
+            if (!cloneStartCoords) {
+                cloneStartCoords = getMouseCoords();
+                selectTileUnderMouse();
+            }
+            cloneLastCoords = getMouseCoords();
+        } else {
+            cloneStartCoords = cloneLastCoords =null;
+        }
+        if (cloneStartCoords) {
+            var cloneRectangle = getDrawnRectangle(cloneStartCoords, cloneLastCoords);
+            if (cloneRectangle.height > 1 || cloneRectangle.width > 1) {
+                var cloneTileGrid = [];
+                for (var row = cloneRectangle.top; row < cloneRectangle.bottom; row++) {
+                    cloneTileGrid[row - cloneRectangle.top] = [];
+                    for (var column = cloneRectangle.left; column < cloneRectangle.right; column++) {
+                        cloneTileGrid[row - cloneRectangle.top][column - cloneRectangle.left]
+                            = currentMap.composite[row][column];
+                    }
+                }
+                currentBrush = new CloneBrush(cloneTileGrid);
+            }
+        }
+    }
     currentBrush.update();
 }
 
@@ -15,9 +40,18 @@ const renderEditor = () => {
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
     mainContext.globalAlpha = .5
-    var coords = getMouseCoords();
-    var targetRectangle = rectangle(coords[0] * currentMap.tileSize, coords[1] * currentMap.tileSize, currentMap.tileSize, currentMap.tileSize);
-    currentBrush.renderPreview(targetRectangle);
+
+    if (cloneStartCoords) {
+        var drawnRectangle = getDrawnRectangle(cloneStartCoords, cloneLastCoords);
+        draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), 'yellow');
+    } else {
+        var coords = getMouseCoords();
+        var targetRectangle = rectangle(
+            coords[0] * currentMap.tileSize, coords[1] * currentMap.tileSize,
+            currentMap.tileSize, currentMap.tileSize
+        );
+        currentBrush.renderPreview(targetRectangle);
+    }
     mainContext.restore();
     // Editing HUD displays the currently selected tile/object in the top right.
     mainContext.save();
@@ -32,14 +66,14 @@ const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
         Math.min(startCoords[0], endCoords[0]), Math.min(startCoords[1], endCoords[1]),
         Math.abs(startCoords[0] - endCoords[0]) + 1, Math.abs(startCoords[1] - endCoords[1]) + 1
     );
-    if (mapObject.maxWidth) {
+    if (mapObject && mapObject.maxWidth) {
         var right = drawnRectangle.right;
         // adjust the left hand side to include the start coord and be at most max width wide.
         drawnRectangle.left = Math.max(drawnRectangle.left, Math.min(startCoords[0], right - mapObject.maxWidth));
         drawnRectangle.width = Math.min(mapObject.maxWidth, right - drawnRectangle.left);
         drawnRectangle.right = drawnRectangle.left + drawnRectangle.width;
     }
-    if (mapObject.maxHeight) {
+    if (mapObject && mapObject.maxHeight) {
         var bottom = drawnRectangle.bottom;
         // adjust the left hand side to include the start coord and be at most max width wide.
         drawnRectangle.top = Math.max(drawnRectangle.top, Math.min(startCoords[1], bottom - mapObject.maxHeight));
@@ -49,6 +83,94 @@ const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
     return drawnRectangle;
 };
 
+// Send tile update only if the brush is different than what is currently on the map.
+var updateTileIfDifferent = (coords, tileSource) => {
+    var currentTile = currentMap.composite[coords[1]][coords[0]];
+    var different = currentTile !== tileSource;
+    if (currentTile !== null && tileSource !== null) {
+        different = false;
+        for (var key in tileSource) {
+            if (tileSource[key] !== currentTile[key]) {
+                different = true;
+                break;
+            }
+        }
+    }
+    if (different) {
+        sendTileUpdate(tileSource, coords);
+    }
+}
+
+class CloneBrush {
+
+    constructor(tileGrid) {
+        this.tileGrid = tileGrid;
+        this.released = true;
+    }
+
+    forEachTile(coords, callback) {
+        for (var row = 0; row < this.tileGrid.length; row++) {
+            for (var column = 0; column < this.tileGrid[0].length; column++) {
+                callback(this.tileGrid[row][column], coords[1] + row, coords[0] + column);
+            }
+        }
+    }
+
+    update() {
+        // Send tile update only if the brush is different than what is
+        // currently on the map.
+        if (this.released && mouseDown) {
+            this.forEachTile(getMouseCoords(), (tileSource, tileRow, tileColumn) => {
+                updateTileIfDifferent([tileColumn, tileRow], tileSource);
+            });
+        }
+        this.released = !mouseDown;
+    }
+
+    renderPreview(target) {
+        this.forEachTile(getMouseCoords(), (tileSource, tileRow, tileColumn) => {
+            var target = rectangle(tileColumn * currentMap.tileSize, tileRow * currentMap.tileSize, currentMap.tileSize, currentMap.tileSize);
+            if (tileSource) {
+                mainContext.save();
+                mainContext.translate(target.left + currentMap.tileSize / 2, target.top + currentMap.tileSize / 2);
+                mainContext.scale(tileSource.xScale, tileSource.yScale);
+                draw.image(mainContext, requireImage(tileSource.image),
+                    getTileSourceRectangle(tileSource),
+                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
+                );
+                mainContext.restore();
+            } else {
+                draw.fillRectangle(mainContext, target, 'white');
+            }
+        });
+    }
+
+    renderHUD(target) {
+        var scale = Math.min(2 / this.tileGrid.length, 2 / this.tileGrid[0].length);
+        mainContext.scale(scale, scale);
+        this.forEachTile([0, 0], (tileSource, tileRow, tileColumn) => {
+            var subTarget = rectangle(
+                Math.round(target.left / scale + tileColumn * currentMap.tileSize),
+                Math.round(target.top / scale + tileRow * currentMap.tileSize),
+                currentMap.tileSize,
+                currentMap.tileSize
+            );
+            if (tileSource) {
+                mainContext.save();
+                mainContext.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
+                mainContext.scale(tileSource.xScale || 1, tileSource.yScale || 1);
+                draw.image(mainContext, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
+                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize));
+                mainContext.restore();
+            }
+        });
+    }
+}
+
+var getTileSourceRectangle = tileSource => rectangle(
+    tileSource.size * tileSource.x, tileSource.size * tileSource.y, tileSource.size, tileSource.size
+);
+
 class TileBrush {
 
     constructor(tileSource) {
@@ -56,32 +178,9 @@ class TileBrush {
     }
 
     update() {
-        // Send tile update only if the brush is different than what is
-        // currently on the map.
         if (mouseDown) {
-            var coords = getMouseCoords();
-            var currentTile = currentMap.composite[coords[1]][coords[0]];
-            var different = currentTile !== this.tileSource;
-            if (currentTile !== null && this.tileSource !== null) {
-                different = false;
-                for (var key in this.tileSource) {
-                    if (this.tileSource[key] !== currentTile[key]) {
-                        different = true;
-                        break;
-                    }
-                }
-            }
-            if (different) {
-                sendTileUpdate(this.tileSource, coords);
-            }
+            updateTileIfDifferent(getMouseCoords(), this.tileSource);
         }
-    }
-
-    sourceRectangle() {
-        return rectangle(
-            this.tileSource.size * this.tileSource.x, this.tileSource.size * this.tileSource.y,
-            this.tileSource.size, this.tileSource.size
-        );
     }
 
     renderPreview(target) {
@@ -89,7 +188,7 @@ class TileBrush {
             mainContext.translate(target.left + currentMap.tileSize / 2, target.top + currentMap.tileSize / 2);
             mainContext.scale(this.tileSource.xScale, this.tileSource.yScale);
             draw.image(mainContext, requireImage(this.tileSource.image),
-                this.sourceRectangle(),
+                getTileSourceRectangle(this.tileSource),
                 rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
             );
         } else {
@@ -100,7 +199,7 @@ class TileBrush {
     renderHUD(target) {
         if (this.tileSource) {
             mainContext.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
-            draw.image(mainContext, requireImage(this.tileSource.image), this.sourceRectangle(), target);
+            draw.image(mainContext, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
         } else {
             draw.fillRectangle(mainContext, target, 'white');
         }
