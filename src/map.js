@@ -13,7 +13,7 @@ module.exports = () => {
             new StretchNine(tiles.stretchNine, rectangle(-1, 0, 2, 30)),
             new StretchNine(tiles.stretchNine, rectangle(49, 0, 2, 30)),
             new StretchNine(tiles.stretchNine, rectangle(0, -1, 50, 2)),
-            new StretchNine(tiles.bouncyBlock, rectangle(0, 29, 50, 2)),
+            new StretchNine(tiles.stretchNine, rectangle(0, 29, 50, 2)),
         ],
         tileSize: 32,
         width: 50,

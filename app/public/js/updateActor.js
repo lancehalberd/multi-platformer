@@ -65,7 +65,7 @@ function updateActor(actor) {
         actor.hitBox = rectangle(-18, -31, 36, 31);
     } else {
         actor.scale = 1.5;
-        actor.hitBox = rectangle(-18, -63, 36, 63);
+        actor.hitBox = rectangle(-18, -62, 36, 62);
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 

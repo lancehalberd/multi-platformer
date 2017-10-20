@@ -1,6 +1,9 @@
 'use strict';
 
-requireImage('/gfx/jetrel/twilight-tiles.png');
+// Make sure that the map tile sets are preloaded before we initialize the game.
+requireImage(twilightTiles);
+requireImage(customTiles);
+
 var gameHasBeenInitialized = false;
 // Load any graphic assets needed by the game here.
 function initializeGame() {
