@@ -40,6 +40,7 @@ socket.addEventListener('message', event => {
         for (var i in data.player) {
             otherCharacters[data.player.id][i] = data.player[i];
         }
+        if (data.player.deathTime) delete otherCharacters[data.player.id].deathTime;
     }
     if (data.tagged) {
         setItId(data.tagged);

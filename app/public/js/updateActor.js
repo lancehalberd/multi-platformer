@@ -121,10 +121,10 @@ function updateActor(actor) {
     if (actor.y - actor.hitBox.height > currentMap.tileSize * currentMap.height) {
         actor.health = 0;
     }
-    if (actor.health <= 0 && !actor.deathTime) {
+    if (actor === mainCharacter && actor.health <= 0 && !actor.deathTime) {
         actor.deathTime = now();
     }
-    if (!actor.deathComplete && actor.deathTime && actor.deathTime < now() - 1000) {
+    if (actor === mainCharacter && !actor.deathComplete && actor.deathTime && actor.deathTime < now() - 1000) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
