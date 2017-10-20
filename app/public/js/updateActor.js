@@ -2,7 +2,7 @@ function updateActor(actor) {
     // Friction. Air Friction is much lower than on the ground.
     if (!actor.slipping) {
         if (actor.isCrouching) actor.vx *= 0.75;
-        else if (actor.grounded) actor.vx *= .8;
+        else if (actor.grounded) actor.vx *= 0.8;
         else actor.vx *= 0.9;
     }
     // Main character's movement is controlled with the keyboard.
@@ -14,11 +14,14 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         // Initially each frame assumes the player is standing:
+        var playerCrouchingUnderCeiling = false;
+        if (isPlayerUnderCeiling(actor) && actor.isCrouching) playerCrouchingUnderCeiling = true;
         actor.isCrouching = false;
         if (actor.grounded) {
             // The player can crouch by pressing down while standing on solid ground.
-            if (isKeyDown(KEY_DOWN)) {
+            if (isKeyDown(KEY_DOWN) || playerCrouchingUnderCeiling) {
                 actor.isCrouching = true;
+                console.log(playerCrouchingUnderCeiling);
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
@@ -51,7 +54,7 @@ function updateActor(actor) {
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
         if (isKeyDown(KEY_RIGHT)) dx++;
-        if (actor.slipping || actor.stuck) actor.vx += .1 * dx;
+        if (actor.slipping || actor.stuck) actor.vx += 0.1 * dx;
         else if (actor.isCrouching) actor.vx += dx / 2;
         else if (actor.grounded) actor.vx += dx;
         else actor.vx += dx / 1.5;
@@ -60,9 +63,8 @@ function updateActor(actor) {
 
     // Horizontal controls
     if (actor.isCrouching) {
-        // CROUCH IS MESSED UP: You can stand up even if a ceiling should prevent you from doing so.
-        actor.scale = 0.75;
-        actor.hitBox = rectangle(-18, -31, 36, 31);
+        actor.scale = 0.75; //normal scale is 1.5, so this is half normal size. This affects visual representation only.
+        actor.hitBox = rectangle(-18, -31, 36, 31); //this represents collision. Only yScale is halved. xScale is normal.
     } else {
         actor.scale = 1.5;
         actor.hitBox = rectangle(-18, -62, 36, 62);
@@ -99,7 +101,7 @@ function updateActor(actor) {
 
     // Rather than have the player get imperceptibly slower and slower, we just bring
     // them to a full stop once their speed is less than .5.
-    if (!actor.slipping && Math.abs(actor.vx) < .5) actor.vx = 0;
+    if (!actor.slipping && Math.abs(actor.vx) < 0.5) actor.vx = 0;
 
     actor.vy++;
     if (!actor.grounded) {
@@ -138,6 +140,17 @@ var directionToCoordinate = {
     [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
+function isPlayerUnderCeiling(player) {
+    var hitBox = rectangle (
+        player.x + player.hitBox.left, player.y + player.hitBox.top,
+        player.hitBox.width, player.hitBox.height
+    ),
+    topRow = Math.floor(hitBox.top / currentMap.tileSize) - 1,
+    leftColumn = Math.floor(hitBox.left / currentMap.tilesize),
+    rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
+    if (isTileX(topRow, leftColumn, TILE_SOLID * TILE_UP) || isTileX(topRow, rightColumn, TILE_SOLID * TILE_UP)) return true;
+    else return false;
+}
 
 function moveSpriteInDirection(sprite, amount, direction) {
     var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
@@ -201,11 +214,11 @@ function moveSpriteInDirection(sprite, amount, direction) {
             switch(direction) {
                 case TILE_UP:
                 case TILE_DOWN:
-                    sprite.vx *= .3;
+                    sprite.vx *= 0.3;
                     break;
                 case TILE_LEFT:
                 case TILE_RIGHT:
-                    sprite.vy *= .3;
+                    sprite.vy *= 0.3;
                     sprite.currentNumberOfJumps = 1;
                     sprite.currentJumpDuration = sprite.maxJumpDuration;
             }
