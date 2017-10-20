@@ -35,8 +35,8 @@ function updateActor(actor) {
                 if (isKeyDown(KEY_UP)) {
                     // Make the actor jump away from the wall if they are stuck to it.
                     if (actor.stuck) {
-                        if (isKeyDown(KEY_RIGHT)) actor.vx -= 5;
-                        if (isKeyDown(KEY_LEFT))  actor.vx += 5;
+                        if (isKeyDown(KEY_RIGHT)) actor.vx -= 8;
+                        if (isKeyDown(KEY_LEFT))  actor.vx += 8;
                     }
                     actor.jump();
                 }

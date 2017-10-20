@@ -142,7 +142,7 @@ class TTCharacter {
         this.jumpMagnitude = -9; //how much upward thrust, per frame, the jump button produces.
         this.currentNumberOfJumps = 0; //to count jumps to make double-jumping work
         this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
-        this.jumpScaling = [1, 0.67]; //jumps after the first have jumpMagnitude * jumpScaling
+        this.jumpScaling = [1, 0.7]; //jumps after the first have jumpMagnitude * jumpScaling
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
         this.isCrouching = false; //is crouched or not
         this.weapon = weapon;
