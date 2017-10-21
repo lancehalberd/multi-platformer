@@ -144,10 +144,17 @@ var directionToCoordinate = {
     [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
-var getSpriteHitBox = (sprite) => rectangle(
-    sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-    sprite.hitBox.width, sprite.hitBox.height
-);
+var getSpriteHitBox = (sprite) => {
+    var hitBox = sprite.hitBox;
+    if (!hitBox) {
+        var frame = sprite.animation.frames[sprite.currentFrame];
+        hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
+    }
+    return rectangle(
+        sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
+        sprite.hitBox.width, sprite.hitBox.height
+    );
+}
 
 function isPlayerUnderCeiling(player) {
     var hitBox = getSpriteHitBox(player),
