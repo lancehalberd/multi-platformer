@@ -35,6 +35,8 @@ class SimpleSprite {
     }
 }
 
+
+
 // This function is called every update and controls updating the local sprite, which for now just means:
 // update position according to velocity.
 // updating the current frame
@@ -163,13 +165,14 @@ function updateLocalSprite(localSprite) {
     if (localSprite.name === 'triggerZone') {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprite.cooldownTimer === 0) { //WRONG, probably: sould probabaly use getGlobalSpriteHitBox(localSprite), but not sure how that will interact with triggerZones lack of meaningful frames data.
             if (localSprite.spawnedObjectType === 0) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);
+            localSprite.target.vx += localSprite.xForce;
+            localSprite.target.vy += localSprite.yForce;
             localSprite.cooldownTimer++;
         }
         if (localSprite.cooldownTimer > 0 && localSprite.cooldownTimer < localSprite.cooldownFrames) localSprite.cooldownTimer++;
         else localSprite.cooldownTimer = 0;
     }
-    if (localSprite.shouldBeRemoved && localSprite.name === 'homingFireball') addFireballDetonation(localSprite, 10, 32, 32); //don't know why this isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
-
+    if (localSprite.shouldBeRemoved && localSprite.name === 'homingFireball') addFireballDetonation(localSprite, 10, 32, 32); //WRONG: don't know why this (following) isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
 }
 
 function removeFinishedLocalSprites() {
@@ -226,6 +229,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.diesOnImpact = true;
     localSprites.push(homingFireballSprite);
 }
+
 
 function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) { //types: 0 = contrail, 1 = detonation
     var hitBox = rectangle(0, 0, 8, 8);
@@ -291,6 +295,45 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
 
     }
 }
+
+
+function addTriggerZone(left, top, width, height, target, spawnedObjectType, spawnedObjectXOffset, spawnedObjectYOffset, xForce, yForce, cooldownFrames) {
+    //spawnedObjectXOffset and ...YOffset are where opject spawns relative to the center of the trigger zone
+    //spawnedObjectType key: 0 = doesn't spawn anything, 1 = homing fireball
+    var hitBox = rectangle(left, top, width, height);
+    var frames = [
+        $.extend(rectangle(1 * 16, 0 * 16, 16, 16), {image: customBlocksAImage, hitBox}),
+        //$.extend(rectangle(1 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(2 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(3 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        //$.extend(rectangle(4 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+    ];
+    var triggerZone = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
+    triggerZone.name = 'triggerZone',
+    triggerZone.hitBox = rectangle(left, top, width, height),
+    triggerZone.target = target,
+    triggerZone.cooldownFrames = cooldownFrames,   //50 per second, I think
+    triggerZone.cooldownTimer = 0,
+    triggerZone.xForce = xForce,
+    triggerZone.yForce = yForce,
+    triggerZone.spawnedObjectType = 1,
+    triggerZone.spawnedObjectXOffset = (left + width / 2) + spawnedObjectXOffset,
+    triggerZone.spawnedObjectYOffset = (top + width / 2) + spawnedObjectYOffset,
+    triggerZone.framesToLive = 32767;   //would like to have an easy way to make this infinite, like a -1.
+    localSprites.push(triggerZone);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

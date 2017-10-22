@@ -23,7 +23,12 @@ setInterval(() => {
     if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
         //addLocalFallingSpikesSprite();
 //        addHomingFireballSprite(350, 700, mainCharacter);
-        addTriggerZone(0, 800, 64, 200, mainCharacter, 0, 250, -150);
+        addTriggerZone(0, 800, 64, 200, mainCharacter, 1, 250, -150, 0, 0, 150);
+    }
+        if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
+        //addLocalFallingSpikesSprite();
+//        addHomingFireballSprite(350, 700, mainCharacter);
+        addTriggerZone(0, 800, 64, 200, mainCharacter, 0, 0, 0, 10, -10);
     }
     //updating homing fireballs, specifically. Seems like all this code shouldn't be in this file. But translplanting it directly into "updateLocalSprite" didn't work.
     for (var i = 0; i < localSprites.length; i++) {
