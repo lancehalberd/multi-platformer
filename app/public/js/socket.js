@@ -22,10 +22,8 @@ socket.addEventListener('message', event => {
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
         currentMap = data.map;
-        // A new player enters the map as tagged if there are other players present.
-        if (!_.isEmpty(otherCharacters)) {
-            setTaggedId(publicId);
-        }
+        // The new player is always tagged by default.
+        setTaggedId(publicId);
         return;
     }
     if (data.playerJoined) {
@@ -64,6 +62,11 @@ var getPlayerById = (id) => {
     return otherCharacters[id];
 }
 var setTaggedId = (id) => {
+    // No one should be tagged if only one player is present
+    if (_.isEmpty(otherCharacters)) {
+        taggedId = null;
+        return;
+    }
     // The player who tagged the other player cannot be tagged for 5 seconds.
     var currentlyTaggedPlayer = getPlayerById(taggedId);
     if (currentlyTaggedPlayer) currentlyTaggedPlayer.untaggableUntil = now() + 5000;

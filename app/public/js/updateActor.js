@@ -151,8 +151,8 @@ var getSpriteHitBox = (sprite) => {
         hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
     }
     return rectangle(
-        sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-        sprite.hitBox.width, sprite.hitBox.height
+        sprite.x + hitBox.left, sprite.y + hitBox.top,
+        hitBox.width, hitBox.height
     );
 }
 
