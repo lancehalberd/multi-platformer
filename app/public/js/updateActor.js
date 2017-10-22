@@ -262,11 +262,11 @@ function moveSpriteInDirection(sprite, amount, direction) {
                     break;
                 case TILE_LEFT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = (leftColumn + 1) * currentMap.tileSize - sprite.hitBox.left;
+                    sprite.x = (leftColumn + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).left;
                     break;
                 case TILE_RIGHT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = rightColumn * currentMap.tileSize - hitBox.width - sprite.hitBox.left;
+                    sprite.x = rightColumn * currentMap.tileSize - hitBox.width - getLocalSpriteHitBox(sprite).left;
                     break;
             }
         }
