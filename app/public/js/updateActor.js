@@ -308,29 +308,4 @@ function damageSprite(sprite, amount) {
     sprite.invulnerableUntil = now() + 1000;
 }
 
-/*function getSpriteHitBox(sprite) {
-    var hitBox = sprite.hitBox;
-    if (!hitBox) {
-        var frame = sprite.animation.frames[sprite.currentFrame];
-        hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
-    } else {
-        return rectangle(
-        sprite.x + sprite.hitBox.left, sprite.y + sprite.hitBox.top,
-        sprite.hitBox.width, sprite.hitBox.height
-        );
-    }
-}*/
-
-var getSpriteHitBox = (sprite) => {
-   var hitBox = sprite.hitBox;
-   if (!hitBox) {
-       var frame = sprite.animation.frames[sprite.currentFrame];
-       hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
-   }
-   return rectangle(
-       sprite.x + hitBox.left, sprite.y + hitBox.top,
-       hitBox.width, hitBox.height
-   );
-}
-
 //localSprites.push(addHomingFireballSprite(400, 150, {x: 200, y:500}));
