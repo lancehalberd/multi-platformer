@@ -142,6 +142,21 @@ function updateLocalSprite(localSprite) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
     }
+    //geomtry collision checks for projectiles that die on impact
+    if (localSprite.vx && localSprite.diesOnImpact) {
+        if (localSprite.vx < 0) {
+            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT))) localSprite.shouldBeRemoved = true;
+        } else {
+            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT))) localSprite.shouldBeRemoved = true;
+        }
+    }
+    if (localSprite.vy && localSprite.diesOnImpact) {
+        if (localSprite.vy < 0) {
+            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP))) localSprite.shouldBeRemoved = true;
+        } else {
+            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN))) localSprite.shouldBeRemoved = true;
+        }
+    }
 }
 
 function removeFinishedLocalSprites() {
@@ -194,6 +209,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.yScalePerFrame = 0.01;
     homingFireballSprite.hasContrail = true;
     homingFireballSprite.framesBetweenContrailParticles = 3;
+    homingFireballSprite.diesOnImpact = true;
     localSprites.push(homingFireballSprite);
 }
 
@@ -245,8 +261,8 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
         } else {
             randomVY = Math.random() * 50;
         }
-        fireballParticle.vx = randomVX;
-        fireballParticle.vy = randomVY;
+        fireballParticle.vx = randomVX;     //BROKEN: I'm not seeing these detonation particles move how they should.
+        fireballParticle.vy = randomVY + 4;
         localSprites.push(fireballParticle);
     }
 }
@@ -261,5 +277,7 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
 
     }
 }
+
+
 
 
