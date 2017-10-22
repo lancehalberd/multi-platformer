@@ -312,3 +312,5 @@ function damageSprite(sprite, amount) {
     sprite.health -= amount;
     sprite.invulnerableUntil = now() + 1000;
 }
+
+//localSprites.push(addHomingFireballSprite(400, 150, {x: 200, y:500}));
