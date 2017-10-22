@@ -159,7 +159,17 @@ function updateLocalSprite(localSprite) {
             if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN))) localSprite.shouldBeRemoved = true;
         }
     }
+    //update trigger zones
+    if (localSprite.name === 'triggerZone') {
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprite.cooldownTimer === 0) { //WRONG, probably: sould probabaly use getGlobalSpriteHitBox(localSprite), but not sure how that will interact with triggerZones lack of meaningful frames data.
+            if (localSprite.spawnedObjectType === 0) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);
+            localSprite.cooldownTimer++;
+        }
+        if (localSprite.cooldownTimer > 0 && localSprite.cooldownTimer < localSprite.cooldownFrames) localSprite.cooldownTimer++;
+        else localSprite.cooldownTimer = 0;
+    }
     if (localSprite.shouldBeRemoved && localSprite.name === 'homingFireball') addFireballDetonation(localSprite, 10, 32, 32); //don't know why this isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
+
 }
 
 function removeFinishedLocalSprites() {
@@ -170,7 +180,8 @@ function removeFinishedLocalSprites() {
 var localSprites = [];
 var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
 fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
-fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png');
+fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
+customBlocksAImage = requireImage('gfx/customBlocksA.png');
 
 function addLocalFallingSpikesSprite() {
     var hitBox = rectangle(0, 0, 16, 16);
