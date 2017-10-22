@@ -5,7 +5,7 @@ function drawSprite(context, sprite) {
         sprite.x, sprite.y,
         ifdefor(sprite.xScale, 1) * scale, ifdefor(sprite.yScale, 1) * scale,
         ifdefor(sprite.rotation, 0),
-        sprite.isIt ? 'red' : null
+        (sprite.id === taggedId) ? 'red' : ((sprite.untaggableUntil > now()) ? 'blue' : null)
     );
 }
 function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint) {

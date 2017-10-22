@@ -167,13 +167,12 @@ var updatePlayer = (playerId, playerData) => {
     for (var key in playerData) players[playerId][key] = playerData[key];
 }
 
+// We track which player is it on the server by setting 'taggedId' for that
+// zone. The server only uses this to detect when the currently tagged player
+// logs out so it can automatically mark another existing player as it.
 var tagPlayer = (id) => {
     var player = players[id];
-    for (var key in players) {
-        if (players[key].zoneId !== player.zoneId) continue;
-        players[key].isIt = false;
-    }
-    player.isIt = true;
+    if (player) getZone(player.zoneId).taggedId = id;
 }
 
 wsServer.on('request', function(request) {
@@ -217,7 +216,6 @@ wsServer.on('request', function(request) {
                 vy: data.player.vy || 0,
                 isCrouching: data.player.isCrouching || false,
                 zoneId: data.player.zoneId,
-                isIt: true,
             };
             // console.log("Added player");
             // console.log(players);
@@ -285,12 +283,14 @@ wsServer.on('request', function(request) {
             // console.log(players);
             if (player) {
                 var message = {playerLeft: publicId}
-                // Tag a random player if the player who is it leaves.
-                if (player.isIt) {
-                    var key = _.sample(Object.keys(players))
-                    if(key) {
-                        tagPlayer(key);
-                        message.tagged = key;
+                // Tag a random player if the player who is it leaves and there are
+                // still at least 2 players left in the zone.
+                if (publicId === getZone(player.zoneId).taggedId) {
+                    var playersInZone = _.filter(players, {zoneId: player.zoneId});
+                    if (playersInZone.length > 1) {
+                        var taggedPlayer = _.sample(playersInZone);
+                        tagPlayer(taggedPlayer.id);
+                        message.tagged = taggedPlayer.id;
                     }
                 }
                 broadcast(player.zoneId, message);

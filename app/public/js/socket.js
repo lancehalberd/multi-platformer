@@ -1,5 +1,6 @@
 
 var privateId, publicId, connected = false;
+var taggedId = null;
 // Create WebSocket connection.
 socket = new WebSocket(`ws://${window.location.host}`);
 // Connection opened
@@ -15,20 +16,27 @@ socket.addEventListener('message', event => {
     if (data.privateId) {
         privateId = data.privateId;
         publicId = data.publicId;
+        mainCharacter.id = publicId;
         for (var id in data.players) {
             if (id === publicId) continue;
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
         currentMap = data.map;
-        setItId(publicId);
+        // A new player enters the map as tagged if there are other players present.
+        if (!_.isEmpty(otherCharacters)) {
+            setTaggedId(publicId);
+        }
         return;
     }
     if (data.playerJoined) {
         otherCharacters[data.playerJoined.id] = initializeTTCharacter(data.playerJoined);
-        setItId(data.playerJoined.id);
+        setTaggedId(data.playerJoined.id);
     }
     if (data.playerLeft) {
         delete otherCharacters[data.playerLeft];
+        if (_.isEmpty(otherCharacters)) {
+            taggedId = null;
+        }
     }
     if (data.playerAttacked) {
         if (data.playerAttacked === publicId) return;
@@ -40,10 +48,9 @@ socket.addEventListener('message', event => {
         for (var i in data.player) {
             otherCharacters[data.player.id][i] = data.player[i];
         }
-        if (data.player.deathTime) delete otherCharacters[data.player.id].deathTime;
     }
     if (data.tagged) {
-        setItId(data.tagged);
+        setTaggedId(data.tagged);
     }
     if (typeof(data.tileData) !== 'undefined') {
         applyTileToMap(currentMap, data.tileData, data.position);
@@ -52,17 +59,19 @@ socket.addEventListener('message', event => {
         applyObjectToMap(currentMap, data.mapObject, data.position);
     }
 });
-var setItId = (id) => {
-    //console.log('was tagged', id);
-    var allCharacters = $.extend({}, otherCharacters, {[publicId]: mainCharacter});
-    for (var key in allCharacters) {
-        var character = allCharacters[key];
-        // Player who tagged someone cannot be tagged for 2 seconds.
-        if (character.isIt) character.untaggableUntil = now() + 2000;
-        character.isIt = (key === id);
-        // Player who was tagged cannot move for 2 seconds.
-        if (character.isIt) character.stuckUntil = now() + 2000;
-    }
+var getPlayerById = (id) => {
+    if (id === publicId) return mainCharacter;
+    return otherCharacters[id];
+}
+var setTaggedId = (id) => {
+    // The player who tagged the other player cannot be tagged for 5 seconds.
+    var currentlyTaggedPlayer = getPlayerById(taggedId);
+    if (currentlyTaggedPlayer) currentlyTaggedPlayer.untaggableUntil = now() + 5000;
+    // It is hard to keep 'stuck' players in sync, and maybe not necessary for the
+    // game to work.
+    // var newlyTaggedPlayer = getPlayerById(id);
+    // if (newlyTaggedPlayer) newlyTaggedPlayer.stuckUntil = now() + 2000;
+    taggedId = id;
 }
 var currentMap = null;
 var sendData = data => socket.readyState === socket.OPEN && socket.send(JSON.stringify(data));
