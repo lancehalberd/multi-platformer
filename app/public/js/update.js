@@ -27,15 +27,15 @@ setInterval(() => {
     //updating homing fireballs, specifically. Seems like all this code shouldn't be in this file. But translplanting it directly into "updateLocalSprite" didn't work.
     for (var i = 0; i < localSprites.length; i++) {
         if (localSprites[i].name === 'homingFireball') {
-            var fireballHitBox = rectangle(100, 100, 100, 100);//getSpriteHitBox(localSprites[i]),
-            targetHitBox = getSpriteHitBox(localSprites[i].target);
+            var fireballHitBox = getGlobalSpriteHitBox(localSprites[i]),
+            targetHitBox = getGlobalSpriteHitBox(localSprites[i].target);
             if (rectanglesOverlap(fireballHitBox, targetHitBox)) { //WRONG: should check against all players rather than just its target
                 localSprites[i].target.health--;
                 localSprites[i].shouldBeRemoved = true;
             }
-            if (localSprites[i].shouldBeRemoved) addFireballDetonation(localSprites[i], 10, 32, 32); //32's should be something like "localSprites[i].hitbox.height and ...width, but haven't been able to grasp the syntax to access the animation frame's hitBox.
         }
     }
+
     for (var localSprite of localSprites) {
         updateLocalSprite(localSprite);
     }

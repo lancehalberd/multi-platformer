@@ -143,6 +143,8 @@ function updateLocalSprite(localSprite) {
         localSprite.shouldBeRemoved = true;
     }
     //geomtry collision checks for projectiles that die on impact
+    //BROKEN: It looks to me like "alignToTile" isn't happening, and the fireball is detonating in the frame before it would impact something,
+    //  rather than right next to the wall it would be moving past.
     if (localSprite.vx && localSprite.diesOnImpact) {
         if (localSprite.vx < 0) {
             if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT))) localSprite.shouldBeRemoved = true;
@@ -157,6 +159,7 @@ function updateLocalSprite(localSprite) {
             if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN))) localSprite.shouldBeRemoved = true;
         }
     }
+    if (localSprite.shouldBeRemoved && localSprite.name === 'homingFireball') addFireballDetonation(localSprite, 10, 32, 32); //don't know why this isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
 }
 
 function removeFinishedLocalSprites() {
@@ -178,7 +181,7 @@ function addLocalFallingSpikesSprite() {
         $.extend(rectangle(3 * 16, 14 * 16, 16, 16), {image: twilightTilesImage, hitBox}),
         $.extend(rectangle(2 * 16, 14 * 16, 16, 16), {image: twilightTilesImage, hitBox}),
     ];
-    var fallingSpikesSprite = new SimpleSprite({frames}, mainCharacter.x, cameraY - 32, 0, 5, 2, -2); //what is this '5' in here?
+    var fallingSpikesSprite = new SimpleSprite({frames}, mainCharacter.x, cameraY - 32, 0, 5, 2, -2);
     localSprites.push(fallingSpikesSprite);
 }
 
