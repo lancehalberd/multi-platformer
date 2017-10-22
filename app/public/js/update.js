@@ -60,4 +60,14 @@ setInterval(() => {
         }
     }
     updateEditor();
+    if (publicId === taggedId) {
+        for (var id in otherCharacters) {
+            var target = otherCharacters[id];
+            if (target.untaggableUntil > now()) continue;
+            if (rectanglesOverlap(getSpriteHitBox(mainCharacter), getSpriteHitBox(target))) {
+                sendTaggedPlayer(id);
+                break;
+            }
+        }
+    }
 }, frameMilliseconds);
