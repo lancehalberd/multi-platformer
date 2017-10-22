@@ -23,16 +23,17 @@ setInterval(() => {
     if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
         //addLocalFallingSpikesSprite();
 //        addHomingFireballSprite(350, 700, mainCharacter);
-        addTriggerZone(0, 800, 64, 200, mainCharacter, 1, 250, -150, 0, 0, 150);
+        addTrigger(0, 800, 64, 200, mainCharacter, 1, 250, -150, 0, 0, 150);
     }
-        if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
-        //addLocalFallingSpikesSprite();
-//        addHomingFireballSprite(350, 700, mainCharacter);
-        addTriggerZone(0, 800, 64, 200, mainCharacter, 0, 0, 0, 10, -10);
+    if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
+        addTrigger(0, 800, 64, 200, mainCharacter, 0, 0, 0, 10, -10, 0);
+    }
+    if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
+        addPowerup(150, 750, 0, 0.6, 0.6, mainCharacter, true);
     }
     //updating homing fireballs, specifically. Seems like all this code shouldn't be in this file. But translplanting it directly into "updateLocalSprite" didn't work.
     for (var i = 0; i < localSprites.length; i++) {
-        if (localSprites[i].name === 'homingFireball') {
+        if (localSprites[i].type === 'SPRITE_TYPE_FIREBALL_HOMING') {
             var fireballHitBox = getGlobalSpriteHitBox(localSprites[i]),
             targetHitBox = getGlobalSpriteHitBox(localSprites[i].target);
             if (rectanglesOverlap(fireballHitBox, targetHitBox)) { //WRONG: should check against all players rather than just its target
