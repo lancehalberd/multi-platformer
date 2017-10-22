@@ -144,12 +144,17 @@ var directionToCoordinate = {
     [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
-var getSpriteHitBox = (sprite) => {
+var getLocalSpriteHitBox = (sprite) => {
     var hitBox = sprite.hitBox;
     if (!hitBox) {
         var frame = sprite.animation.frames[sprite.currentFrame];
         hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
     }
+    return hitBox;
+}
+
+var getGlobalSpriteHitBox = (sprite) => {
+    var hitBox = getLocalSpriteHitBox(sprite);
     return rectangle(
         sprite.x + hitBox.left, sprite.y + hitBox.top,
         hitBox.width, hitBox.height
@@ -157,7 +162,7 @@ var getSpriteHitBox = (sprite) => {
 }
 
 function isPlayerUnderCeiling(player) {
-    var hitBox = getSpriteHitBox(player),
+    var hitBox = getGlobalSpriteHitBox(player),
         topRow = Math.floor(hitBox.top / currentMap.tileSize),
         leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
         rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
@@ -170,7 +175,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
     var amount = amount / splits;
     for (var i = 0; i < splits; i++) {
         sprite[directionToCoordinate[direction]] += amount;
-        var hitBox = getSpriteHitBox(sprite);
+        var hitBox = getGlobalSpriteHitBox(sprite);
         var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
         var topRow = Math.floor(hitBox.top / currentMap.tileSize);

@@ -63,7 +63,7 @@ var getPlayerById = (id) => {
 }
 var setTaggedId = (id) => {
     // Everyone gets full life when a new player is tagged.
-    if (id !=== taggedId) mainCharacter.health = mainCharacter.maxHealth;
+    if (id !== taggedId) mainCharacter.health = mainCharacter.maxHealth;
     // No one should be tagged if only one player is present
     if (_.isEmpty(otherCharacters)) {
         taggedId = null;
