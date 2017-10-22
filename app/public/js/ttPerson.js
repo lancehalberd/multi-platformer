@@ -211,6 +211,7 @@ function initializePersonGraphics() {
         this.invulnerableUntil = now() + 2000;
         delete this.deathTime;
         sendPlayerMoved();
+        sendTaggedPlayer(publicId);
     };
     // zoneId is set globally on page load by the server based on the current route. For instance /zones/spikePit will set zoneId to 'spikePit'.
     mainCharacter.zoneId = zoneId;

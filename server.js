@@ -167,6 +167,14 @@ var updatePlayer = (playerId, playerData) => {
     for (var key in playerData) players[playerId][key] = playerData[key];
 }
 
+// We track which player is it on the server by setting 'taggedId' for that
+// zone. The server only uses this to detect when the currently tagged player
+// logs out so it can automatically mark another existing player as it.
+var tagPlayer = (id) => {
+    var player = players[id];
+    if (player) getZone(player.zoneId).taggedId = id;
+}
+
 wsServer.on('request', function(request) {
     var privateId, publicId;
     if (!originIsAllowed(request.origin)) {
@@ -254,6 +262,11 @@ wsServer.on('request', function(request) {
                 map.isDirty = true;
                 return;
             }
+            if (data.action === 'tagged') {
+                tagPlayer(data.id);
+                broadcast(player.zoneId, {tagged: data.id});
+                return;
+            }
             return;
         }
         connection.sendUTF(JSON.stringify({errorMessage: `Player id ${data.privateId} not found.`}));
@@ -262,12 +275,26 @@ wsServer.on('request', function(request) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         // If the most recent connection for a private id closes, purge it from memory
         if (connections[privateId] === connection) {
+            var player = players[publicId];
             delete connections[privateId];
             delete players[publicId];
             delete privateIdMap[privateId];
             console.log(`Player ${publicId} left`);
             // console.log(players);
-            broadcast({playerLeft: publicId});
+            if (player) {
+                var message = {playerLeft: publicId}
+                // Tag a random player if the player who is it leaves and there are
+                // still at least 2 players left in the zone.
+                if (publicId === getZone(player.zoneId).taggedId) {
+                    var playersInZone = _.filter(players, {zoneId: player.zoneId});
+                    if (playersInZone.length > 1) {
+                        var taggedPlayer = _.sample(playersInZone);
+                        tagPlayer(taggedPlayer.id);
+                        message.tagged = taggedPlayer.id;
+                    }
+                }
+                broadcast(player.zoneId, message);
+            }
         }
     });
 });

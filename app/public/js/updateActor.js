@@ -1,4 +1,7 @@
 function updateActor(actor) {
+    if (actor.stuckUntil > now()) {
+        return;
+    }
     // Friction. Air Friction is much lower than on the ground.
     if (!actor.slipping) {
         if (actor.isCrouching) actor.vx *= 0.75;
@@ -14,12 +17,12 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         // Initially each frame assumes the player is standing:
-        var playerCrouchingUnderCeiling = false;
-        if (isPlayerUnderCeiling(actor) && actor.isCrouching) playerCrouchingUnderCeiling = true;
+        //var playerCrouchingUnderCeiling = false;
+        //if ( && actor.isCrouching) playerCrouchingUnderCeiling = true;
         actor.isCrouching = false;
         if (actor.grounded) {
             // The player can crouch by pressing down while standing on solid ground.
-            if (isKeyDown(KEY_DOWN) || playerCrouchingUnderCeiling) {
+            if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
@@ -60,13 +63,15 @@ function updateActor(actor) {
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
 
+    // User normal scaling when checking if player is under ceiling.
+    actor.scale = 1.5;
+    actor.hitBox = rectangle(-18, -62, 36, 62);
+    actor.isCrouching = actor.isCrouching || isPlayerUnderCeiling(actor);
+
     // Horizontal controls
-    if (actor.isCrouching) {
+    if (actor.isCrouching ) {
         actor.scale = 0.75; //normal scale is 1.5, so this is half normal size. This affects visual representation only.
         actor.hitBox = rectangle(-18, -31, 36, 31); //this represents collision. Only yScale is halved. xScale is normal.
-    } else {
-        actor.scale = 1.5;
-        actor.hitBox = rectangle(-18, -62, 36, 62);
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -119,10 +124,10 @@ function updateActor(actor) {
     if (actor.y - actor.hitBox.height > currentMap.tileSize * currentMap.height) {
         actor.health = 0;
     }
-    if (actor.health <= 0 && !actor.deathTime) {
+    if (actor === mainCharacter && actor.health <= 0 && !actor.deathTime) {
         actor.deathTime = now();
     }
-    if (!actor.deathComplete && actor.deathTime && actor.deathTime < now() - 1000) {
+    if (actor === mainCharacter && !actor.deathComplete && actor.deathTime && actor.deathTime < now() - 1000) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
@@ -139,14 +144,23 @@ var directionToCoordinate = {
     [TILE_UP]: 'y', [TILE_DOWN]: 'y', [TILE_LEFT]: 'x', [TILE_RIGHT]: 'x'
 }
 
+var getSpriteHitBox = (sprite) => {
+    var hitBox = sprite.hitBox;
+    if (!hitBox) {
+        var frame = sprite.animation.frames[sprite.currentFrame];
+        hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
+    }
+    return rectangle(
+        sprite.x + hitBox.left, sprite.y + hitBox.top,
+        hitBox.width, hitBox.height
+    );
+}
+
 function isPlayerUnderCeiling(player) {
-    var hitBox = rectangle (
-        player.x + player.hitBox.left, player.y + player.hitBox.top,
-        player.hitBox.width, player.hitBox.height
-    ),
-    topRow = Math.floor(hitBox.top / currentMap.tileSize) - 1,
-    leftColumn = Math.floor(hitBox.left / currentMap.tilesize),
-    rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
+    var hitBox = getSpriteHitBox(player),
+        topRow = Math.floor(hitBox.top / currentMap.tileSize),
+        leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
+        rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
     if (isTileX(topRow, leftColumn, TILE_SOLID * TILE_UP) || isTileX(topRow, rightColumn, TILE_SOLID * TILE_UP)) return true;
     else return false;
 }

@@ -4,10 +4,11 @@ function drawSprite(context, sprite) {
         sprite.animation.frames[sprite.currentFrame],
         sprite.x, sprite.y,
         ifdefor(sprite.xScale, 1) * scale, ifdefor(sprite.yScale, 1) * scale,
-        ifdefor(sprite.rotation, 0)
+        ifdefor(sprite.rotation, 0),
+        (sprite.id === taggedId) ? 'red' : ((sprite.untaggableUntil > now()) ? 'blue' : null)
     );
 }
-function drawFrameTo(context, frame, x, y, xScale, yScale, rotation) {
+function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint) {
     context.save();
     // If the frame does not have an explicit hitbox, just assume the hitbox
     // is the size of the box with origin at (0, 0).
@@ -22,7 +23,8 @@ function drawFrameTo(context, frame, x, y, xScale, yScale, rotation) {
         'width': frame.width,
         'height': frame.height,
     };
-    draw.image(context, frame.image, frame, target)
+    if (tint) draw.tintedImage(context, frame.image, tint, .5, frame, target)
+    else draw.image(context, frame.image, frame, target)
     context.restore();
 
     /*if (tints.length) {
