@@ -29,13 +29,13 @@ setInterval(() => {
 
     if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
         // addHomingFireballSprite(350, 700, mainCharacter);
-        addTrigger(0, 800, 64, 200, mainCharacter, SPRITE_TYPE_FIREBALL_HOMING, 250, -150, 0, 0, 150);
+        addSpawnTrigger(0, 800, 64, 200, 3, mainCharacter, SPRITE_TYPE_HOMING_FIREBALL, 250, -150);
     }
     if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
-        addTrigger(0, 800, 64, 200, mainCharacter, 0, 0, 0, 10, -10, 0);
+        addForceTrigger(1200, 800, 200, 200, 0, mainCharacter, FORCE_AMP, 1.2, 1.33);
     }
     if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
-        addPowerup(150, 750, POWERUP_TYPE_HEART, 0.6, 0.6, 0, true);
+        addPowerup(150, 750, POWERUP_TYPE_HEART, 1, 1, 0, true);
     }
     if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
         addPowerup(250, 700, POWERUP_TYPE_AIRDASH, 1, 1, 10, false);
