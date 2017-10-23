@@ -17,35 +17,24 @@ var render = () => {
     var target = rectangle(0, 0, 1920 * .6, 1080 *.6);
     target.left = - xPercent * (target.width - mainCanvas.width);
     target.top = - yPercent * (target.height - mainCanvas.height);
-    //console.log(target.x);
     draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), rectangle(0, 0, 1920, 1080), target);
 
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
-    /*draw.fillRectangle(mainContext, rectangle(cameraX, groundY, mainCanvas.width, areaRectangle.height - groundY), '#403020');
-    draw.fillRectangle(mainContext, rectangle(500 * Math.floor(cameraX / 500), groundY, 200, areaRectangle.height - groundY), '#504030');
-    draw.fillRectangle(mainContext, rectangle(500 * Math.ceil(cameraX / 500), groundY, 200, areaRectangle.height - groundY), '#504030');
-    draw.fillRectangle(mainContext, rectangle(500 * Math.ceil(cameraX / 500 + 1), groundY, 200, areaRectangle.height - groundY), '#504030');*/
     drawMap();
-    for (var actor of [...Object.values(otherCharacters), mainCharacter]) {
-        /*draw.fillRectangle(mainContext, rectangle(
-            actor.x + actor.hitBox.left,
-            actor.y + actor.hitBox.top,
-            actor.hitBox.width,
-            actor.hitBox.height), 'red');*/
-        mainContext.save();
-        if (actor.deathTime) {
-            mainContext.globalAlpha = Math.max(0, 1 - (now() - actor.deathTime) / 1000);
-        } else if (actor.invulnerableUntil && actor.invulnerableUntil > now()) {
-            mainContext.globalAlpha = Math.cos((actor.invulnerableUntil - now()) / 10) / 8 + .6;
-        } else {
-            mainContext.globalAlpha = 1;
-        }
-        drawSprite(mainContext, actor);
-        mainContext.restore();
-    }
-    for (var localSprite of localSprites) {
-        drawSprite(mainContext, localSprite);
+    // Update all the sprites that the game keeps track of
+    for (var sprite of
+        [
+            // All the characters from other clients.
+            ...Object.values(otherCharacters),
+            // The main character for the client is drawn after the other characters
+            // so that it will always appear in front of them.
+            mainCharacter,
+            // Other sprite objects like fireballs, particles, explosions and triggers.
+            ...localSprites,
+        ]
+    ) {
+        sprite.render(sprite);
     }
     mainContext.restore();
 

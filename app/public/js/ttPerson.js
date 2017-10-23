@@ -166,6 +166,23 @@ class TTCharacter {
         // if you are bouncing very quickly up, holding up should not slow you down.
         this.vy = Math.min(this.vy, this.jumpMagnitude * this.jumpScaling[scalingIndex]);
     }
+
+    update() {
+        updateActor(this);
+    }
+
+    render() {
+        mainContext.save();
+        if (this.deathTime) {
+            // The player fades to invisible before respawning when they die.
+            mainContext.globalAlpha = Math.max(0, 1 - (now() - this.deathTime) / 1000);
+        } else if (this.invulnerableUntil && this.invulnerableUntil > now()) {
+            // The character flashes transparent when they are invulnerable.
+            mainContext.globalAlpha = Math.cos((this.invulnerableUntil - now()) / 10) / 8 + .6;
+        }
+        drawSprite(mainContext, this);
+        mainContext.restore();
+    }
 }
 
 var mainCharacter;

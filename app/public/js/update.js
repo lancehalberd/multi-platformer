@@ -13,16 +13,22 @@ setInterval(() => {
     areaRectangle.width = currentMap.width * currentMap.tileSize;
     areaRectangle.height = currentMap.height * currentMap.tileSize;
 
-    for (var actor of [mainCharacter, ...Object.values(otherCharacters)]) {
-        updateActor(actor);
+    // Update all the sprites that the game keeps track of
+    for (var sprite of
+        [
+            // The character for this client.
+            mainCharacter,
+            // All the characters from other clients.
+            ...Object.values(otherCharacters),
+            // Other sprite objects like fireballs, particles, explosions and triggers.
+            ...localSprites,
+        ]
+    ) {
+        sprite.update(sprite);
     }
-    // Example code for adding a new local sprite. We add a new one any time the existing one is removed.
-    /*if (!localSprites.isArray(fallingSpikesSprite)) {   //this doesn't work. Trying to just check in a fallingSpikesSprite object is in the localSprites array, and if not, add one. Then we can always have one fireball and one set of falling spikes.
-        addLocalFallingSpikesSprite();
-    }*/
+
     if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
-        //addLocalFallingSpikesSprite();
-//        addHomingFireballSprite(350, 700, mainCharacter);
+        // addHomingFireballSprite(350, 700, mainCharacter);
         addTrigger(0, 800, 64, 200, mainCharacter, 1, 250, -150, 0, 0, 150);
     }
     if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
@@ -31,21 +37,7 @@ setInterval(() => {
     if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
         addPowerup(150, 750, 0, 0.6, 0.6, mainCharacter, true);
     }
-    //updating homing fireballs, specifically. Seems like all this code shouldn't be in this file. But translplanting it directly into "updateLocalSprite" didn't work.
-    for (var i = 0; i < localSprites.length; i++) {
-        if (localSprites[i].type === 'SPRITE_TYPE_FIREBALL_HOMING') {
-            var fireballHitBox = getGlobalSpriteHitBox(localSprites[i]),
-            targetHitBox = getGlobalSpriteHitBox(localSprites[i].target);
-            if (rectanglesOverlap(fireballHitBox, targetHitBox)) { //WRONG: should check against all players rather than just its target
-                localSprites[i].target.health--;
-                localSprites[i].shouldBeRemoved = true;
-            }
-        }
-    }
 
-    for (var localSprite of localSprites) {
-        updateLocalSprite(localSprite);
-    }
     removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;

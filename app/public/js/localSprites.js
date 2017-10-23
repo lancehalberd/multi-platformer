@@ -32,6 +32,14 @@ class SimpleSprite {
         this.xScaleWaxing = false;
         this.yScaleWaxing = false;
     }
+
+    update() {
+        updateLocalSprite(this);
+    }
+
+    render() {
+        drawSprite(mainContext, this);
+    }
 }
 
 
@@ -41,6 +49,15 @@ class SimpleSprite {
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
+    if (localSprite.type === 'SPRITE_TYPE_FIREBALL_HOMING') {
+        var fireballHitBox = getGlobalSpriteHitBox(localSprite);
+        // We only need to check against the main character here because each client will be running this
+        // check for its own main character, which should cover all players.
+        if (rectanglesOverlap(fireballHitBox, getGlobalSpriteHitBox(mainCharacter))) {
+            mainCharacter.health--;
+            localSprite.shouldBeRemoved = true;
+        }
+    }
     if (localSprite.homing) { //homing behavior
         var homerToTargetX,  //these two vars are the difference, in x/y values, between the homer's position and its target's position,
         homerToTargetY,        //phrased so that they could be added to the homer's coordinates in order to overlap the target's.
@@ -159,7 +176,7 @@ function updateLocalSprite(localSprite) {
     //update trigger zones
     if (localSprite.type === 'SPRITE_TYPE_TRIGGER') {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprite.cooldownTimer === 0) { //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            if (localSprite.spawnedObjectType === 1) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);    
+            if (localSprite.spawnedObjectType === 1) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);
                 if (localSprite.xForce) localSprite.target.vx += localSprite.xForce;
                 if (localSprite.yForce) localSprite.target.vy += localSprite.yForce;
                 localSprite.cooldownTimer++;
@@ -173,9 +190,9 @@ function updateLocalSprite(localSprite) {
                 localSprite.target.health++;
                 localSprite.shouldBeRemoved = true;
             }
-        }    
+        }
     }
-    
+
     if (localSprite.framesToLive-- <= 0) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
@@ -321,7 +338,7 @@ function addTrigger(left, top, width, height, target, spawnedObjectType, spawned
 
 function addPowerup(x, y, powerupType, xScale, yScale, target, falls) {
     //send powerup x, y for where its bottom middle should be
-    //itemType key: 0 = heart, 
+    //itemType key: 0 = heart,
     var frames = [];
     var powerup = new SimpleSprite({frames}, x, y, 0, 0, target, xScale, yScale);
     powerup.type = 'SPRITE_TYPE_POWERUP';
