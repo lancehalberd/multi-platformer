@@ -23,6 +23,7 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
+            actor.airDashed = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
@@ -53,6 +54,16 @@ function updateActor(actor) {
                 // until they hit the maxJumpDuration.
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
+            }
+            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed)) {
+                actor.vx += 7;
+                actor.vy -= 4;
+                actor.airDashed = true;
+            }
+            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed)) {
+                actor.vx -= 7;
+                actor.vy -= 4;
+                actor.airDashed = true;
             }
         }
         var dx = 0;
