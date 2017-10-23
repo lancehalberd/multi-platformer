@@ -185,9 +185,9 @@ function updateLocalSprite(localSprite) {
         else localSprite.cooldownTimer = 0;
     }
     if (localSprite.type === 'SPRITE_TYPE_POWERUP') {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             if (localSprite.powerupType === 'POWERUP_TYPE_HEART') {
-                localSprite.target.health = Math.min(localSprite.health + 1, localSprite.target.maxHealth);
+                mainCharacter.health = Math.min(mainCharacter.health + 1, mainCharacter.maxHealth);
                 localSprite.shouldBeRemoved = true;
             }
         }
