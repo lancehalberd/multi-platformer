@@ -29,15 +29,17 @@ setInterval(() => {
 
     if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
         // addHomingFireballSprite(350, 700, mainCharacter);
-        addTrigger(0, 800, 64, 200, mainCharacter, 1, 250, -150, 0, 0, 150);
+        addTrigger(0, 800, 64, 200, mainCharacter, SPRITE_TYPE_FIREBALL_HOMING, 250, -150, 0, 0, 150);
     }
     if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
         addTrigger(0, 800, 64, 200, mainCharacter, 0, 0, 0, 10, -10, 0);
     }
-    if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
-        addPowerup(150, 750, 0, 0.6, 0.6, mainCharacter, true);
+    if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
+        addPowerup(150, 750, POWERUP_TYPE_HEART, 0.6, 0.6, 0, true);
     }
-
+    if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
+        addPowerup(250, 700, POWERUP_TYPE_AIRDASH, 1, 1, 10, false);
+    }
     removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;

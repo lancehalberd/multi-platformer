@@ -1,3 +1,17 @@
+var SPRITE_TYPE_TRIGGER = 'trigger';
+var TRIGGER_TYPE_FORCE = 'force';
+var TRIGGER_TYPE_SPAWN = 'spawn';
+var SPAWN_TRIGGER_TYPE_HOMING_FIREBALL = 'homingFireballTrigger';
+
+var SPRITE_TYPE_FIREBALL_HOMING = 'homingFireball';
+var SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL = 'fireballContrailParticle';
+var SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION = 'fireballDetonationParticle';
+
+var SPRITE_TYPE_POWERUP = 'powerup';
+var POWERUP_TYPE_HEART = 'heart';
+var POWERUP_TYPE_AIRDASH = 'airDash';
+
+
 class SimpleSprite {
     constructor(animation, x, y, vx = 0, vy = 0, xScale = 1, yScale = 1) {
         this.animation = animation;
@@ -49,7 +63,7 @@ class SimpleSprite {
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
-    if (localSprite.type === 'SPRITE_TYPE_FIREBALL_HOMING') {
+    if (localSprite.type === SPRITE_TYPE_FIREBALL_HOMING) {
         var fireballHitBox = getGlobalSpriteHitBox(localSprite);
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
@@ -134,7 +148,7 @@ function updateLocalSprite(localSprite) {
     //WRONG: TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
     if (localSprite.hasContrail === true) {
         if (localSprite.contrailTimer >= localSprite.framesBetweenContrailParticles) {
-            addFireballParticle(localSprite, 30, 32, 32, 0); //for last argument, 0 = contrail, 1 = detonation
+            addFireballParticle(localSprite, 30, 32, 32, SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL);
             localSprite.contrailTimer = 0;
         } else {
             localSprite.contrailTimer++;
@@ -174,9 +188,9 @@ function updateLocalSprite(localSprite) {
         }
     }
     //update trigger zones
-    if (localSprite.type === 'SPRITE_TYPE_TRIGGER') {
+    if (localSprite.type === SPRITE_TYPE_TRIGGER) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprite.cooldownTimer === 0) { //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            if (localSprite.spawnedObjectType === 1) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);
+            if (localSprite.spawnedObjectType === SPRITE_TYPE_FIREBALL_HOMING) addHomingFireballSprite(localSprite.spawnedObjectXOffset, localSprite.spawnedObjectYOffset, localSprite.target);
                 if (localSprite.xForce) localSprite.target.vx += localSprite.xForce;
                 if (localSprite.yForce) localSprite.target.vy += localSprite.yForce;
                 localSprite.cooldownTimer++;
@@ -184,10 +198,18 @@ function updateLocalSprite(localSprite) {
         if (localSprite.cooldownTimer > 0 && localSprite.cooldownTimer < localSprite.cooldownFrames) localSprite.cooldownTimer++;
         else localSprite.cooldownTimer = 0;
     }
-    if (localSprite.type === 'SPRITE_TYPE_POWERUP') {
+    if (localSprite.type === POWERUP_TYPE_HEART) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            if (localSprite.powerupType === 'POWERUP_TYPE_HEART') {
-                mainCharacter.health = Math.min(mainCharacter.health + 1, mainCharacter.maxHealth);
+            if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
+                mainCharacter.health++;
+                localSprite.shouldBeRemoved = true;
+            }
+        }
+    }
+    if (localSprite.type === POWERUP_TYPE_AIRDASH) {
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+            if (localSprite.type === POWERUP_TYPE_AIRDASH && !mainCharacter.airDashEnabled) {
+                mainCharacter.canAirDashUntil = now() + localSprite.duration * 1000;   //last number is ms
                 localSprite.shouldBeRemoved = true;
             }
         }
@@ -197,7 +219,7 @@ function updateLocalSprite(localSprite) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
     }
-    if (localSprite.shouldBeRemoved && localSprite.type === 'SPRITE_TYPE_FIREBALL_HOMING') addFireballDetonation(localSprite, 10, 32, 32); //WRONG: don't know why this (following) isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
+    if (localSprite.shouldBeRemoved && localSprite.type === SPRITE_TYPE_FIREBALL_HOMING) addFireballDetonation(localSprite, 10, 32, 32); //WRONG: don't know why this (following) isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
 }
 //remove the sprite from the array of local sprites after it has used up all of its frames.
 function removeFinishedLocalSprites() {
@@ -210,7 +232,8 @@ var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
 fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
 fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
 customBlocksAImage = requireImage('gfx/customBlocksA.png'),
-heartImage = requireImage('/gfx/heart.png');
+heartImage = requireImage('/gfx/heart.png'),
+airDashPowerupImage = requireImage('/gfx/powerups/airDashPowerup.png');
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var hitBox = rectangle(0, 0, 32, 32);
@@ -222,7 +245,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
         $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
     ];
     var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
-    homingFireballSprite.type = 'SPRITE_TYPE_FIREBALL_HOMING';
+    homingFireballSprite.type = SPRITE_TYPE_FIREBALL_HOMING;
     homingFireballSprite.homing = true;
     homingFireballSprite.target = target;
     homingFireballSprite.maxSpeed = 3.5;
@@ -244,7 +267,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
 }
 
 
-function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) { //types: 0 = contrail, 1 = detonation
+function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
     var hitBox = rectangle(0, 0, 8, 8);
     var frames = [
         $.extend(rectangle(0 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
@@ -267,8 +290,8 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
     var fireballParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
-    if (type === 0) fireballParticle.type = 'fireballContrailParticle';
-    if (type === 1) fireballParticle.type = 'fireballDetonationParticle';
+    fireballParticle.type = type;
+    fireballParticle.type = type;
     fireballParticle.framesToLive = decayFrames;
     fireballParticle.scaleOscillation = true;
     fireballParticle.xScalePerFrame = fireballParticle.xScale / fireballParticle.framesToLive;
@@ -278,8 +301,8 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
     fireballParticle.rotationPerFrame = 50;
     //fireballParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(fireballParticle);
-    if (fireballParticle.type === 'fireballContrailParticle') localSprites.push(fireballParticle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
-    if (fireballParticle.type === 'fireballDetonationParticle') {
+    if (fireballParticle.type === SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL) localSprites.push(fireballParticle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+    if (fireballParticle.type === SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION) {
         var randomVX,
         randomVY;
         if (Math.random() < 0.5) {
@@ -301,7 +324,7 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
 function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
     var detonationParticles = [];
     for (var i = 0; i < numberOfFragments; i++) {
-        var newParticle = addFireballParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, 1);
+        var newParticle = addFireballParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION);
         detonationParticles.push(newParticle);
     }
     for (var j = 0; j < detonationParticles.length; j++) {
@@ -322,7 +345,7 @@ function addTrigger(left, top, width, height, target, spawnedObjectType, spawned
         //$.extend(rectangle(4 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
     ];
     var trigger = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
-    trigger.type = 'SPRITE_TYPE_TRIGGER',
+    trigger.type = SPRITE_TYPE_TRIGGER;
     trigger.hitBox = rectangle(left, top, width, height),
     trigger.target = target,
     trigger.cooldownFrames = cooldownFrames,   //50 per second, I think
@@ -336,29 +359,29 @@ function addTrigger(left, top, width, height, target, spawnedObjectType, spawned
     localSprites.push(trigger); //this will gone when tigger zones are broken up into types better
 }
 
-function addPowerup(x, y, powerupType, xScale, yScale, target, falls) {
+function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls) {
     //send powerup x, y for where its bottom middle should be
     //itemType key: 0 = heart,
     var frames = [];
-    var powerup = new SimpleSprite({frames}, x, y, 0, 0, target, xScale, yScale);
-    powerup.type = 'SPRITE_TYPE_POWERUP';
-    if (powerupType === 0) {
+    var powerup = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    if (powerupType === POWERUP_TYPE_HEART) {
         frames.push($.extend(rectangle(0, 0, 50, 50), {image: heartImage, hitBox}));
-        var xSize = 50,  //would like to procedurally draw this figure (and Y counterpart) from the dimensions of the current animation frame
-        ySize = 50,
-        scaledXSize = xScale * xSize,
-        scaledYSize = yScale * ySize,
-        hitBox = rectangle(x - (scaledXSize / 2), y - scaledYSize, scaledXSize, scaledYSize); //or could skip and like getGlobalSpriteHitBox use the animation frame?
-        //could probably draw from these (following) lines of code to extract dimensions from an animation frame (but this would be of a static size):
-        //var frame = sprite.animation.frames[sprite.currentFrame];
-        //hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
-        powerup.powerupType = 'POWERUP_TYPE_HEART',
-        powerup.xScale = xScale,
-        powerup.yScale = yScale,
-        powerup.target = target,
-        powerup.hitBox = rectangle(x - (scaledXSize / 2), y - scaledYSize, scaledXSize, scaledYSize),
-        powerup.framesToLive = 32767;
     }
+    if (powerupType === POWERUP_TYPE_AIRDASH) {
+        frames.push($.extend(rectangle(0, 0, 32, 32), {image: airDashPowerupImage, hitBox}));
+        powerup.duration = durationInSeconds;
+    }
+    var xSize = 32,
+    ySize = 32,
+    scaledXSize = xScale * xSize,
+    scaledYSize = yScale * ySize,
+    hitBox = rectangle(x - (scaledXSize / 2), y - scaledYSize, scaledXSize, scaledYSize);
+    powerup.type = powerupType;
+    powerup.xScale = xScale,
+    powerup.yScale = yScale,
+    powerup.hitBox = rectangle(x - (scaledXSize / 2), y - scaledYSize, scaledXSize, scaledYSize),
+    powerup.framesToLive = 32767;
+
 /*    if (falls) {          //for powerups to fall and settle on the ground, they'd need geometry collision, which I don't want to tackle right now.
         powerup.vy += 5;    //for some reason this line wasn't working.
     }*/

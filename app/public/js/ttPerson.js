@@ -144,6 +144,7 @@ class TTCharacter {
         this.maxJumps = 2; //i.e. single-jump capable = 1, double-jump capable = 2 etc.
         this.jumpScaling = [1, 0.7]; //jumps after the first have jumpMagnitude * jumpScaling
         this.jumpKeyReleased = false;  //so you have to release the jump key before a double-jump can be triggered.
+        this.airDashed = false; //if player has airDashed, they won't be able to airDash again until after they've grounded.
         this.isCrouching = false; //is crouched or not
         this.weapon = weapon;
     }

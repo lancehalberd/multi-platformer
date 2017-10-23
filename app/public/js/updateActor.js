@@ -55,12 +55,13 @@ function updateActor(actor) {
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
             }
-            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed)) {
+            //air dash
+            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
                 actor.vx += 7;
                 actor.vy -= 4;
                 actor.airDashed = true;
             }
-            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed)) {
+            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
                 actor.vx -= 7;
                 actor.vy -= 4;
                 actor.airDashed = true;
@@ -167,6 +168,10 @@ var getGlobalSpriteHitBox = (sprite) => {
         sprite.x + hitBox.left, sprite.y + hitBox.top,
         hitBox.width, hitBox.height
     );
+}
+
+function canCharacterAirDash(character) {
+    return character.canAirDashUntil > now();
 }
 
 function isPlayerUnderCeiling(player) {
