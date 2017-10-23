@@ -232,14 +232,5 @@ function initializePersonGraphics() {
     };
     // zoneId is set globally on page load by the server based on the current route. For instance /zones/spikePit will set zoneId to 'spikePit'.
     mainCharacter.zoneId = zoneId;
-    /*while (otherCharacters.length < 1) {
-        baseImage = requireImage('/gfx/person/monsterPeople.png');
-        skinToneIndex = Random.range(0, ttMonsterPersonRows - 1);
-        hairIndex = Random.range(0, ttHairRows); // no -1 so they can be bald.
-        actorCanvas = createEquippedActorSource(baseImage, skinToneIndex, hairIndex,
-            [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources.sword]
-        );
-        otherCharacters.push(new TTCharacter(actorCanvas));
-    }*/
     sendPlayerJoined();
 }
