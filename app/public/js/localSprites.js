@@ -187,7 +187,7 @@ function updateLocalSprite(localSprite) {
     if (localSprite.type === 'SPRITE_TYPE_POWERUP') {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             if (localSprite.powerupType === 'POWERUP_TYPE_HEART') {
-                localSprite.target.health++;
+                localSprite.target.health = Math.min(localSprite.health + 1, localSprite.target.maxHealth);
                 localSprite.shouldBeRemoved = true;
             }
         }
