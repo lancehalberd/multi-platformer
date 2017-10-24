@@ -158,6 +158,7 @@ class TTCharacter {
             this.applyJumpVelocity();
         }
     }
+        
 
     // Apply the jump velocity to the actor for a single frame.
     applyJumpVelocity() {

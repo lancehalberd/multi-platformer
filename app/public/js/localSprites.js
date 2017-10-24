@@ -11,6 +11,8 @@ var SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION = 'fireballDetonationParticle';
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIRDASH = 'airDash';
 
+var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
+
 
 class SimpleSprite {
     constructor(animation, x, y, vx = 0, vy = 0, xScale = 1, yScale = 1) {
@@ -25,6 +27,8 @@ class SimpleSprite {
         this.target = {x: 0, y: 0};
         this.acceleration = 0;
         this.maxSpeed = 0;
+        this.collides = false;  //checks for collision with level geometry.
+        this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.currentFrame = 0;
         this.framesToLive = 200;
         this.msBetweenFrames = 200;
@@ -68,15 +72,6 @@ class SimpleSprite {
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
-    if (localSprite.type === SPRITE_TYPE_HOMING_FIREBALL) {
-        var fireballHitBox = getGlobalSpriteHitBox(localSprite);
-        // We only need to check against the main character here because each client will be running this
-        // check for its own main character, which should cover all players.
-        if (rectanglesOverlap(fireballHitBox, getGlobalSpriteHitBox(mainCharacter))) {
-            mainCharacter.health--;
-            localSprite.shouldBeRemoved = true;
-        }
-    }
     if (localSprite.homing) { //homing behavior
         var homerToTargetX,  //these two vars are the difference, in x/y values, between the homer's position and its target's position,
         homerToTargetY,        //phrased so that they could be added to the homer's coordinates in order to overlap the target's.
@@ -184,29 +179,37 @@ function updateLocalSprite(localSprite) {
     //animation stuff. msBetweenFrames sets sprite's animation speed.
     localSprite.currentFrame = Math.floor(now() / localSprite.msBetweenFrames) % localSprite.animation.frames.length;
 
-    //geomtry collision checks for projectiles that die on impact
-    //BROKEN: It looks to me like "alignToTile" isn't happening, and the fireball is detonating in the frame before it would impact something,
-    //  rather than right next to the wall it would be moving past.
-    if (localSprite.vx && localSprite.diesOnImpact) {
+    //geomtry collision checks
+    //BROKEN: if something.collides, but it !removedOnCollision, it doesn't behave well.
+    //  But I'm going to leave this structure in place because I think the behavior can be updated.
+    if (localSprite.vx && localSprite.collides) {
         if (localSprite.vx < 0) {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT))) localSprite.shouldBeRemoved = true;
+            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT))) {
+                if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+            }
         } else {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT))) localSprite.shouldBeRemoved = true;
+            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT))) {
+                if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+            }
         }
     }
-    if (localSprite.vy && localSprite.diesOnImpact) {
+    if (localSprite.vy && localSprite.collides) {
         if (localSprite.vy < 0) {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP))) localSprite.shouldBeRemoved = true;
+            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP))) {
+                if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+            }
         } else {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN))) localSprite.shouldBeRemoved = true;
+            if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) {
+                if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+            }
         }
     }
-    //update triggers
+    //updating various sprite types
     if (localSprite.type === TRIGGER_TYPE_FORCE) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprites.length <2/*canTriggerTrigger(localSprite)*/) {
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {
             if (localSprite.forceType === FORCE_AMP) {
                 if (localSprite.target.vx) localSprite.target.vx *= localSprite.xForce;
-                if (localSprite.target.vy) localSprite.target.vy *= localSprite.yForce;              
+                if (localSprite.target.vy < 0) localSprite.target.vy *= localSprite.yForce;    //doesn't speed falling
             }
             if (localSprite.forceType === FORCE_FIXED) {
                 if (localSprite.target.vx) localSprite.target.vx += localSprite.xForce;
@@ -217,25 +220,41 @@ function updateLocalSprite(localSprite) {
     }
     
     if (localSprite.type === TRIGGER_TYPE_SPAWN) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && localSprites.length <2/*canTriggerTrigger(localSprite)*/) {
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should probably just use it once.
             if (localSprite.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
-    if (localSprite.type === POWERUP_TYPE_HEART) {
+    
+    if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
-                mainCharacter.health++;
-                localSprite.shouldBeRemoved = true;
-            }
+            mainCharacter.health++;
+            localSprite.shouldBeRemoved = true;
         }
     }
+    
     if (localSprite.type === POWERUP_TYPE_AIRDASH) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            if (localSprite.type === POWERUP_TYPE_AIRDASH) {
-                mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;   //last number is ms
-                localSprite.shouldBeRemoved = true;
-            }
+            mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;
+            localSprite.shouldBeRemoved = true;
+        }
+    }
+    
+    if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
+        if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+            //mainCharacter.vy -= 9;
+            localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
+            mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
+        }
+    }
+
+    if (localSprite.type === SPRITE_TYPE_HOMING_FIREBALL) {
+        var fireballHitBox = getGlobalSpriteHitBox(localSprite);
+        // We only need to check against the main character here because each client will be running this
+        // check for its own main character, which should cover all players.
+        if (rectanglesOverlap(fireballHitBox, getGlobalSpriteHitBox(mainCharacter))) {
+            mainCharacter.health--;
+            localSprite.shouldBeRemoved = true;
         }
     }
 
@@ -256,7 +275,8 @@ var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
 fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
 fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
 powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
-powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png');
+powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
+creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var hitBox = rectangle(0, 0, 32, 32);
@@ -270,6 +290,8 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = SPRITE_TYPE_HOMING_FIREBALL;
     homingFireballSprite.homing = true;
+    homingFireballSprite.collides = true;
+    homingFireballSprite.removedOnCollision = true;
     homingFireballSprite.target = target;
     homingFireballSprite.maxSpeed = 3.5;
     homingFireballSprite.acceleration = 0.8;
@@ -285,8 +307,46 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.yScalePerFrame = 0.01;
     homingFireballSprite.hasContrail = true;
     homingFireballSprite.framesBetweenContrailParticles = 3;
-    homingFireballSprite.diesOnImpact = true;
     localSprites.push(homingFireballSprite);
+}
+
+function addCreature(x, y, target, creatureType) {
+    if (creatureType === CREATURE_TYPE_ADORABILIS) {
+        var xSize = 32,
+        ySize = 32,
+        xScale = 2.5,
+        yScale = 2.5,
+        scaledXSize = xSize * xScale,
+        scaledYSize = ySize * yScale,
+        //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
+        //scaledCenteredTop = y - (scaledYSize / 2),
+        //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
+        hitBox = rectangle(-24, -56, 80, 80),   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
+        frames = [
+            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+        ];
+        var creatureSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+        creatureSprite.type = creatureType;
+        creatureSprite.homing = true;
+        creatureSprite.collides = false; //should be true when there's better collision behavior in place. Probably.
+        creatureSprite.target = target;
+        creatureSprite.maxSpeed = 0.8;
+        creatureSprite.acceleration = 0.1;
+        creatureSprite.notReadyToTriggerUntil = now();
+        creatureSprite.durationOfTouchEffectInMS = 5000;
+        creatureSprite.framesToLive = 32767;
+        creatureSprite.msBetweenFrames = 85;
+        creatureSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
+        localSprites.push(creatureSprite);
+    }
 }
 
 
@@ -313,7 +373,6 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
     var fireballParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
-    fireballParticle.type = type;
     fireballParticle.type = type;
     fireballParticle.framesToLive = decayFrames;
     fireballParticle.scaleOscillation = true;
@@ -357,7 +416,7 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
 
 //TRIGGERS
 function canTriggerTrigger(trigger) {
-    return  trigger.notReadyToTriggerUntil > now();
+    return  now() > trigger.notReadyToTriggerUntil;
 }
 
 function addSpawnTrigger(left, top, width, height, cooldownInSeconds, target, spawnedObjectType, spawnedObjectXOffset, spawnedObjectYOffset) {
@@ -366,14 +425,14 @@ function addSpawnTrigger(left, top, width, height, cooldownInSeconds, target, sp
         $.extend(rectangle(1 * 16, 0 * 16, 16, 16), {image: fireballContrailAImage, hitBox}),
     ];
     var spawnTrigger = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
-    spawnTrigger.type = TRIGGER_TYPE_SPAWN, //hm, don't actually use this...
-    spawnTrigger.cooldownInMS = cooldownInSeconds * 1000,
-    spawnTrigger.hitBox = hitBox,
-    spawnTrigger.notReadyToTriggerUntil = now() + spawnTrigger.cooldownInMS,
-    spawnTrigger.framesToLive = 32767,
-    spawnTrigger.target = target,
-    spawnTrigger.spawnedObjectType = spawnedObjectType,
-    spawnTrigger.spawnedObjectX = (left + width / 2) + spawnedObjectXOffset,
+    spawnTrigger.type = TRIGGER_TYPE_SPAWN; //hm, don't actually use this...
+    spawnTrigger.cooldownInMS = cooldownInSeconds * 1000;
+    spawnTrigger.hitBox = hitBox;
+    spawnTrigger.framesToLive = 32767;
+    spawnTrigger.target = target;
+    spawnTrigger.notReadyToTriggerUntil = now();
+    spawnTrigger.spawnedObjectType = spawnedObjectType;
+    spawnTrigger.spawnedObjectX = (left + width / 2) + spawnedObjectXOffset;
     spawnTrigger.spawnedObjectY = (top + width / 2) + spawnedObjectYOffset;
     localSprites.push(spawnTrigger);
 }
@@ -387,14 +446,14 @@ function addForceTrigger(left, top, width, height, cooldownInSeconds, target, fo
         $.extend(rectangle(1 * 16, 0 * 16, 16, 16), {image: fireballContrailAImage, hitBox}),
     ];
     var forceTrigger = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
-    forceTrigger.type = TRIGGER_TYPE_FORCE, //hm, don't actually use this...
-    forceTrigger.cooldownInMS = cooldownInSeconds * 1000,
-    forceTrigger.hitBox = hitBox,
-    forceTrigger.notReadyToTriggerUntil = now() + forceTrigger.cooldownInMS,
-    forceTrigger.framesToLive = 32767,
-    forceTrigger.target = target,
-    forceTrigger.forceType = forceType,
-    forceTrigger.xForce = forceMagnitudeX,
+    forceTrigger.type = TRIGGER_TYPE_FORCE; //hm, don't actually use this...
+    forceTrigger.cooldownInMS = cooldownInSeconds * 1000;
+    forceTrigger.hitBox = hitBox;
+    forceTrigger.notReadyToTriggerUntil = now();
+    forceTrigger.framesToLive = 32767;
+    forceTrigger.target = target;
+    forceTrigger.forceType = forceType;
+    forceTrigger.xForce = forceMagnitudeX;
     forceTrigger.yForce = forceMagnitudeY;
     localSprites.push(forceTrigger);
 }
@@ -419,7 +478,7 @@ function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls)
     powerup.type = powerupType;
     powerup.xScale = xScale,
     powerup.yScale = yScale,
-    powerup.hitBox = rectangle(x - (scaledXSize / 2), y - scaledYSize, scaledXSize, scaledYSize),
+    powerup.hitBox = hitBox,
     powerup.scaleOscillation = true,
     powerup.xScaleMin = 0.875,
     powerup.yScaleMin = 0.875,

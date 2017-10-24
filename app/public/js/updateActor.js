@@ -76,6 +76,12 @@ function updateActor(actor) {
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
+    
+    if (isPlayerCompelledByOctopusTouch(actor) && actor.grounded) {
+            actor.vy -= 14;
+    }
+    
+    
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
@@ -172,6 +178,10 @@ var getGlobalSpriteHitBox = (sprite) => {
 
 function canCharacterAirDash(character) {
     return character.canAirDashUntil > now();
+}
+
+function isPlayerCompelledByOctopusTouch(character) {
+    return character.compelledByOctopusTouch > now();
 }
 
 function isPlayerUnderCeiling(player) {
