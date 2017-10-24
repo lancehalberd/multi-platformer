@@ -23,6 +23,7 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
+            actor.airDashed = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
@@ -54,6 +55,17 @@ function updateActor(actor) {
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
             }
+            //air dash
+            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
+                actor.vx += 7;
+                actor.vy -= 4;
+                actor.airDashed = true;
+            }
+            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
+                actor.vx -= 7;
+                actor.vy -= 4;
+                actor.airDashed = true;
+            }
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -64,6 +76,12 @@ function updateActor(actor) {
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
+    
+    if (isPlayerCompelledByOctopusTouch(actor) && actor.grounded) {
+            actor.vy -= 14;
+    }
+    
+    
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
@@ -156,6 +174,14 @@ var getGlobalSpriteHitBox = (sprite) => {
         sprite.x + hitBox.left, sprite.y + hitBox.top,
         hitBox.width, hitBox.height
     );
+}
+
+function canCharacterAirDash(character) {
+    return character.canAirDashUntil > now();
+}
+
+function isPlayerCompelledByOctopusTouch(character) {
+    return character.compelledByOctopusTouch > now();
 }
 
 function isPlayerUnderCeiling(player) {
