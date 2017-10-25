@@ -221,6 +221,7 @@ function initializePersonGraphics() {
     mainCharacter.maxHealth = 5;
     mainCharacter.originalX = mainCharacter.x;
     mainCharacter.originalY = mainCharacter.y;
+    mainCharacter.invulnerableUntil = now();
     mainCharacter.onDeathComplete = function () {
         this.health = this.maxHealth;
         this.x = this.originalX;

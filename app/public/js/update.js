@@ -32,7 +32,7 @@ setInterval(() => {
         addSpawnTrigger(0, 800, 64, 200, 3, mainCharacter, SPRITE_TYPE_HOMING_FIREBALL, 250, -150);
     }
     if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
-        addForceTrigger(1200, 800, 200, 200, 0, mainCharacter, FORCE_AMP, 1.15, 1.27);
+        addForceTrigger(1200, 800, 200, 200, 0, mainCharacter, FORCE_AMP, 1, 1.27);
     }
     if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
         addPowerup(150, 750, POWERUP_TYPE_HEART, 1, 1, 0, true);
@@ -42,6 +42,9 @@ setInterval(() => {
     }
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
+    }
+    if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
+        addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
     }
     removeFinishedLocalSprites();
 
