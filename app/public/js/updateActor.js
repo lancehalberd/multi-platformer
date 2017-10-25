@@ -94,7 +94,7 @@ function updateActor(actor) {
         actor.attackFrame = Math.floor((now() - actor.attackTime) / 100);
         // Autojump when the mouse is higher than the character.
         // if (actor.attackFrame === 1 && targetPosition[1] < groundY - 100) actor.jump();
-        if (actor.attackFrame >= actor.animation.frames.length) {
+        if (actor.attackFrame >= actor.attackAnimation.frames.length) {
             actor.attacking = false;
         }
     }
@@ -105,7 +105,7 @@ function updateActor(actor) {
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.walkAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
