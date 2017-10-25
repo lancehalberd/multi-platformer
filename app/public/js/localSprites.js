@@ -1,9 +1,3 @@
-var TRIGGER_TYPE_FORCE = 'forceTrigger';
-var TRIGGER_TYPE_SPAWN = 'spawnTrigger';
-
-var FORCE_AMP = 'playerVelocityMultiplied';
-var FORCE_FIXED = 'fixedForceAddedToPlayer';
-
 var SPRITE_TYPE_HOMING_FIREBALL = 'homingFireball';
 var SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL = 'fireballContrailParticle';
 var SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION = 'fireballDetonationParticle';
@@ -235,16 +229,19 @@ powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
 creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
 
-function addHomingFireballSprite(xPosition, yPosition, target) {
-    var hitBox = rectangle(0, 0, 32, 32);
-    var frames = [
+var hitBox = rectangle(0, 0, 32, 32);
+var fireballAnimation = {
+    frames: [
         $.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(1 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(2 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(3 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-    ];
-    var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
+    ]
+};
+
+function addHomingFireballSprite(xPosition, yPosition, target) {
+    var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = SPRITE_TYPE_HOMING_FIREBALL;
     homingFireballSprite.homing = true;
     homingFireballSprite.collides = true;

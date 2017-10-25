@@ -4,6 +4,7 @@ var KEY_UP = 38;
 var KEY_DOWN = 40;
 var KEY_SPACE = 32;
 var KEY_SHIFT = 16;
+var KEY_BACK_SPACE = 8;
 var KEY_E = 'E'.charCodeAt(0);
 
 var KEY_MAPPINGS = {

@@ -248,13 +248,12 @@ function constrain(value, min, max) {
 function rectangle(left, top, width, height) {
     return {left: left, top: top, width: width, height: height, right: left + width, bottom: top + height};
 }
-function shrinkRectangle(rectangle, margin) {
-    return {'left': rectangle.left + margin, 'width': rectangle.width - 2 * margin,
-            'top': rectangle.top + margin, 'height': rectangle.height - 2 * margin};
+var rectangleByCenter = (x, y, width, height) => rectangle(x - width / 2, y - height / 2, width, height);
+function shrinkRectangle(rect, margin) {
+    return rectangle(rect.left + margin, rect.top + margin, rect.width - 2 * margin, rect.height - 2 * margin);
 }
-function scaleRectangle(rectangle, scale) {
-    return {left: rectangle.left * scale, width: rectangle.width * scale,
-        top: rectangle.top * scale, height: rectangle.height * scale};
+function scaleRectangle(rect, scale) {
+    return rectangle(rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale);
 }
 function rectangleCenter(rectangle) {
     return [rectangle.left + rectangle.width / 2, rectangle.top + rectangle.height / 2];
