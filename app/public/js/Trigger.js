@@ -59,12 +59,12 @@ class Trigger {
         } else {
             draw.fillRectangle(mainContext, target, this.color);
         }
-        if (selectedTrigger) {
+        if (selectedTrigger === this) {
             mainContext.save();
             mainContext.globalAlpha = 1;
             mainContext.strokeStyle = 'white';
             mainContext.beginPath();
-            draw.rectangle(mainContext, selectedTrigger.hitBox);
+            draw.rectangle(mainContext, this.hitBox);
             mainContext.stroke();
             mainContext.restore();
         }
@@ -133,12 +133,14 @@ class SpawnTrigger extends Trigger {
 
     renderPreview(target, startCoords, lastCoords) {
         super.renderPreview(target);
-        // We should update this to draw the spawned object eventually.
-        var frame = getAnimationFrame(fireballAnimation.frames, 5);
-        // Draw a fireball clip where the fireball will spawn.
-        draw.image(mainContext, frame.image, frame,
-            rectangleByCenter(this.spawnX, this.spawnY, frame.width, frame.height)
-        );
+        if (selectedTrigger === this) {
+            // We should update this to draw the spawned object eventually.
+            var frame = getAnimationFrame(fireballAnimation.frames, 5);
+            // Draw a fireball clip where the fireball will spawn.
+            draw.image(mainContext, frame.image, frame,
+                rectangleByCenter(this.spawnX, this.spawnY, frame.width, frame.height)
+            );
+        }
     }
 
     renderHUD(target) {
