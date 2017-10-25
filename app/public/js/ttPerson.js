@@ -206,7 +206,7 @@ function walkAnimation(actorCanvas) {
 function characterMysteryWalkAnimation() {
     var xSize = 32,
     ySize = 32,
-    hitBox = rectangle(0, -32, 40, 64),
+    hitBox = rectangle(-4, -32, 40, 64),
     frames = [
         $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
         $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
@@ -219,7 +219,7 @@ function characterMysteryWalkAnimation() {
 function characterMysteryIdleAnimation() {
     var xSize = 32,
     ySize = 32,
-    hitBox = rectangle(0, -32, 40, 64),
+    hitBox = rectangle(-4, -32, 40, 64),
     frames = [
         $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
         $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
