@@ -73,55 +73,13 @@ class SimpleSprite {
 // removing the object
 function updateLocalSprite(localSprite) {
     if (localSprite.homing) { //homing behavior
-        var homerToTargetX,  //these two vars are the difference, in x/y values, between the homer's position and its target's position,
-        homerToTargetY,        //phrased so that they could be added to the homer's coordinates in order to overlap the target's.
-        normalizedHomerToTargetXRatio,    //these two vars will turn that vector into a normalized ratio. Actually, sometimes one of the numbers is over 1 right now, but it still works, I *think.*
-        normalizedHomerToTargetYRatio,
-        homerX = localSprite.x,
-        homerY = localSprite.y,
-        targetX = localSprite.target.x,
-        targetY = localSprite.target.y,
-        dx,
-        dy;
-        //finding values for homerToTargetX and homerToTargetY.
-        if ((homerX < targetX && homerX >= 0 && targetX > 0) || (homerX > targetX && homerX > 0 && targetX >= 0) || (homerX > targetX && homerX <= 0 && targetX < 0) || (homerX === targetX)) homerToTargetX = targetX - homerX;
-        if (homerX < targetX && homerX <= 0 && targetX >= 0) homerToTargetX = Math.abs(homerX) + Math.abs(targetX);
-        if (homerX < targetX && homerX < 0 && targetX <= 0) homerToTargetX = Math.abs(homerX) - Math.abs(targetX);
-        if (homerX > targetX && homerX > 0 && targetX < 0) homerToTargetX = -(Math.abs(homerX) + Math.abs(targetX));
-        if ((homerY < targetY && homerY >= 0 && targetY > 0) || (homerY > targetY && homerY > 0 && targetY >= 0) || (homerY > targetY && homerY <= 0 && targetY < 0) || (homerY === targetY)) homerToTargetY = targetY - homerY;
-        if (homerY < targetY && homerY <= 0 && targetY >= 0) homerToTargetY = Math.abs(homerY) + Math.abs(targetY);
-        if (homerY < targetY && homerY < 0 && targetY <= 0) homerToTargetY = Math.abs(homerY) - Math.abs(targetY);
-        if (homerY > targetY && homerY > 0 && targetY < 0) homerToTargetY = -(Math.abs(homerY) + Math.abs(targetY));
-        //making a normalized ratio out of homerToTargetX and homerToTargetY's relationship
-        //NO DIVIDE BY ZERO PROTECTION HERE!!!
-        if (Math.abs(homerToTargetX) > Math.abs(homerToTargetY)) {
-            if (homerToTargetX < 0) {
-                normalizedHomerToTargetXRatio = -(Math.abs(homerToTargetX) / Math.abs(homerToTargetX));
-            } else {
-                normalizedHomerToTargetXRatio = Math.abs(homerToTargetX) / Math.abs(homerToTargetX);
-            }
-            if (homerToTargetY < 0) {
-                normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetX));
-            } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetX);
-            }
+        var dx = localSprite.target.x - localSprite.x;
+        var dy = localSprite.target.y - localSprite.y;
+        var magnitude = Math.sqrt(dx * dx + dy * dy);
+        if (magnitude > 0) {
+            localSprite.vx += dx * localSprite.acceleration / magnitude;
+            localSprite.vy += dy * localSprite.acceleration / magnitude;
         }
-        if (Math.abs(homerToTargetX) < Math.abs(homerToTargetY)) {
-            if (homerToTargetX < 0) {
-                normalizedHomerToTargetXRatio = -(Math.abs(homerToTargetX) / Math.abs(homerToTargetY));
-            } else {
-                normalizedHomerToTargetXRatio = Math.abs(homerToTargetX) / Math.abs(homerToTargetY);
-            }
-            if (homerToTargetY < 0) {
-                normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetY));
-            } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetY);
-            }
-        }
-        dx = normalizedHomerToTargetXRatio * localSprite.acceleration;    //scale the normalized ratio for the desired acceleration
-        dy = normalizedHomerToTargetYRatio * localSprite.acceleration;
-        localSprite.vx += dx;   //add the scaled vector to the homer's velocity
-        localSprite.vy += dy;
     }
     //rotation. Should there be an "isRotating" flag, ond only do this if it's true?
     localSprite.rotation += localSprite.rotationPerFrame;
@@ -218,28 +176,28 @@ function updateLocalSprite(localSprite) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
-    
+
     if (localSprite.type === TRIGGER_TYPE_SPAWN) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should probably just use it once.
             if (localSprite.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
-    
+
     if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.health++;
             localSprite.shouldBeRemoved = true;
         }
     }
-    
+
     if (localSprite.type === POWERUP_TYPE_AIRDASH) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;
             localSprite.shouldBeRemoved = true;
         }
     }
-    
+
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             //mainCharacter.vy -= 9;
