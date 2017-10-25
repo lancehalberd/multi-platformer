@@ -76,12 +76,12 @@ function updateActor(actor) {
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
     }
-    
+
     if (isPlayerCompelledByOctopusTouch(actor) && actor.grounded) {
             actor.vy -= 14;
     }
-    
-    
+
+
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
@@ -252,12 +252,12 @@ function moveSpriteInDirection(sprite, amount, direction) {
             switch(direction) {
                 case TILE_UP:
                 case TILE_DOWN:
-                    sprite.vx *= 0.3;
+                    sprite.vx *= 0.5;
                     break;
                 case TILE_LEFT:
                 case TILE_RIGHT:
-                    sprite.vy *= 0.3;
-                    sprite.currentNumberOfJumps = 1;
+                    sprite.vy *= 0.5;
+                    sprite.currentNumberOfJumps = 0;
                     sprite.currentJumpDuration = sprite.maxJumpDuration;
             }
         }
