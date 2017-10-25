@@ -81,8 +81,7 @@ function updateLocalSprite(localSprite) {
             localSprite.vy += dy * localSprite.acceleration / magnitude;
         }
     }
-    //rotation. Should there be an "isRotating" flag, ond only do this if it's true?
-    localSprite.rotation += localSprite.rotationPerFrame;
+    if (localSprite.rotationPerFrame) localSprite.rotation += localSprite.rotationPerFrame;
     //WRONG: Both bobbing and scale oscillation should have a nice sinusoid curve to them, but they're just linear right now.
     //bobbing
     if (localSprite.bobs) {
