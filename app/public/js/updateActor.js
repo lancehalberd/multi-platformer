@@ -17,8 +17,8 @@ function updateActor(actor) {
             sendPlayerAttacked();
         }
         // User normal scaling when checking if player is under ceiling.
-        actor.scale = 1.5;
-        actor.hitBox = rectangle(-18, -62, 36, 62);
+        actor.scale = 2;
+        actor.hitBox = rectangle(-20, -64, 40, 64);
         // Each frame we assume the player is standing at first, unless the ceiling is
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
@@ -85,8 +85,8 @@ function updateActor(actor) {
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
-        actor.scale = 0.75; //normal scale is 1.5, so this is half normal size. This affects visual representation only.
-        actor.hitBox = rectangle(-18, -31, 36, 31); //this represents collision. Only yScale is halved. xScale is normal.
+        actor.scale = 1; //normal scale is 2, so this is half normal size. This affects visual representation only.
+        actor.hitBox = rectangle(0, -32, 32, 32); //this represents collision. Only yScale is halved. xScale is normal.
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -117,6 +117,12 @@ function updateActor(actor) {
         actor.grounded = false;
         moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
     }
+    
+    if (actor.grounded && !actor.vx && !actor.attacking) {
+        actor.animation = actor.idleAnimation;
+        actor.idleFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.currentFrame = actor.idleFrame;
+    }
 
     // Rather than have the player get imperceptibly slower and slower, we just bring
     // them to a full stop once their speed is less than .5.
@@ -124,11 +130,14 @@ function updateActor(actor) {
 
     actor.vy++;
     if (!actor.grounded) {
-        actor.walkFrame = 1;
+        actor.animation = actor.walkAnimation;
+        actor.walkFrame = 2;
     }
     if (!actor.attacking) {
-        actor.animation = actor.walkAnimation;
-        actor.currentFrame = actor.walkFrame;
+        if (actor.vx) {
+            actor.animation = actor.walkAnimation;
+            actor.currentFrame = actor.walkFrame;
+        }
     } else {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;

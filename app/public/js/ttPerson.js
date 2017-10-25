@@ -132,8 +132,11 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = rectangle(-18, -63, 36, 63);
-        this.walkAnimation = walkAnimation(actorCanvas);
-        this.attackAnimation = attackAnimation(actorCanvas);
+        //this.walkAnimation = walkAnimation(actorCanvas);
+        //this.attackAnimation = attackAnimation(actorCanvas);
+        this.walkAnimation = characterMysteryWalkAnimation();
+        this.attackAnimation = characterMysteryAttackAnimation();
+        this.idleAnimation = characterMysteryIdleAnimation();
         this.animation = this.walkAnimation;
         this.skin = skin;
         this.hair = hair;
@@ -180,12 +183,15 @@ class TTCharacter {
             mainContext.globalAlpha = Math.max(0, 1 - (now() - this.deathTime) / 1000);
         } else if (this.invulnerableUntil && this.invulnerableUntil > now()) {
             // The character flashes transparent when they are invulnerable.
-            mainContext.globalAlpha = Math.cos((this.invulnerableUntil - now()) / 10) / 8 + .6;
+            mainContext.globalAlpha = Math.cos((this.invulnerableUntil - now()) / 10) / 8 + 0.6;
         }
         drawSprite(mainContext, this);
         mainContext.restore();
     }
 }
+
+var humanImage = requireImage('/gfx/person/personSprite.png'),
+characterMysteryImage = requireImage('/gfx/person/characterMystery.png');
 
 var mainCharacter;
 var otherCharacters = {};
@@ -196,6 +202,34 @@ function walkAnimation(actorCanvas) {
     var stepLeft = $.extend(rectangle(192, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [neutralFrame, stepRight, neutralFrame, stepLeft]};
 }
+
+function characterMysteryWalkAnimation() {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = rectangle(0, -32, 40, 64),
+    frames = [
+        $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+        $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox})
+    ];
+    return {frames};
+}
+
+function characterMysteryIdleAnimation() {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = rectangle(0, -32, 40, 64),
+    frames = [
+        $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+        $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+    ];
+    return {frames};
+}
+
+
 function attackAnimation(actorCanvas) {
     var hitBox = rectangle(36, 18, 24, 42);
     var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
@@ -203,7 +237,21 @@ function attackAnimation(actorCanvas) {
     var attackFrame = $.extend(rectangle(96 * 4, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [prepareFrame, attackFrame, prepareFrame, neutralFrame]};
 }
-var humanImage = requireImage('/gfx/person/personSprite.png');
+
+function characterMysteryAttackAnimation() {
+        var xSize = 32,
+        ySize = 32,
+        hitBox = rectangle(0, -32, 40, 64),
+        frames = [
+            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
+        ];
+        return {frames};
+}
+
 function initializeTTCharacter(playerData) {
     var actorCanvas = createEquippedActorSource(humanImage, playerData.skin, playerData.hair,
         [equipmentSources.leatherVest, equipmentSources.leatherPants, equipmentSources.leatherBoots, weaponSources[playerData.weapon]]
