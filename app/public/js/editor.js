@@ -5,7 +5,8 @@ const updateEditor = () => {
         isEditing = true;
     }
     if (!isEditing) return;
-    if (!mouseDown) {
+    // Trigger brush uses the right click to set the target
+    if (!mouseDown && currentBrush.type !== 'trigger') {
         if (rightMouseDown) {
             if (!cloneStartCoords) {
                 cloneStartCoords = getMouseCoords();
@@ -253,6 +254,82 @@ class ObjectBrush {
     }
 }
 
+var selectedTrigger = null, draggingTrigger = null;
+class TriggerBrush {
+
+    constructor(sourceTrigger) {
+        this.sourceTrigger = sourceTrigger;
+        // I'm just using this to prevent clone brush from activating
+        // when you right click while you have a trigger brush selected.
+        this.type = 'trigger';
+        this.wasMouseDown = false;
+    }
+
+    update() {
+        var mouseCoords = getMouseCoords();
+        var pixelMouseCoords = getPixelMouseCoords();
+        if (selectedTrigger && isKeyDown(KEY_BACK_SPACE)) {
+            localSprites.splice(localSprites.indexOf(selectedTrigger), 1);
+            selectedTrigger = null;
+        }
+        if (!this.wasMouseDown && mouseDown) {
+            var lastSelected = selectedTrigger, newSelectedTrigger;
+            localSprites.filter(sprite => sprite.type === TRIGGER_TYPE_FORCE || sprite.type === TRIGGER_TYPE_SPAWN)
+                .forEach(sprite => {
+                    if (isPointInRectObject(pixelMouseCoords[0], pixelMouseCoords[1], sprite.hitBox)) {
+                        newSelectedTrigger = sprite;
+                        return false;
+                    }
+                });
+            draggingTrigger = newSelectedTrigger;
+            if (lastSelected === newSelectedTrigger) {
+                selectedTrigger = null;
+            } else if (newSelectedTrigger) {
+                selectedTrigger = newSelectedTrigger;
+                currentBrush = new TriggerBrush(selectedTrigger);
+                currentBrush.wasMouseDown = true;
+            }
+        }
+        if (mouseDown) {
+            if (!objectStartCoords && !draggingTrigger) objectStartCoords = mouseCoords;
+            objectLastCoords = mouseCoords;
+        } else {
+            draggingTrigger = null;
+            if (objectStartCoords) {
+                var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
+                var hitBox = scaleRectangle(drawnRectangle, currentMap.tileSize);
+                if (!selectedTrigger) {
+                    selectedTrigger = this.makeNewTrigger();
+                    localSprites.push(selectedTrigger);
+                    selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                }
+                selectedTrigger.hitBox = hitBox;
+                objectStartCoords = null;
+            }
+        }
+        if (rightMouseDown && selectedTrigger) {
+            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+        }
+        this.wasMouseDown = mouseDown;
+    }
+
+    makeNewTrigger(hitBox) {
+        return this.sourceTrigger.clone();
+    }
+
+    renderPreview(target) {
+        if (selectedTrigger) selectedTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
+        else this.sourceTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
+    }
+
+    renderHUD(target) {
+        this.sourceTrigger.renderHUD(target);
+    }
+}
+
+
+var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
+
 var objectStartCoords, objectLastCoords;
 var drawingObjectRectangle;
 
@@ -263,6 +340,10 @@ var getMouseCoords = () => {
     return [Math.floor((targetPosition[0] + cameraX) / currentMap.tileSize),
             Math.floor((targetPosition[1] + cameraY) / currentMap.tileSize),
     ];
+}
+var getPixelMouseCoords = () => {
+    var targetPosition = relativeMousePosition(mainCanvas);
+    return [targetPosition[0] + cameraX, targetPosition[1] + cameraY];
 }
 // Disable context menu on the main canvas
 $('.js-mainCanvas').on('contextmenu', event => {
@@ -283,14 +364,20 @@ var brushList = [
     new ObjectBrush(spikesRight),
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),
+    new TriggerBrush(new SpawnTrigger(rectangle(0, 0, 32, 32), 2,
+            SPRITE_TYPE_HOMING_FIREBALL, 0, 0
+        )),
+    new TriggerBrush(new ForceTrigger(rectangle(0, 0, 32, 32), 0, FORCE_AMP, 1.15, 1.27)),
 ];
 var selectPreviousObject = () => {
     brushIndex = ((brushIndex || 0) + brushList.length - 1) % brushList.length;
     currentBrush = brushList[brushIndex];
+    selectedTrigger = null;
 }
 var selectNextObject = () => {
     brushIndex = ((brushIndex || 0) + 1) % brushList.length;
     currentBrush = brushList[brushIndex];
+    selectedTrigger = null;
 }
 $(document).on('keydown', e => {
     if (e.which === 219) selectPreviousObject(); // '['

@@ -1,9 +1,3 @@
-var TRIGGER_TYPE_FORCE = 'forceTrigger';
-var TRIGGER_TYPE_SPAWN = 'spawnTrigger';
-
-var FORCE_AMP = 'playerVelocityMultiplied';
-var FORCE_FIXED = 'fixedForceAddedToPlayer';
-
 var SPRITE_TYPE_HOMING_FIREBALL = 'homingFireball';
 var SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL = 'fireballContrailParticle';
 var SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION = 'fireballDetonationParticle';
@@ -77,59 +71,15 @@ class SimpleSprite {
 // removing the object
 function updateLocalSprite(localSprite) {
     if (localSprite.homing) { //homing behavior
-        //this homing code should be generalized to, like, function getNormalizedVectorFromAToB(objectA, objectB). Then it could be used to bounce the player away from something that's damaged it.
-        var homerToTargetX,  //these two vars are the difference, in x/y values, between the homer's position and its target's position,
-        homerToTargetY,        //phrased so that they could be added to the homer's coordinates in order to overlap the target's.
-        normalizedHomerToTargetXRatio,    //these two vars will turn that vector into a normalized ratio. Actually, sometimes one of the numbers is over 1 right now, but it still works, I *think.*
-        normalizedHomerToTargetYRatio,
-        homerX = localSprite.x,
-        homerY = localSprite.y,
-        targetX = localSprite.target.x,
-        targetY = localSprite.target.y,
-        dx,
-        dy;
-        //finding values for homerToTargetX and homerToTargetY.
-        if ((homerX < targetX && homerX >= 0 && targetX > 0) || (homerX > targetX && homerX > 0 && targetX >= 0) || (homerX > targetX && homerX <= 0 && targetX < 0) || (homerX === targetX)) homerToTargetX = targetX - homerX;
-        if (homerX < targetX && homerX <= 0 && targetX >= 0) homerToTargetX = Math.abs(homerX) + Math.abs(targetX);
-        if (homerX < targetX && homerX < 0 && targetX <= 0) homerToTargetX = Math.abs(homerX) - Math.abs(targetX);
-        if (homerX > targetX && homerX > 0 && targetX < 0) homerToTargetX = -(Math.abs(homerX) + Math.abs(targetX));
-        if ((homerY < targetY && homerY >= 0 && targetY > 0) || (homerY > targetY && homerY > 0 && targetY >= 0) || (homerY > targetY && homerY <= 0 && targetY < 0) || (homerY === targetY)) homerToTargetY = targetY - homerY;
-        if (homerY < targetY && homerY <= 0 && targetY >= 0) homerToTargetY = Math.abs(homerY) + Math.abs(targetY);
-        if (homerY < targetY && homerY < 0 && targetY <= 0) homerToTargetY = Math.abs(homerY) - Math.abs(targetY);
-        if (homerY > targetY && homerY > 0 && targetY < 0) homerToTargetY = -(Math.abs(homerY) + Math.abs(targetY));
-        //making a normalized ratio out of homerToTargetX and homerToTargetY's relationship
-        //NO DIVIDE BY ZERO PROTECTION HERE!!!
-        if (Math.abs(homerToTargetX) > Math.abs(homerToTargetY)) {
-            if (homerToTargetX < 0) {
-                normalizedHomerToTargetXRatio = -(Math.abs(homerToTargetX) / Math.abs(homerToTargetX));
-            } else {
-                normalizedHomerToTargetXRatio = Math.abs(homerToTargetX) / Math.abs(homerToTargetX);
-            }
-            if (homerToTargetY < 0) {
-                normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetX));
-            } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetX);
-            }
+        var dx = localSprite.target.x - localSprite.x;
+        var dy = localSprite.target.y - localSprite.y;
+        var magnitude = Math.sqrt(dx * dx + dy * dy);
+        if (magnitude > 0) {
+            localSprite.vx += dx * localSprite.acceleration / magnitude;
+            localSprite.vy += dy * localSprite.acceleration / magnitude;
         }
-        if (Math.abs(homerToTargetX) < Math.abs(homerToTargetY)) {
-            if (homerToTargetX < 0) {
-                normalizedHomerToTargetXRatio = -(Math.abs(homerToTargetX) / Math.abs(homerToTargetY));
-            } else {
-                normalizedHomerToTargetXRatio = Math.abs(homerToTargetX) / Math.abs(homerToTargetY);
-            }
-            if (homerToTargetY < 0) {
-                normalizedHomerToTargetYRatio = -(Math.abs(homerToTargetY) / Math.abs(homerToTargetY));
-            } else {
-                normalizedHomerToTargetYRatio = Math.abs(homerToTargetY) / Math.abs(homerToTargetY);
-            }
-        }
-        dx = normalizedHomerToTargetXRatio * localSprite.acceleration;    //scale the normalized ratio for the desired acceleration
-        dy = normalizedHomerToTargetYRatio * localSprite.acceleration;
-        localSprite.vx += dx;   //add the scaled vector to the homer's velocity
-        localSprite.vy += dy;
     }
-    //rotation. Should there be an "isRotating" flag, ond only do this if it's true?
-    localSprite.rotation += localSprite.rotationPerFrame;
+    if (localSprite.rotationPerFrame) localSprite.rotation += localSprite.rotationPerFrame;
     //WRONG: Both bobbing and scale oscillation should have a nice sinusoid curve to them, but they're just linear right now.
     //bobbing
     if (localSprite.bobs) {
@@ -226,28 +176,28 @@ function updateLocalSprite(localSprite) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
-    
+
     if (localSprite.type === TRIGGER_TYPE_SPAWN) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should just use it once.
             if (localSprite.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
-    
+
     if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.health++;
             localSprite.shouldBeRemoved = true;
         }
     }
-    
+
     if (localSprite.type === POWERUP_TYPE_AIRDASH) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;
             localSprite.shouldBeRemoved = true;
         }
     }
-    
+
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
@@ -297,16 +247,20 @@ powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
 creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
 
-function addHomingFireballSprite(xPosition, yPosition, target) {    //looks like the contrail particles are beneath the fireball (apparent when it's not moving). This needs to be fixed for other (i.e. pacing) fireballs as well. Maybe contrail particles should rise slightly, and detonation particles fall?
-    var hitBox = rectangle(0, 0, 32, 32);
-    var frames = [
+
+var hitBox = rectangle(0, 0, 32, 32);
+var fireballAnimation = {
+    frames: [
         $.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(1 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(2 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
         $.extend(rectangle(3 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-        $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox})
-    ];
-    var homingFireballSprite = new SimpleSprite({frames}, xPosition, yPosition, 0, 0, 1.5, 1.5);
+        $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
+    ]
+};
+
+function addHomingFireballSprite(xPosition, yPosition, target) {
+    var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = SPRITE_TYPE_HOMING_FIREBALL;
     homingFireballSprite.homing = true;
     homingFireballSprite.collides = true;
@@ -549,23 +503,23 @@ function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls)
     var xSize = 32,
     ySize = 32,
     scaledXSize = xScale * xSize,
-    scaledYSize = yScale * ySize,
+    scaledYSize = yScale * ySize;
     hitBox = rectangle(x - (scaledXSize / 2), y - (scaledYSize / 2), scaledXSize, scaledYSize);
     powerup.type = powerupType;
-    powerup.xScale = xScale,
-    powerup.yScale = yScale,
-    powerup.hitBox = hitBox,
-    powerup.scaleOscillation = true,
-    powerup.xScaleMin = 0.875,
-    powerup.yScaleMin = 0.875,
-    powerup.xScaleMax = 1.125,
-    powerup.yScaleMax = 1.125,
-    powerup.xScalePerFrame = 0.008,
-    powerup.yScalePerFrame = 0.008,
-    powerup.bobs = true,
-    powerup.bobHeightPerFrame = 0.67,
-    powerup.bobMaxY = 12,
-    powerup.originalY = y,
+    powerup.xScale = xScale;
+    powerup.yScale = yScale;
+    powerup.hitBox = hitBox;
+    powerup.scaleOscillation = true;
+    powerup.xScaleMin = 0.875;
+    powerup.yScaleMin = 0.875;
+    powerup.xScaleMax = 1.125;
+    powerup.yScaleMax = 1.125;
+    powerup.xScalePerFrame = 0.008;
+    powerup.yScalePerFrame = 0.008;
+    powerup.bobs = true;
+    powerup.bobHeightPerFrame = 0.67;
+    powerup.bobMaxY = 12;
+    powerup.originalY = y;
     powerup.framesToLive = 32767;
 /*    if (falls) {          //for powerups to fall and settle on the ground, they'd need geometry collision, which I don't want to tackle right now.
         powerup.vy += 5;    //for some reason this line wasn't working.

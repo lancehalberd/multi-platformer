@@ -26,14 +26,6 @@ setInterval(() => {
     ) {
         sprite.update(sprite);
     }
-
-    if (localSprites.length === 0 && isKeyDown('F'.charCodeAt(0))) {
-        // addHomingFireballSprite(350, 700, mainCharacter);
-        addSpawnTrigger(0, 800, 64, 200, 3, mainCharacter, SPRITE_TYPE_HOMING_FIREBALL, 250, -150);
-    }
-    if (localSprites.length === 0 && isKeyDown('E'.charCodeAt(0))) {
-        addForceTrigger(1200, 800, 200, 200, 0, mainCharacter, FORCE_AMP, 1, 1.27);
-    }
     if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
         addPowerup(150, 750, POWERUP_TYPE_HEART, 1, 1, 0, true);
     }
