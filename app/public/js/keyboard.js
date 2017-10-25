@@ -53,6 +53,7 @@ function isKeyDown(keyCode) {
 
 
 $(document).on('keydown', event => {
+    //console.log(event.which);
     // Don't process this if the key is already down.
     if (physicalKeysDown[event.which]) return;
     physicalKeysDown[event.which] = true;
