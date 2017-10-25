@@ -70,7 +70,7 @@ function updateActor(actor) {
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
         if (isKeyDown(KEY_RIGHT)) dx++;
-        if (actor.slipping || actor.stuck) actor.vx += 0.1 * dx;
+        if (actor.slipping) actor.vx += 0.1 * dx;
         else if (actor.isCrouching) actor.vx += dx / 2;
         else if (actor.grounded) actor.vx += dx;
         else actor.vx += dx / 1.5;

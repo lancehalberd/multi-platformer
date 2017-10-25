@@ -102,6 +102,8 @@ var updateTileIfDifferent = (coords, tileSource) => {
     }
 }
 
+var onMap = (row, column) => row >= 0 && row < currentMap.height && column >= 0 && column < currentMap.width;
+
 class CloneBrush {
 
     constructor(tileGrid) {
@@ -122,7 +124,9 @@ class CloneBrush {
         // currently on the map.
         if (this.released && mouseDown) {
             this.forEachTile(getMouseCoords(), (tileSource, tileRow, tileColumn) => {
-                updateTileIfDifferent([tileColumn, tileRow], tileSource);
+                if (onMap(tileRow, tileColumn)) {
+                    updateTileIfDifferent([tileColumn, tileRow], tileSource);
+                }
             });
         }
         this.released = !mouseDown;
