@@ -1,6 +1,4 @@
-var SPRITE_TYPE_HOMING_FIREBALL = 'homingFireball';
-var SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL = 'fireballContrailParticle';
-var SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION = 'fireballDetonationParticle';
+var PROJECTILE_TYPE_HOMING_FIREBALL = 'homingFireball';
 
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIRDASH = 'airDash';
@@ -8,6 +6,11 @@ var POWERUP_TYPE_AIRDASH = 'airDash';
 var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
 var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
+
+var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
+var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
+var PARTICLE_TYPE_TELEPORTER_IDLING = 'teleporterIdlingParticle';
+var PARTICLE_TYPE_TELEPORTER_TELEPORTING = 'teleporterTeleportingParticle';
 
 var NO_TARGET = 'targetIsNoTarget';
 
@@ -112,7 +115,7 @@ function updateLocalSprite(localSprite) {
     //WRONG: TOO SPECIFIC TO FIREBALL RIGHT NOW. It seems like you could give addSprite functions a bunch of new parameters to fix this, but that seems messy, as a lot of sprites won't have contrails.
     if (localSprite.hasContrail === true) {
         if (localSprite.contrailTimer >= localSprite.framesBetweenContrailParticles) {
-            addFireballParticle(localSprite, 30, 32, 32, SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL);
+            addParticle(localSprite, 30, 32, 32, PARTICLE_TYPE_FIREBALL_CONTRAIL);
             localSprite.contrailTimer = 0;
         } else {
             localSprite.contrailTimer++;
@@ -179,7 +182,7 @@ function updateLocalSprite(localSprite) {
 
     if (localSprite.type === TRIGGER_TYPE_SPAWN) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should just use it once.
-            if (localSprite.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
+            if (localSprite.spawnedObjectType === PROJECTILE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
     }
@@ -217,7 +220,7 @@ function updateLocalSprite(localSprite) {
         }
     }
 
-    if (localSprite.type === SPRITE_TYPE_HOMING_FIREBALL) {
+    if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
         var fireballHitBox = getGlobalSpriteHitBox(localSprite);
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
@@ -231,7 +234,7 @@ function updateLocalSprite(localSprite) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
     }
-    if (localSprite.shouldBeRemoved && localSprite.type === SPRITE_TYPE_HOMING_FIREBALL) addFireballDetonation(localSprite, 10, 32, 32); //WRONG: don't know why this (following) isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
+    if (localSprite.shouldBeRemoved && localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) addFireballDetonation(localSprite, 10, 32, 32); //WRONG: don't know why this (following) isn't working for the rest of this line (starting after '10,'): getGlobalSpriteHitBox(localSprites[i]).width, getLocalSpriteHitBox(localSprites[i].height));
 }
 //remove the sprite from the array of local sprites after it has used up all of its frames.
 function removeFinishedLocalSprites() {
@@ -261,7 +264,7 @@ var fireballAnimation = {
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
-    homingFireballSprite.type = SPRITE_TYPE_HOMING_FIREBALL;
+    homingFireballSprite.type = PROJECTILE_TYPE_HOMING_FIREBALL;
     homingFireballSprite.homing = true;
     homingFireballSprite.collides = true;
     homingFireballSprite.removedOnCollision = true;
@@ -380,7 +383,7 @@ function addCreature(x, y, target, creatureType) {
 }
 
 
-function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
+function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
     var hitBox = rectangle(0, 0, 8, 8);
     var frames = [
         $.extend(rectangle(0 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
@@ -402,41 +405,44 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
     } else {
         randomY = Math.round(parent.y - ((Math.random() * parent.yScale * parentPreScalingYSize) / 2));
     }
-    var fireballParticle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
-    fireballParticle.type = type;
-    fireballParticle.framesToLive = decayFrames;
-    fireballParticle.scaleOscillation = true;
-    fireballParticle.xScalePerFrame = fireballParticle.xScale / fireballParticle.framesToLive;
-    fireballParticle.yScalePerFrame = fireballParticle.yScale / fireballParticle.framesToLive;
-    fireballParticle.xScaleMin = 0;
-    fireballParticle.yScaleMin = 0;
-    fireballParticle.rotationPerFrame = 50;
-    //fireballParticle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
-    //parent.contrailParticles.push(fireballParticle);
-    if (fireballParticle.type === SPRITE_TYPE_FIREBALL_PARTICLE_CONTRAIL) localSprites.push(fireballParticle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
-    if (fireballParticle.type === SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION) {
+    var particle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
+    particle.type = type;
+    particle.framesToLive = decayFrames;
+    particle.scaleOscillation = true;
+    particle.xScalePerFrame = particle.xScale / particle.framesToLive;
+    particle.yScalePerFrame = particle.yScale / particle.framesToLive;
+    particle.xScaleMin = 0;
+    particle.yScaleMin = 0;
+    particle.rotationPerFrame = 50;
+    //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
+    //parent.contrailParticles.push(particle);
+    if (particle.type === PARTICLE_TYPE_FIREBALL_CONTRAIL) {
+        particle.vy = -3;
+        localSprites.push(particle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+    }
+    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {
         var randomVX,
         randomVY;
         if (Math.random() < 0.5) {
-            randomVX = -(Math.random() * 50);
+            randomVX = -(Math.random() * 5);
         } else {
-            randomVX = Math.random() * 50;
+            randomVX = Math.random() * 5;
         }
         if (Math.random() < 0.5) {
-            randomVY = -(Math.random() * 50);
+            randomVY = -(Math.random() * 3);
         } else {
-            randomVY = Math.random() * 50;
+            randomVY = Math.random() * 3;
         }
-        fireballParticle.vx = randomVX;     //BROKEN: I'm not seeing these detonation particles move how they should.
-        fireballParticle.vy = randomVY -4;  //can't see how much rising this is.
-        localSprites.push(fireballParticle);
+        particle.vx = randomVX;
+        particle.vy = randomVY + 2;
+        localSprites.push(particle);
     }
 }
 
 function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
     var detonationParticles = [];
     for (var i = 0; i < numberOfFragments; i++) {
-        var newParticle = addFireballParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, SPRITE_TYPE_FIREBALL_PARTICLE_DETONATION);
+        var newParticle = addParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_FIREBALL_COLLISION);
         detonationParticles.push(newParticle);
     }
     for (var j = 0; j < detonationParticles.length; j++) {
