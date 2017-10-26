@@ -26,7 +26,6 @@ setInterval(() => {
     ) {
         sprite.update(sprite);
     }
-
     if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
         addPowerup(150, 750, POWERUP_TYPE_HEART, 1, 1, 0, true);
     }
@@ -35,6 +34,9 @@ setInterval(() => {
     }
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
+    }
+    if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
+        addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
     }
     removeFinishedLocalSprites();
 

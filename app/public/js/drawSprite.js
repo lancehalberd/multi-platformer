@@ -4,11 +4,13 @@ function drawSprite(context, sprite) {
     // is being displayed correctly relative to the hitbox.
     // This will need to be updated for sprites that do not
     // have hitBox set on them directly as a property.
-    /*draw.fillRectangle(mainContext, rectangle(
-        sprite.x + sprite.hitBox.left,
-        sprite.y + sprite.hitBox.top,
-        sprite.hitBox.width,
-        sprite.hitBox.height), 'red');*/
+    if (isKeyDown('Y'.charCodeAt(0))) {
+        draw.fillRectangle(mainContext, rectangle(
+            sprite.x + sprite.hitBox.left,
+            sprite.y + sprite.hitBox.top,
+            sprite.hitBox.width,
+            sprite.hitBox.height), 'red');
+        }
     var scale = ifdefor(sprite.scale, 1);
     drawFrameTo(context,
         sprite.animation.frames[sprite.currentFrame],

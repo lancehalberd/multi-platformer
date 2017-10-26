@@ -6,6 +6,10 @@ var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIRDASH = 'airDash';
 
 var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
+var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
+var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
+
+var NO_TARGET = 'targetIsNoTarget';
 
 
 class SimpleSprite {
@@ -20,7 +24,7 @@ class SimpleSprite {
         this.homing = false;
         this.target = {x: 0, y: 0};
         this.acceleration = 0;
-        this.maxSpeed = 0;
+        this.maxSpeed = 32767;
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.currentFrame = 0;
@@ -131,27 +135,30 @@ function updateLocalSprite(localSprite) {
     localSprite.currentFrame = Math.floor(now() / localSprite.msBetweenFrames) % localSprite.animation.frames.length;
 
     //geomtry collision checks
-    //BROKEN: if something.collides, but it !removedOnCollision, it doesn't behave well.
-    //  But I'm going to leave this structure in place because I think the behavior can be updated.
+    //if something.collides, but !it.removedOnCollision && it.pacing, it reverses at it.speed
     if (localSprite.vx && localSprite.collides) {
         if (localSprite.vx < 0) {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT))) {
+            if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+                if (localSprite.pacing) localSprite.vx = localSprite.xSpeed;
             }
         } else {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT))) {
+            if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+                if (localSprite.pacing) localSprite.vx = -localSprite.xSpeed;
             }
         }
     }
     if (localSprite.vy && localSprite.collides) {
         if (localSprite.vy < 0) {
-            if (!(moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP))) {
+            if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+                if (localSprite.pacing) localSprite.vy = localSprite.ySpeed;
             }
         } else {
             if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
+                if (localSprite.pacing) localSprite.vy = -localSprite.ySpeed;
             }
         }
     }
@@ -171,7 +178,7 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === TRIGGER_TYPE_SPAWN) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should probably just use it once.
+        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should just use it once.
             if (localSprite.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
         }
@@ -193,9 +200,20 @@ function updateLocalSprite(localSprite) {
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            //mainCharacter.vy -= 9;
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
+        }
+    }
+    
+    if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
+        if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && mainCharacter.invulnerableUntil < now()) {
+            var randomVXBoost;
+            //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
+            mainCharacter.vy = -15; //player pops upward if hit
+            if (Math.random() > 0.5) randomVXBoost = Math.random() * 8;   //player gets a random vx if hit.
+            else randomVXBoost = Math.random() * -8;
+            mainCharacter.vx += randomVXBoost;
+            damageSprite(mainCharacter, 1);
         }
     }
 
@@ -229,6 +247,7 @@ powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
 creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
 
+
 var hitBox = rectangle(0, 0, 32, 32);
 var fireballAnimation = {
     frames: [
@@ -247,16 +266,16 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.collides = true;
     homingFireballSprite.removedOnCollision = true;
     homingFireballSprite.target = target;
-    homingFireballSprite.maxSpeed = 3.5;
-    homingFireballSprite.acceleration = 0.8;
+    homingFireballSprite.maxSpeed = 1.4;
+    homingFireballSprite.acceleration = 0.5;
     homingFireballSprite.framesToLive = 1000;
     homingFireballSprite.msBetweenFrames = 50;
     homingFireballSprite.rotationPerFrame = 5;
     homingFireballSprite.scaleOscillation = true;
-    homingFireballSprite.xScaleMax = 1.75;
-    homingFireballSprite.xScaleMin = 1.25;
-    homingFireballSprite.yScaleMax = 1.75;
-    homingFireballSprite.yScaleMin = 1.25;
+    homingFireballSprite.xScaleMax = 1.33;
+    homingFireballSprite.xScaleMin = 1;
+    homingFireballSprite.yScaleMax = 1.33;
+    homingFireballSprite.yScaleMin = 1;
     homingFireballSprite.xScalePerFrame = 0.01;
     homingFireballSprite.yScalePerFrame = 0.01;
     homingFireballSprite.hasContrail = true;
@@ -265,17 +284,28 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
 }
 
 function addCreature(x, y, target, creatureType) {
-    if (creatureType === CREATURE_TYPE_ADORABILIS) {
-        var xSize = 32,
-        ySize = 32,
-        xScale = 2.5,
-        yScale = 2.5,
-        scaledXSize = xSize * xScale,
-        scaledYSize = ySize * yScale,
+        var xSize,
+        ySize,
+        xScale,
+        yScale,
+        scaledXSize,
+        scaledYSize,
         //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
         //scaledCenteredTop = y - (scaledYSize / 2),
         //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
-        hitBox = rectangle(-24, -56, 80, 80),   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
+        hitBox,   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
+        frames = [];
+    if (creatureType === CREATURE_TYPE_ADORABILIS) {
+        xSize = 32;
+        ySize = 32;
+        xScale = 2.5;
+        yScale = 2.5;
+        scaledXSize = xSize * xScale;
+        scaledYSize = ySize * yScale;
+        //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
+        //scaledCenteredTop = y - (scaledYSize / 2),
+        //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
+        hitBox = rectangle(-24, -56, 80, 80);   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
         frames = [
             $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
             $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
@@ -285,21 +315,67 @@ function addCreature(x, y, target, creatureType) {
             $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
             $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
             $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
+            $.extend(rectangle(8 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox})
         ];
-        var creatureSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
-        creatureSprite.type = creatureType;
-        creatureSprite.homing = true;
-        creatureSprite.collides = false; //should be true when there's better collision behavior in place. Probably.
-        creatureSprite.target = target;
-        creatureSprite.maxSpeed = 0.8;
-        creatureSprite.acceleration = 0.1;
-        creatureSprite.notReadyToTriggerUntil = now();
-        creatureSprite.durationOfTouchEffectInMS = 5000;
-        creatureSprite.framesToLive = 32767;
-        creatureSprite.msBetweenFrames = 85;
-        creatureSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
-        localSprites.push(creatureSprite);
+        var adorabilisSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+        adorabilisSprite.type = creatureType;
+        adorabilisSprite.homing = true;
+        adorabilisSprite.collides = false; //should be true when there's better collision behavior in place. Probably.
+        adorabilisSprite.target = target;
+        adorabilisSprite.maxSpeed = 0.8;
+        adorabilisSprite.acceleration = 0.1;
+        adorabilisSprite.notReadyToTriggerUntil = now();
+        adorabilisSprite.durationOfTouchEffectInMS = 5000;
+        adorabilisSprite.framesToLive = 32767;
+        adorabilisSprite.msBetweenFrames = 85;
+        adorabilisSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
+        localSprites.push(adorabilisSprite);
+    }
+    if (creatureType === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
+        xSize = 32;
+        ySize = 32;
+        xScale = 1.5;
+        yScale = 1.5;
+        scaledXSize = xSize * xScale;
+        scaledYSize = ySize * yScale;
+        //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
+        //scaledCenteredTop = y - (scaledYSize / 2),
+        //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
+        hitBox = rectangle(0, 0, 32, 32);   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
+        frames = [
+            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
+        ];
+        var pacingFireballSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+        pacingFireballSprite.type = creatureType;
+        pacingFireballSprite.collides = true;
+        pacingFireballSprite.pacing = true;
+        if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
+            pacingFireballSprite.xSpeed = 1.75;
+            pacingFireballSprite.ySpeed = 0;
+        }
+        if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
+            pacingFireballSprite.xSpeed = 0;
+            pacingFireballSprite.ySpeed = 1.75;
+        }
+        pacingFireballSprite.vx = pacingFireballSprite.xSpeed;
+        pacingFireballSprite.vy = pacingFireballSprite.ySpeed;
+        pacingFireballSprite.framesToLive = 32767;
+        pacingFireballSprite.msBetweenFrames = 50;
+        pacingFireballSprite.rotationPerFrame = 5;
+        pacingFireballSprite.scaleOscillation = true;
+        pacingFireballSprite.xScaleMax = 1.75;
+        pacingFireballSprite.xScaleMin = 1.25;
+        pacingFireballSprite.yScaleMax = 1.75;
+        pacingFireballSprite.yScaleMin = 1.25;
+        pacingFireballSprite.xScalePerFrame = 0.01;
+        pacingFireballSprite.yScalePerFrame = 0.01;
+        pacingFireballSprite.hasContrail = true;
+        pacingFireballSprite.framesBetweenContrailParticles = 3;
+        localSprites.push(pacingFireballSprite);
     }
 }
 
@@ -352,7 +428,7 @@ function addFireballParticle(parent, decayFrames, parentPreScalingXSize, parentP
             randomVY = Math.random() * 50;
         }
         fireballParticle.vx = randomVX;     //BROKEN: I'm not seeing these detonation particles move how they should.
-        fireballParticle.vy = randomVY + 4;
+        fireballParticle.vy = randomVY -4;  //can't see how much rising this is.
         localSprites.push(fireballParticle);
     }
 }
@@ -427,23 +503,23 @@ function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls)
     var xSize = 32,
     ySize = 32,
     scaledXSize = xScale * xSize,
-    scaledYSize = yScale * ySize,
+    scaledYSize = yScale * ySize;
     hitBox = rectangle(x - (scaledXSize / 2), y - (scaledYSize / 2), scaledXSize, scaledYSize);
     powerup.type = powerupType;
-    powerup.xScale = xScale,
-    powerup.yScale = yScale,
-    powerup.hitBox = hitBox,
-    powerup.scaleOscillation = true,
-    powerup.xScaleMin = 0.875,
-    powerup.yScaleMin = 0.875,
-    powerup.xScaleMax = 1.125,
-    powerup.yScaleMax = 1.125,
-    powerup.xScalePerFrame = 0.008,
-    powerup.yScalePerFrame = 0.008,
-    powerup.bobs = true,
-    powerup.bobHeightPerFrame = 0.67,
-    powerup.bobMaxY = 12,
-    powerup.originalY = y,
+    powerup.xScale = xScale;
+    powerup.yScale = yScale;
+    powerup.hitBox = hitBox;
+    powerup.scaleOscillation = true;
+    powerup.xScaleMin = 0.875;
+    powerup.yScaleMin = 0.875;
+    powerup.xScaleMax = 1.125;
+    powerup.yScaleMax = 1.125;
+    powerup.xScalePerFrame = 0.008;
+    powerup.yScalePerFrame = 0.008;
+    powerup.bobs = true;
+    powerup.bobHeightPerFrame = 0.67;
+    powerup.bobMaxY = 12;
+    powerup.originalY = y;
     powerup.framesToLive = 32767;
 /*    if (falls) {          //for powerups to fall and settle on the ground, they'd need geometry collision, which I don't want to tackle right now.
         powerup.vy += 5;    //for some reason this line wasn't working.
