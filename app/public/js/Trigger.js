@@ -1,5 +1,6 @@
 var TRIGGER_TYPE_FORCE = 'forceTrigger';
 var TRIGGER_TYPE_SPAWN = 'spawnTrigger';
+var TRIGGER_TYPE_TELEPORTER = 'teleporter'
 
 var FORCE_AMP = 'playerVelocityMultiplied';
 var FORCE_FIXED = 'fixedForceAddedToPlayer';
@@ -120,7 +121,7 @@ class SpawnTrigger extends Trigger {
     }
 
     trigger() {
-        if (this.spawnedObjectType === SPRITE_TYPE_HOMING_FIREBALL) {
+        if (this.spawnedObjectType === PROJECTILE_TYPE_HOMING_FIREBALL) {
             addHomingFireballSprite(this.spawnX, this.spawnY, mainCharacter);
         }
     }
@@ -139,6 +140,51 @@ class SpawnTrigger extends Trigger {
             // Draw a fireball clip where the fireball will spawn.
             draw.image(mainContext, frame.image, frame,
                 rectangleByCenter(this.spawnX, this.spawnY, frame.width, frame.height)
+            );
+        }
+    }
+
+    renderHUD(target) {
+        // We should update this to draw the spawned object eventually.
+        var frame = getAnimationFrame(fireballAnimation.frames, 5);
+        draw.image(mainContext, frame.image, frame, target);
+    }
+}
+
+class TeleporterTrigger extends Trigger {
+
+    constructor(hitBox, cooldownInSeconds, destinationX, destinationY) {
+        super(TRIGGER_TYPE_TELEPORTER, hitBox, cooldownInSeconds);
+        this.destinationX = destinationX;
+        this.destinationY = destinationY;
+        this.color = 'blue';
+    }
+
+    clone() {
+        return new TeleporterTrigger($.extend({}, this.hitBox),
+            this.cooldownInSeconds, this.destinationX, this.destinationY
+        );
+    }
+
+    trigger() {
+        mainCharacter.x = this.destinationX;
+        mainCharacter.y = this.destinationY;
+    }
+
+    // Methods used by editor:
+    setTarget(x, y) {
+        this.destinationX = x;
+        this.destinationY = y;
+    }
+    
+        renderPreview(target, startCoords, lastCoords) {
+        super.renderPreview(target);
+        if (selectedTrigger === this) {
+            // We should update this to draw the spawned object eventually.
+            var frame = getAnimationFrame(fireballAnimation.frames, 5);
+            // Draw a fireball clip where the fireball will spawn.
+            draw.image(mainContext, frame.image, frame,
+                rectangleByCenter(this.destinationX, this.destinationY, frame.width, frame.height)
             );
         }
     }
