@@ -258,6 +258,9 @@ function scaleRectangle(rect, scale) {
 function rectangleCenter(rectangle) {
     return [rectangle.left + rectangle.width / 2, rectangle.top + rectangle.height / 2];
 }
+function translateRectangle(rect, dx, dy) {
+    return rectangle(rect.left + dx, rect.top + dy, rect.width, rect.height);
+}
 function rectangleFromPoints(A, B) {
     var left = Math.min(A.x, B.x);
     var top = Math.min(A.y, B.y);

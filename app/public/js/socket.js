@@ -17,6 +17,7 @@ socket.addEventListener('message', event => {
         privateId = data.privateId;
         publicId = data.publicId;
         mainCharacter.id = publicId;
+        mainCharacter.color = data.color;
         for (var id in data.players) {
             if (id === publicId) continue;
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
@@ -26,6 +27,8 @@ socket.addEventListener('message', event => {
         setTaggedId(publicId);
         return;
     }
+    // Don't process any messages from the server until we have the character data.
+    if (!privateId) return;
     if (data.playerJoined) {
         otherCharacters[data.playerJoined.id] = initializeTTCharacter(data.playerJoined);
         setTaggedId(data.playerJoined.id);

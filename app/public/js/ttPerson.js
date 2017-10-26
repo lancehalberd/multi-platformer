@@ -132,8 +132,9 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = rectangle(-18, -63, 36, 63);
-        //this.walkAnimation = walkAnimation(actorCanvas);
-        //this.attackAnimation = attackAnimation(actorCanvas);
+        /*this.walkAnimation = walkAnimation(actorCanvas);
+        this.attackAnimation = attackAnimation(actorCanvas);
+        this.idleAnimation = walkAnimation(actorCanvas);*/
         this.walkAnimation = characterMysteryWalkAnimation();
         this.attackAnimation = characterMysteryAttackAnimation();
         this.idleAnimation = characterMysteryIdleAnimation();
@@ -150,6 +151,7 @@ class TTCharacter {
         this.airDashed = false; //if player has airDashed, they won't be able to airDash again until after they've grounded.
         this.isCrouching = false; //is crouched or not
         this.weapon = weapon;
+        this.color = 'white';
     }
 
     jump() {
@@ -161,7 +163,7 @@ class TTCharacter {
             this.applyJumpVelocity();
         }
     }
-        
+
 
     // Apply the jump velocity to the actor for a single frame.
     applyJumpVelocity() {
@@ -181,17 +183,27 @@ class TTCharacter {
         if (this.deathTime) {
             // The player fades to invisible before respawning when they die.
             mainContext.globalAlpha = Math.max(0, 1 - (now() - this.deathTime) / 1000);
-        } else if (this.invulnerableUntil && this.invulnerableUntil > now()) {
+        } else if (this.invulnerableUntil > now() || this.untaggableUntil > now()) {
             // The character flashes transparent when they are invulnerable.
             mainContext.globalAlpha = Math.cos((this.invulnerableUntil - now()) / 10) / 8 + 0.6;
         }
         drawSprite(mainContext, this);
         mainContext.restore();
     }
+
+    renderFrame(context, frame, target) {
+        if (taggedId === this.id) {
+            var frame = getAnimationFrame(fireballAnimation.frames, 5);
+        }
+        draw.solidTintedImage(context, frame.image, this.color, frame, target);
+        draw.image(context, frame.image, translateRectangle(frame, 0, frame.height), target);
+    }
 }
 
-var humanImage = requireImage('/gfx/person/personSprite.png'),
-characterMysteryImage = requireImage('/gfx/person/characterMystery.png');
+
+
+var humanImage = requireImage('/gfx/person/personSprite.png');
+var characterMysteryImage = requireImage('/gfx/person/characterMystery.png');
 
 var mainCharacter;
 var otherCharacters = {};
@@ -208,7 +220,7 @@ function characterMysteryWalkAnimation() {
     ySize = 32,
     hitBox = rectangle(-4, -32, 40, 64),
     frames = [
-        $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+        $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
         $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
         $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
         $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox})
@@ -221,10 +233,10 @@ function characterMysteryIdleAnimation() {
     ySize = 32,
     hitBox = rectangle(-4, -32, 40, 64),
     frames = [
-        $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+        $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
         $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
         $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}), 
+        $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
     ];
     return {frames};
 }

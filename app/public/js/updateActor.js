@@ -8,6 +8,9 @@ function updateActor(actor) {
         else if (actor.grounded) actor.vx *= 0.8;
         else actor.vx *= 0.9;
     }
+    // User normal scaling when checking if player is under ceiling.
+    actor.scale = 2;
+    actor.hitBox = rectangle(-20, -64, 40, 64);
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -16,9 +19,6 @@ function updateActor(actor) {
             actor.attackTime = now();
             sendPlayerAttacked();
         }
-        // User normal scaling when checking if player is under ceiling.
-        actor.scale = 2;
-        actor.hitBox = rectangle(-20, -64, 40, 64);
         // Each frame we assume the player is standing at first, unless the ceiling is
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
@@ -86,7 +86,7 @@ function updateActor(actor) {
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
         actor.scale = 1; //normal scale is 2, so this is half normal size. This affects visual representation only.
-        actor.hitBox = rectangle(0, -32, 32, 32); //this represents collision. Only yScale is halved. xScale is normal.
+        actor.hitBox = rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -117,7 +117,7 @@ function updateActor(actor) {
         actor.grounded = false;
         moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
     }
-    
+
     if (actor.grounded && !actor.vx && !actor.attacking) {
         actor.animation = actor.idleAnimation;
         actor.idleFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;

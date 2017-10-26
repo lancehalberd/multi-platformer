@@ -7,6 +7,8 @@ var mustache = require('mustache');
 var _ = require('lodash');
 var fs = require('fs');
 
+var colors = ['red', 'blue', 'yellow', 'green', 'purple', 'white', 'grey', 'orange', 'brown'];
+
 
 var makeEmptyMap = require('./src/map.js');
 var tiles = require('./app/public/js/tiles.js');
@@ -204,6 +206,9 @@ wsServer.on('request', function(request) {
                 publicId = crypto.createHash('md5').update('' + Math.random()).digest("hex");
             } while (players[publicId]);
             privateIdMap[privateId] = publicId;
+            var playersInZone = _.pickBy(players, player => player.zoneId === data.player.zoneId);
+            var usedColors = Object.values(playersInZone).map(player => player.color);
+
             players[publicId] = {
                 id: publicId,
                 name: data.player.name || 'Incognito' + publicId.substring(0, 6),
@@ -216,12 +221,16 @@ wsServer.on('request', function(request) {
                 vy: data.player.vy || 0,
                 isCrouching: data.player.isCrouching || false,
                 zoneId: data.player.zoneId,
+                color: _.sample(_.difference(colors, usedColors)),
             };
             // console.log("Added player");
             // console.log(players);
             // When a player first logs in we send them their public/private ids and the full list of player data for the current zone.
-            var playersInZone = _.pickBy(players, player => player.zoneId === data.player.zoneId);
-            connection.sendUTF(JSON.stringify({privateId, publicId, players: playersInZone, map: getZone(data.player.zoneId)}));
+            connection.sendUTF(JSON.stringify({
+                privateId, publicId, color: players[publicId].color,
+                players: playersInZone,
+                map: getZone(data.player.zoneId)
+            }));
             // Broadcast to all other players that the new player has joined.
             broadcast(data.player.zoneId, {playerJoined: players[publicId]});
             connections[privateId] = connection;
