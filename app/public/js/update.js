@@ -1,6 +1,6 @@
 
 var frameMilliseconds = 20;
-var areaRectangle = rectangle(0, 0, 4000, 1000);
+var areaRectangle = new Rectangle(0, 0, 4000, 1000);
 var cameraX = areaRectangle.width / 2 - 400, cameraY = areaRectangle.height / 2 - 300;
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
@@ -10,8 +10,7 @@ setInterval(() => {
         return;
     }
     if (!currentMap) return;
-    areaRectangle.width = currentMap.width * currentMap.tileSize;
-    areaRectangle.height = currentMap.height * currentMap.tileSize;
+    areaRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
 
     // Update all the sprites that the game keeps track of
     for (var sprite of
@@ -63,7 +62,7 @@ setInterval(() => {
         for (var id in otherCharacters) {
             var target = otherCharacters[id];
             if (target.untaggableUntil > now()) continue;
-            if (rectanglesOverlap(getGlobalSpriteHitBox(mainCharacter), getGlobalSpriteHitBox(target))) {
+            if (getGlobalSpriteHitBox(mainCharacter).overlapsRectangle(getGlobalSpriteHitBox(target))) {
                 sendTaggedPlayer(id);
                 break;
             }

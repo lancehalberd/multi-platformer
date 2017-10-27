@@ -22,7 +22,7 @@ exports.getMustacheData = (zoneId) => {
         }
     };
     addScripts([
-        'utils', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'tiles', 'main', 'ttPerson',
+        'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'tiles', 'main', 'ttPerson',
         'update', 'updateActor', 'render', 'socket', 'StretchNine', 'localSprites', 'Trigger', 'editor',
     ]);
     var addStyleSheets = fileNames => {

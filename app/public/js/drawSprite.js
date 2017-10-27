@@ -5,12 +5,8 @@ function drawSprite(context, sprite) {
     // This will need to be updated for sprites that do not
     // have hitBox set on them directly as a property.
     if (isKeyDown('Y'.charCodeAt(0))) {
-        draw.fillRectangle(mainContext, rectangle(
-            sprite.x + sprite.hitBox.left,
-            sprite.y + sprite.hitBox.top,
-            sprite.hitBox.width,
-            sprite.hitBox.height), 'red');
-        }
+        draw.fillRectangle(mainContext, getGlobalSpriteHitBox(sprite), 'red');
+    }
     var scale = ifdefor(sprite.scale, 1);
     drawFrameTo(context,
         sprite.animation.frames[sprite.currentFrame],
@@ -25,17 +21,13 @@ function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint, sourc
     context.save();
     // If the frame does not have an explicit hitbox, just assume the hitbox
     // is the size of the box with origin at (0, 0).
-    var hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
+    var hitBox = frame.hitBox || frame.moveTo(0, 0);
     context.translate(x, y - hitBox.height * yScale / 2);
     if (rotation) context.rotate(rotation * Math.PI/180);
     if (xScale !== 1 || yScale !== 1) context.scale(xScale, yScale);
 
-    var target = {
-        'left': -(hitBox.left + hitBox.width / 2),
-        'top': -(hitBox.top + hitBox.height / 2),
-        'width': frame.width,
-        'height': frame.height,
-    };
+    var hitBoxCenter = hitBox.getCenter();
+    var target = frame.moveTo(-hitBoxCenter[0], -hitBoxCenter[1]);
     if (source.renderFrame) {
         source.renderFrame(context, frame, target);
     } else if (tint) draw.tintedImage(context, frame.image, tint, .5, frame, target)

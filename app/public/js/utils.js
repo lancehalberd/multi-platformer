@@ -142,83 +142,24 @@ function $tag(type, classes, content) {
 
 var now = () => Date.now();
 
-function isPointInRect(x, y, l, t, w, h) {
-    return !(y < t || y > (t + h) || x < l || x > (l + w));
-}
-
-function isPointInRectObject(x, y, rectangle) {
-    if (!rectangle || ifdefor(rectangle.top) === null || ifdefor(rectangle.left) === null
-         || ifdefor(rectangle.width) === null || ifdefor(rectangle.height) === null) {
-        return false;
-    }
-    return !(y < rectangle.top || y > (rectangle.top + rectangle.height)
-        || x < rectangle.left || x > (rectangle.left + rectangle.width));
-}
-
-
-function rectanglesOverlap(A, B) {
-    return !(A.bottom < B.top || A.top > B.bottom || A.right < B.left || A.left > B.right);
-}
-
 function isMouseOver($div) {
     var x = $('.js-mouseContainer').offset().left + mousePosition[0];
     var y = $('.js-mouseContainer').offset().top + mousePosition[1];
-    var t = $div.offset().top;
-    var l = $div.offset().left;
-    var b = t + $div.outerHeight(true);
-    var r = l + $div.outerWidth(true);
-    return !(y < t || y > b || x < l || x > r);
+    return Rectangle.defineFromElement($div).containsPoint(x, y);
 }
 
 function collision($div1, $div2) {
-    var T = $div1.offset().top;
-    var L = $div1.offset().left;
-    var B = T + $div1.outerHeight(true);
-    var R = L + $div1.outerWidth(true);
-    var t = $div2.offset().top;
-    var l = $div2.offset().left;
-    var b = t + $div2.outerHeight(true);
-    var r = l + $div2.outerWidth(true);
-    return !(B < t || T > b || R < l || L > r);
+    var A = Rectangle.defineFromElement($div1);
+    var B = Rectangle.defineFromElement($div2);
+    return A.overlapsRectangle(B);
 }
 
 // returns the area overlap between two divs.
 function getCollisionArea($div1, $div2) {
-    var T = $div1.offset().top;
-    var L = $div1.offset().left;
-    var B = T + $div1.outerHeight(true);
-    var R = L + $div1.outerWidth(true);
-    var t = $div2.offset().top;
-    var l = $div2.offset().left;
-    var b = t + $div2.outerHeight(true);
-    var r = l + $div2.outerWidth(true);
-    return Math.max(Math.min(B - t, b - T), 0) * Math.max(Math.min(R - l, r - L), 0);
-}
-
-function $getClosestElement($element, $elements, threshold) {
-    var closestElement = null;
-    var closestDistanceSquared = threshold * threshold;
-    var center = rectangleCenter(getElementRectangle($element));
-    $elements.each(function (index, element) {
-        var elementCenter = rectangleCenter(getElementRectangle(element));
-        var d2 = distanceSquared(center, elementCenter);
-        if (d2 <= closestDistanceSquared) {
-            closestDistanceSquared = d2;
-            closestElement = element;
-        }
-    });
-    return closestElement ? $(closestElement) : null;
-}
-
-function getElementRectangle(element, container) {
-    var $element = $(element);
-    var rect = rectangle($element.offset().left, $element.offset().top, $element.outerWidth(true), $element.outerHeight(true));
-    if (container) {
-        var offset = $(container).offset();
-        rect.left -= offset.left;
-        rect.top -= offset.top;
-    }
-    return rect;
+    var A = Rectangle.defineFromElement($div1);
+    var B = Rectangle.defineFromElement($div2);
+    return Math.max(Math.min(A.bottom - B.top, B.bottom - a.top), 0) *
+         Math.max(Math.min(A.right - B.left, B.right - A.left), 0);
 }
 
 /**
@@ -244,27 +185,6 @@ function resize(element, width, height, left, top) {
 
 function constrain(value, min, max) {
     return Math.min(max, Math.max(min, value));
-}
-function rectangle(left, top, width, height) {
-    return {left: left, top: top, width: width, height: height, right: left + width, bottom: top + height};
-}
-var rectangleByCenter = (x, y, width, height) => rectangle(x - width / 2, y - height / 2, width, height);
-function shrinkRectangle(rect, margin) {
-    return rectangle(rect.left + margin, rect.top + margin, rect.width - 2 * margin, rect.height - 2 * margin);
-}
-function scaleRectangle(rect, scale) {
-    return rectangle(rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale);
-}
-function rectangleCenter(rectangle) {
-    return [rectangle.left + rectangle.width / 2, rectangle.top + rectangle.height / 2];
-}
-function translateRectangle(rect, dx, dy) {
-    return rectangle(rect.left + dx, rect.top + dy, rect.width, rect.height);
-}
-function rectangleFromPoints(A, B) {
-    var left = Math.min(A.x, B.x);
-    var top = Math.min(A.y, B.y);
-    return rectangle(left, top, Math.abs(A.x - B.x), Math.abs(A.y - B.y));
 }
 
 function drawRunningAnts(context, rectangle) {

@@ -15,7 +15,7 @@ class Trigger {
     }
 
     isHittingMainCharacter() {
-        return rectanglesOverlap(this.hitBox, getGlobalSpriteHitBox(mainCharacter))
+        return this.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter));
     }
 
     isOnCooldown() {
@@ -56,7 +56,7 @@ class Trigger {
     renderPreview(target, startCoords, lastCoords) {
         if (objectStartCoords) {
             var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
-            draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), this.color);
+            draw.fillRectangle(mainContext, drawnRectangle.scale(currentMap.tileSize), this.color);
         } else {
             draw.fillRectangle(mainContext, target, this.color);
         }
@@ -139,7 +139,7 @@ class SpawnTrigger extends Trigger {
             var frame = getAnimationFrame(fireballAnimation.frames, 5);
             // Draw a fireball clip where the fireball will spawn.
             draw.image(mainContext, frame.image, frame,
-                rectangleByCenter(this.spawnX, this.spawnY, frame.width, frame.height)
+                Rectangle.defineByCenter(this.spawnX, this.spawnY, frame.width, frame.height)
             );
         }
     }
@@ -176,15 +176,15 @@ class TeleporterTrigger extends Trigger {
         this.destinationX = x;
         this.destinationY = y;
     }
-    
-        renderPreview(target, startCoords, lastCoords) {
+
+    renderPreview(target, startCoords, lastCoords) {
         super.renderPreview(target);
         if (selectedTrigger === this) {
             // We should update this to draw the spawned object eventually.
             var frame = getAnimationFrame(fireballAnimation.frames, 5);
             // Draw a fireball clip where the fireball will spawn.
             draw.image(mainContext, frame.image, frame,
-                rectangleByCenter(this.destinationX, this.destinationY, frame.width, frame.height)
+                Rectangle.defineByCenter(this.destinationX, this.destinationY, frame.width, frame.height)
             );
         }
     }

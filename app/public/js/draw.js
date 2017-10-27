@@ -15,15 +15,17 @@ var draw = {
         context.drawImage(image, source.left, source.top, source.width, source.height, -target.width / 2, -target.height / 2, target.width, target.height);
         context.restore();
     },
+    clearRectangle(context, target) {
+        context.clearRect(target.left, target.top, target.width, target.height);
+    },
     solidTintedImage(context, image, tint, source, target) {
         // First make a solid color in the shape of the image to tint.
         globalTintContext.save();
-        globalTintContext.fillStyle = tint;
-        globalTintContext.clearRect(0, 0, source.width, source.height);
-        var tintRectangle = {'left': 0, 'top': 0, 'width': source.width, 'height': source.height};
+        var tintRectangle = source.moveTo(0, 0);
+        draw.clearRectangle(globalTintContext, tintRectangle)
         draw.image(globalTintContext, image, source, tintRectangle)
         globalTintContext.globalCompositeOperation = "source-in";
-        globalTintContext.fillRect(0, 0, source.width, source.height);
+        draw.fillRectangle(globalTintContext, tintRectangle, tint);
         draw.image(context, globalTintCanvas, tintRectangle, target);
         globalTintContext.restore();
     },
@@ -47,11 +49,11 @@ var draw = {
         context.save();
         // First make a solid color in the shape of the image to tint.
         globalTintContext.save();
-        globalTintContext.fillStyle = tint;
-        globalTintContext.clearRect(0, 0, source.width, source.height);
+        var tintRectangle = source.moveTo(0, 0);
+        draw.clearRectangle(globalTintContext, tintRectangle)
         globalTintContext.drawImage(image, source.left, source.top, source.width, source.height, 0, 0, source.width, source.height);
         globalTintContext.globalCompositeOperation = "source-in";
-        globalTintContext.fillRect(0, 0, source.width, source.height);
+        draw.fillRectangle(globalTintContext, tintRectangle, tint);
         globalTintContext.restore();
         // Next draw the untinted image to the target.
         context.drawImage(image, source.left, source.top, source.width, source.height, target.left, target.top, target.width, target.height);
@@ -145,7 +147,7 @@ var draw = {
         context.fillStyle = 'white';
         context.beginPath();
         draw.rectangle(context, rectangle);
-        draw.rectangle(context, shrinkRectangle(rectangle, 1));
+        draw.rectangle(context, rectangle.pad(-1));
         context.fill('evenodd');
         context.restore();
     },
@@ -159,7 +161,7 @@ var draw = {
         context.globalAlpha = 1;
         context.beginPath();
         draw.rectangle(context, rectangle);
-        draw.rectangle(context, shrinkRectangle(rectangle, 2));
+        draw.rectangle(context, rectangle.pad(-2));
         context.fill('evenodd');
         context.restore();
     },

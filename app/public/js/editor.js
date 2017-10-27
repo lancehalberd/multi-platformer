@@ -44,26 +44,23 @@ const renderEditor = () => {
 
     if (cloneStartCoords) {
         var drawnRectangle = getDrawnRectangle(cloneStartCoords, cloneLastCoords);
-        draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), 'yellow');
+        draw.fillRectangle(mainContext, drawnRectangle.scale(currentMap.tileSize), 'yellow');
     } else {
         var coords = getMouseCoords();
-        var targetRectangle = rectangle(
-            coords[0] * currentMap.tileSize, coords[1] * currentMap.tileSize,
-            currentMap.tileSize, currentMap.tileSize
-        );
+        var targetRectangle = new Rectangle(coords[0], coords[1], 1, 1).scale(currentMap.tileSize);
         currentBrush.renderPreview(targetRectangle);
     }
     mainContext.restore();
     // Editing HUD displays the currently selected tile/object in the top right.
     mainContext.save();
     mainContext.translate(mainCanvas.width - 10 - 32, 10 + 32);
-    draw.fillRectangle(mainContext, rectangle(-34, -34, 68, 68), 'red');
-    currentBrush.renderHUD(rectangle(-32, -32, 64, 64));
+    draw.fillRectangle(mainContext, new Rectangle(-34, -34, 68, 68), 'red');
+    currentBrush.renderHUD(new Rectangle(-32, -32, 64, 64));
     mainContext.restore();
 }
 
 const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
-    var drawnRectangle = rectangle(
+    var drawnRectangle = new Rectangle(
         Math.min(startCoords[0], endCoords[0]), Math.min(startCoords[1], endCoords[1]),
         Math.abs(startCoords[0] - endCoords[0]) + 1, Math.abs(startCoords[1] - endCoords[1]) + 1
     );
@@ -134,14 +131,14 @@ class CloneBrush {
 
     renderPreview(target) {
         this.forEachTile(getMouseCoords(), (tileSource, tileRow, tileColumn) => {
-            var target = rectangle(tileColumn * currentMap.tileSize, tileRow * currentMap.tileSize, currentMap.tileSize, currentMap.tileSize);
+            var target = new Rectangle(tileColumn, tileRow, 1, 1).scale(currentMap.tileSize);
             if (tileSource) {
                 mainContext.save();
                 mainContext.translate(target.left + currentMap.tileSize / 2, target.top + currentMap.tileSize / 2);
                 mainContext.scale(tileSource.xScale, tileSource.yScale);
                 draw.image(mainContext, requireImage(tileSource.image),
                     getTileSourceRectangle(tileSource),
-                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
+                    new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
                 );
                 mainContext.restore();
             } else {
@@ -154,7 +151,7 @@ class CloneBrush {
         var scale = Math.min(2 / this.tileGrid.length, 2 / this.tileGrid[0].length);
         mainContext.scale(scale, scale);
         this.forEachTile([0, 0], (tileSource, tileRow, tileColumn) => {
-            var subTarget = rectangle(
+            var subTarget = new Rectangle(
                 Math.round(target.left / scale + tileColumn * currentMap.tileSize),
                 Math.round(target.top / scale + tileRow * currentMap.tileSize),
                 currentMap.tileSize,
@@ -165,16 +162,15 @@ class CloneBrush {
                 mainContext.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
                 mainContext.scale(tileSource.xScale || 1, tileSource.yScale || 1);
                 draw.image(mainContext, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
-                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize));
+                    new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
+                );
                 mainContext.restore();
             }
         });
     }
 }
 
-var getTileSourceRectangle = tileSource => rectangle(
-    tileSource.size * tileSource.x, tileSource.size * tileSource.y, tileSource.size, tileSource.size
-);
+var getTileSourceRectangle = tileSource => new Rectangle(tileSource.x, tileSource.y, 1, 1).scale(tileSource.size);
 
 class TileBrush {
 
@@ -194,7 +190,7 @@ class TileBrush {
             mainContext.scale(this.tileSource.xScale, this.tileSource.yScale);
             draw.image(mainContext, requireImage(this.tileSource.image),
                 getTileSourceRectangle(this.tileSource),
-                rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
+                new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
             );
         } else {
             draw.fillRectangle(mainContext, target, 'white');
@@ -233,7 +229,7 @@ class ObjectBrush {
     renderPreview(target) {
         if (objectStartCoords) {
             var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
-            draw.fillRectangle(mainContext, scaleRectangle(drawnRectangle, currentMap.tileSize), 'red');
+            draw.fillRectangle(mainContext, drawnRectangle.scale(currentMap.tileSize), 'red');
         } else {
             draw.fillRectangle(mainContext, target, 'red');
         }
@@ -247,12 +243,7 @@ class ObjectBrush {
             (this.mapObject.yScale || 1) * height / 3
         );
         draw.image(mainContext, requireImage(this.mapObject.image),
-            rectangle(
-                this.mapObject.size * this.mapObject.x,
-                this.mapObject.size * this.mapObject.y,
-                this.mapObject.size * width,
-                this.mapObject.size * height
-            ),
+            new Rectangle(this.mapObject.x, this.mapObject.y, width, height).scale(this.mapObject.size),
             target
         );
     }
@@ -280,7 +271,7 @@ class TriggerBrush {
             var lastSelected = selectedTrigger, newSelectedTrigger;
             localSprites.filter(sprite => sprite.type === TRIGGER_TYPE_FORCE || sprite.type === TRIGGER_TYPE_SPAWN)
                 .forEach(sprite => {
-                    if (isPointInRectObject(pixelMouseCoords[0], pixelMouseCoords[1], sprite.hitBox)) {
+                    if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                         newSelectedTrigger = sprite;
                         return false;
                     }
@@ -301,13 +292,12 @@ class TriggerBrush {
             draggingTrigger = null;
             if (objectStartCoords) {
                 var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
-                var hitBox = scaleRectangle(drawnRectangle, currentMap.tileSize);
                 if (!selectedTrigger) {
-                    selectedTrigger = this.makeNewTrigger();
+                    selectedTrigger = this.sourceTrigger.clone();
                     localSprites.push(selectedTrigger);
                     selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
                 }
-                selectedTrigger.hitBox = hitBox;
+                selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
                 objectStartCoords = null;
             }
         }
@@ -315,10 +305,6 @@ class TriggerBrush {
             selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
         }
         this.wasMouseDown = mouseDown;
-    }
-
-    makeNewTrigger(hitBox) {
-        return this.sourceTrigger.clone();
     }
 
     renderPreview(target) {
@@ -368,11 +354,11 @@ var brushList = [
     new ObjectBrush(spikesRight),
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),
-    new TriggerBrush(new SpawnTrigger(rectangle(0, 0, 32, 32), 2,
+    new TriggerBrush(new SpawnTrigger(new Rectangle(0, 0, 32, 32), 2,
             PROJECTILE_TYPE_HOMING_FIREBALL, 0, 0
         )),
-    new TriggerBrush(new ForceTrigger(rectangle(0, 0, 32, 32), 0, FORCE_AMP, 1.15, 1.27)),
-    new TriggerBrush(new TeleporterTrigger(rectangle(0, 0, 32, 32), 2, 0, 0))
+    new TriggerBrush(new ForceTrigger(new Rectangle(0, 0, 32, 32), 0, FORCE_AMP, 1.15, 1.27)),
+    new TriggerBrush(new TeleporterTrigger(new Rectangle(0, 0, 32, 32), 2, 0, 0))
 ];
 var selectPreviousObject = () => {
     brushIndex = ((brushIndex || 0) + brushList.length - 1) % brushList.length;

@@ -10,7 +10,7 @@ function updateActor(actor) {
     }
     // User normal scaling when checking if player is under ceiling.
     actor.scale = 2;
-    actor.hitBox = rectangle(-20, -64, 40, 64);
+    actor.hitBox = new Rectangle(-20, -64, 40, 64);
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -86,7 +86,7 @@ function updateActor(actor) {
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
         actor.scale = 1; //normal scale is 2, so this is half normal size. This affects visual representation only.
-        actor.hitBox = rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
+        actor.hitBox = new Rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -172,22 +172,14 @@ var getLocalSpriteHitBox = (sprite) => {
     var hitBox = sprite.hitBox;
     if (!hitBox) {
         var frame = sprite.animation.frames[sprite.currentFrame];
-        hitBox = frame.hitBox || rectangle(0, 0, frame.width, frame.height);
+        hitBox = frame.hitBox || frame.moveTo(0, 0);
     }
     return hitBox;
 }
 
-var getGlobalSpriteHitBox = (sprite) => {
-    var hitBox = getLocalSpriteHitBox(sprite);
-    return rectangle(
-        sprite.x + hitBox.left, sprite.y + hitBox.top,
-        hitBox.width, hitBox.height
-    );
-}
+var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-function canCharacterAirDash(character) {
-    return character.canAirDashUntil > now();
-}
+var canCharacterAirDash = (character) => character.canAirDashUntil > now();
 
 function isPlayerCompelledByOctopusTouch(character) {
     return character.compelledByOctopusTouch > now();

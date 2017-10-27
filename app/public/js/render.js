@@ -14,10 +14,11 @@ var render = () => {
 
     var xPercent = cameraX / (areaRectangle.width - mainCanvas.width);
     var yPercent = cameraY / (areaRectangle.height - mainCanvas.height);
-    var target = rectangle(0, 0, 1920 * .6, 1080 *.6);
-    target.left = - xPercent * (target.width - mainCanvas.width);
-    target.top = - yPercent * (target.height - mainCanvas.height);
-    draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), rectangle(0, 0, 1920, 1080), target);
+    var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
+    var target = bgSourceRectangle.scale(.6);
+    target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height))
+
+    draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
 
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
@@ -42,7 +43,7 @@ var render = () => {
     mainContext.save();
     mainContext.translate(10, 10);
     var heartImage = requireImage('/gfx/heart.png');
-    var heartRectangle = rectangle(0, 0, 50, 50);
+    var heartRectangle = new Rectangle(0, 0, 50, 50);
     for (var i = 0; i < mainCharacter.maxHealth; i++) {
         if (i < mainCharacter.health) draw.image(mainContext, heartImage, heartRectangle, heartRectangle);
         else draw.solidTintedImage(mainContext, heartImage, '#444', heartRectangle, heartRectangle);
@@ -89,8 +90,8 @@ var drawMap = () => {
                 mainContext.save();
                 mainContext.scale(tile.xScale, tile.yScale);
                 draw.image(mainContext, image,
-                    rectangle(tile.size * tile.x, tile.size * tile.y, tile.size, tile.size),
-                    rectangle(-currentMap.tileSize / 2, -currentMap.tileSize / 2, currentMap.tileSize, currentMap.tileSize)
+                    new Rectangle(tile.x, tile.y, 1, 1).scale(tile.size),
+                    new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
                 );
                 mainContext.restore();
             }

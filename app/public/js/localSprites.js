@@ -165,51 +165,31 @@ function updateLocalSprite(localSprite) {
             }
         }
     }
-    //updating various sprite types
-    if (localSprite.type === TRIGGER_TYPE_FORCE) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {
-            if (localSprite.forceType === FORCE_AMP) {
-                if (localSprite.target.vx) localSprite.target.vx *= localSprite.xForce;
-                if (localSprite.target.vy < 0) localSprite.target.vy *= localSprite.yForce;    //doesn't speed falling
-            }
-            if (localSprite.forceType === FORCE_FIXED) {
-                if (localSprite.target.vx) localSprite.target.vx += localSprite.xForce;
-                if (localSprite.target.vy) localSprite.target.vy += localSprite.yForce;
-            }
-            localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
-        }
-    }
 
-    if (localSprite.type === TRIGGER_TYPE_SPAWN) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should just use it once.
-            if (localSprite.spawnedObjectType === PROJECTILE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
-            localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
-        }
-    }
 
     if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.health++;
             localSprite.shouldBeRemoved = true;
         }
     }
 
     if (localSprite.type === POWERUP_TYPE_AIRDASH) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;
             localSprite.shouldBeRemoved = true;
         }
     }
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
-        if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
         }
     }
-    
+
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-        if (rectanglesOverlap(getGlobalSpriteHitBox(localSprite), getGlobalSpriteHitBox(mainCharacter)) && mainCharacter.invulnerableUntil < now()) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && mainCharacter.invulnerableUntil < now()) {
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
             mainCharacter.vy = -15; //player pops upward if hit
@@ -221,10 +201,9 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
-        var fireballHitBox = getGlobalSpriteHitBox(localSprite);
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
-        if (rectanglesOverlap(fireballHitBox, getGlobalSpriteHitBox(mainCharacter))) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {
             mainCharacter.health--;
             localSprite.shouldBeRemoved = true;
         }
@@ -250,16 +229,17 @@ powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
 creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
 
+var rectangleToFrames = (rectangle, image, numberOfFrames) => {
+    var frames = [];
+    for (var i = 0; i < numberOfFrames; i++) {
+        frames[i] = rectangle.moveTo(i * rectangle.width, 0);
+        frames[i].image = image;
+    }
+    return frames;
+}
 
-var hitBox = rectangle(0, 0, 32, 32);
 var fireballAnimation = {
-    frames: [
-        $.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-        $.extend(rectangle(1 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-        $.extend(rectangle(2 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-        $.extend(rectangle(3 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-        $.extend(rectangle(4 * 32, 0 * 32, 32, 32), {image: fireballBImage, hitBox}),
-    ]
+    frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), fireballBImage, 5)
 };
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
@@ -287,39 +267,18 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
 }
 
 function addCreature(x, y, target, creatureType) {
-        var xSize,
-        ySize,
-        xScale,
-        yScale,
-        scaledXSize,
-        scaledYSize,
-        //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
-        //scaledCenteredTop = y - (scaledYSize / 2),
-        //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
-        hitBox,   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
-        frames = [];
+    var xScale, yScale, hitBox, frames;
     if (creatureType === CREATURE_TYPE_ADORABILIS) {
-        xSize = 32;
-        ySize = 32;
-        xScale = 2.5;
-        yScale = 2.5;
-        scaledXSize = xSize * xScale;
-        scaledYSize = ySize * yScale;
         //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
         //scaledCenteredTop = y - (scaledYSize / 2),
         //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
-        hitBox = rectangle(-24, -56, 80, 80);   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
-        frames = [
-            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox}),
-            $.extend(rectangle(8 * xSize, 0 * ySize, xSize, ySize), {image: creatureAdorabilisImage, hitBox})
-        ];
+        // rectangleToFrames creates N frames from the same image assuming they are in a strip of rectangles laid side by side.
+        frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), creatureAdorabilisImage, 9);
+        //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
+        hitBox = new Rectangle(-24, -56, 80, 80);
+        frames.forEach(frame => frame.hitBox = hitBox);
+
+        xScale = yScale = 2.5;
         var adorabilisSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
         adorabilisSprite.type = creatureType;
         adorabilisSprite.homing = true;
@@ -335,24 +294,8 @@ function addCreature(x, y, target, creatureType) {
         localSprites.push(adorabilisSprite);
     }
     if (creatureType === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
-        xSize = 32;
-        ySize = 32;
-        xScale = 1.5;
-        yScale = 1.5;
-        scaledXSize = xSize * xScale;
-        scaledYSize = ySize * yScale;
-        //scaledCenteredLeft = x - (scaledXSize / 2), //replaces 'left' part of rectangle to center the hitBox on the 'x' argument, rather than have 'x' be at its upper-left.
-        //scaledCenteredTop = y - (scaledYSize / 2),
-        //hitBox = rectangle(scaledCenteredLeft, scaledCenteredTop, scaledXSize, scaledYSize), //made the sprite not draw. don't know why.
-        hitBox = rectangle(0, 0, 32, 32);   //These values seem to make the octopus sit right on top of the player (note just visually, but in the x/y coordinates), whereas different values leave it displaced. I think it has something to do with scaling, as 1, 1 scaling doesn't create displacement. The fireball, from which this creature was originally copied, doesn't seem to have this problem.
-        frames = [
-            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
-        ];
-        var pacingFireballSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+        xScale = yScale = 2.5;
+        var pacingFireballSprite = new SimpleSprite(fireballAnimation, x, y, 0, 0, xScale, yScale);
         pacingFireballSprite.type = creatureType;
         pacingFireballSprite.collides = true;
         pacingFireballSprite.pacing = true;
@@ -384,13 +327,9 @@ function addCreature(x, y, target, creatureType) {
 
 
 function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
-    var hitBox = rectangle(0, 0, 8, 8);
+    var hitBox = new Rectangle(0, 0, 8, 8);
     var frames = [
-        $.extend(rectangle(0 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
-        //$.extend(rectangle(1 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
-        //$.extend(rectangle(2 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
-        //$.extend(rectangle(3 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
-        //$.extend(rectangle(4 * 8, 0 * 8, 8, 8), {image: fireballContrailAImage, hitBox}),
+        $.extend(new Rectangle(0, 0, 8, 8), {image: fireballContrailAImage, hitBox}),
     ];
     var randomX,    //distance particle spawns from parent's origin
     randomY;
@@ -450,49 +389,6 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
     }
 }
 
-//TRIGGERS
-function canTriggerTrigger(trigger) {
-    return  now() > trigger.notReadyToTriggerUntil;
-}
-
-function addSpawnTrigger(left, top, width, height, cooldownInSeconds, target, spawnedObjectType, spawnedObjectXOffset, spawnedObjectYOffset) {
-    var hitBox = rectangle(left, top, width, height);
-    var frames = [
-        $.extend(rectangle(1 * 16, 0 * 16, 16, 16), {image: fireballContrailAImage, hitBox}),
-    ];
-    var spawnTrigger = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
-    spawnTrigger.type = TRIGGER_TYPE_SPAWN; //hm, don't actually use this...
-    spawnTrigger.cooldownInMS = cooldownInSeconds * 1000;
-    spawnTrigger.hitBox = hitBox;
-    spawnTrigger.framesToLive = 32767;
-    spawnTrigger.target = target;
-    spawnTrigger.notReadyToTriggerUntil = now();
-    spawnTrigger.spawnedObjectType = spawnedObjectType;
-    spawnTrigger.spawnedObjectX = (left + width / 2) + spawnedObjectXOffset;
-    spawnTrigger.spawnedObjectY = (top + width / 2) + spawnedObjectYOffset;
-    localSprites.push(spawnTrigger);
-}
-
-function addForceTrigger(left, top, width, height, cooldownInSeconds, target, forceType, forceMagnitudeX, forceMagnitudeY) {
-    //can send forceTypes FORCE_AMP or FORCE_FIXED right now.
-    //FORCE_AMP multiplies the player's vx and vy by the forceMagnitudeX and forceMagnitudeY arguments.
-    //FORCE_FIXED adds the forceMagnitudeX and forceMagnitudeY arguments to the player's vx and vy.
-    var hitBox = rectangle(left, top, width, height);
-    var frames = [
-        $.extend(rectangle(1 * 16, 0 * 16, 16, 16), {image: fireballContrailAImage, hitBox}),
-    ];
-    var forceTrigger = new SimpleSprite({frames}, left, top, 0, 0, 1, 1);
-    forceTrigger.type = TRIGGER_TYPE_FORCE; //hm, don't actually use this...
-    forceTrigger.cooldownInMS = cooldownInSeconds * 1000;
-    forceTrigger.hitBox = hitBox;
-    forceTrigger.notReadyToTriggerUntil = now();
-    forceTrigger.framesToLive = 32767;
-    forceTrigger.target = target;
-    forceTrigger.forceType = forceType;
-    forceTrigger.xForce = forceMagnitudeX;
-    forceTrigger.yForce = forceMagnitudeY;
-    localSprites.push(forceTrigger);
-}
 
 function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls) {
     //send powerup x, y for where its center should be
@@ -500,21 +396,20 @@ function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls)
     var frames = [];
     var powerup = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
     if (powerupType === POWERUP_TYPE_HEART) {
-        frames.push($.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: powerupHeartImage, hitBox}));   //powerup sprites will be animated in the future
+        frames.push($.extend(new Rectangle(0, 0, 32, 32), {image: powerupHeartImage}));   //powerup sprites will be animated in the future
     }
     if (powerupType === POWERUP_TYPE_AIRDASH) {
-        frames.push($.extend(rectangle(0 * 32, 0 * 32, 32, 32), {image: powerupAirDashImage, hitBox}));
+        frames.push($.extend(new Rectangle(0, 0, 32, 32), {image: powerupAirDashImage}));
         powerup.durationInMS = durationInSeconds * 1000;
     }
     var xSize = 32,
     ySize = 32,
     scaledXSize = xScale * xSize,
     scaledYSize = yScale * ySize;
-    hitBox = rectangle(x - (scaledXSize / 2), y - (scaledYSize / 2), scaledXSize, scaledYSize);
     powerup.type = powerupType;
     powerup.xScale = xScale;
     powerup.yScale = yScale;
-    powerup.hitBox = hitBox;
+    powerup.hitBox = Rectangle.defineByCenter(x, y, scaledXSize, scaledYSize);
     powerup.scaleOscillation = true;
     powerup.xScaleMin = 0.875;
     powerup.yScaleMin = 0.875;
@@ -533,6 +428,3 @@ function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls)
     localSprites.push(powerup);
 }
 
-function powerupBob(powerup) {
-
-}

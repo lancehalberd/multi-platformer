@@ -89,33 +89,33 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
     var actorContext = actorCanvas.getContext('2d');
     actorContext.imageSmoothingEnabled = false;
     for (var frame = 0; frame < ttPersonFrames; frame++) {
-        var targetRectangle = rectangle(frame * 96 + 32, 0, 32, 64);
+        var targetRectangle = new Rectangle(frame * 96 + 32, 0, 32, 64);
         // Draw the person legs then body then hair then under garment then leg gear then body gear.
-        draw.image(actorContext, baseImage, rectangle(frame * 96 + 64, row * 64 , 32, 64), targetRectangle); //legs
-        draw.image(actorContext, baseImage, rectangle(frame * 96, row * 64 , 32, 64), targetRectangle); //body
+        draw.image(actorContext, baseImage, new Rectangle(frame * 96 + 64, row * 64 , 32, 64), targetRectangle); //legs
+        draw.image(actorContext, baseImage, new Rectangle(frame * 96, row * 64 , 32, 64), targetRectangle); //body
         if (!equipmentSources.head || !equipmentSources.head.hideHair) {
-            draw.image(actorContext, hairImageSource, rectangle(frame * 96, hairIndex * 64, 32, 64), targetRectangle); // hair
+            draw.image(actorContext, hairImageSource, new Rectangle(frame * 96, hairIndex * 64, 32, 64), targetRectangle); // hair
         }
         // draw feet then legs (offset 64) then body then head gear (offset 0).
         for (var subX of [64, 0]) {
             for (var equipmentSlot of equipmentSlots) {
                 var source = equipmentSources[equipmentSlot];
                 if (!source || source.xOffset !== subX) continue;
-                draw.image(actorContext, equipmentImageSource, rectangle(frame * 96 + source.xOffset, source.yOffset, 32, 64), targetRectangle);
+                draw.image(actorContext, equipmentImageSource, new Rectangle(frame * 96 + source.xOffset, source.yOffset, 32, 64), targetRectangle);
             }
         }
         // Draw the weapon under the arm.
         if (equipmentSources.weapon) {
             var source = equipmentSources.weapon;
-            draw.image(actorContext, weaponsImageSource, rectangle(frame * 96, source.yOffset, 96, 64), rectangle(frame * 96, 0, 96, 64));
+            draw.image(actorContext, weaponsImageSource, new Rectangle(frame * 96, source.yOffset, 96, 64), new Rectangle(frame * 96, 0, 96, 64));
         }
         // Draw the person arm then arm gear.
-        draw.image(actorContext, baseImage, rectangle(frame * 96 + 32, row * 64 , 32, 64), targetRectangle); // arm
+        draw.image(actorContext, baseImage, new Rectangle(frame * 96 + 32, row * 64 , 32, 64), targetRectangle); // arm
         // draw arm+hands gear (offset 32).
         for (var equipmentSlot of equipmentSlots) {
             var source = equipmentSources[equipmentSlot];
             if (!source || source.xOffset !== 32) continue; // don't draw this if it isn't arm/hands gear
-            draw.image(actorContext, equipmentImageSource, rectangle(frame * 96 + source.xOffset, source.yOffset, 32, 64), targetRectangle);
+            draw.image(actorContext, equipmentImageSource, new Rectangle(frame * 96 + source.xOffset, source.yOffset, 32, 64), targetRectangle);
         }
     }
     return actorCanvas;
@@ -131,7 +131,7 @@ class TTCharacter {
         this.speed = 0; //this is defined in the input area of updateActor.js, regarding crouching and standing.
         this.vx = this.vy = 0;
         this.grounded = false;
-        this.hitBox = rectangle(-18, -63, 36, 63);
+        this.hitBox = new Rectangle(-18, -63, 36, 63);
         /*this.walkAnimation = walkAnimation(actorCanvas);
         this.attackAnimation = attackAnimation(actorCanvas);
         this.idleAnimation = walkAnimation(actorCanvas);*/
@@ -196,7 +196,7 @@ class TTCharacter {
             var frame = getAnimationFrame(fireballAnimation.frames, 5);
         }
         draw.solidTintedImage(context, frame.image, this.color, frame, target);
-        draw.image(context, frame.image, translateRectangle(frame, 0, frame.height), target);
+        draw.image(context, frame.image, frame.translate(0, frame.height), target);
     }
 }
 
@@ -208,22 +208,22 @@ var characterMysteryImage = requireImage('/gfx/person/characterMystery.png');
 var mainCharacter;
 var otherCharacters = {};
 function walkAnimation(actorCanvas) {
-    var hitBox = rectangle(36, 18, 24, 42);
-    var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
-    var stepRight = $.extend(rectangle(96, 0, 96, 64), {image: actorCanvas, hitBox});
-    var stepLeft = $.extend(rectangle(192, 0, 96, 64), {image: actorCanvas, hitBox});
+    var hitBox = new Rectangle(36, 18, 24, 42);
+    var neutralFrame = $.extend(new Rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
+    var stepRight = $.extend(new Rectangle(96, 0, 96, 64), {image: actorCanvas, hitBox});
+    var stepLeft = $.extend(new Rectangle(192, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [neutralFrame, stepRight, neutralFrame, stepLeft]};
 }
 
 function characterMysteryWalkAnimation() {
     var xSize = 32,
     ySize = 32,
-    hitBox = rectangle(-4, -32, 40, 64),
+    hitBox = new Rectangle(-4, -32, 40, 64),
     frames = [
-        $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox})
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox})
     ];
     return {frames};
 }
@@ -231,35 +231,35 @@ function characterMysteryWalkAnimation() {
 function characterMysteryIdleAnimation() {
     var xSize = 32,
     ySize = 32,
-    hitBox = rectangle(-4, -32, 40, 64),
+    hitBox = new Rectangle(-4, -32, 40, 64),
     frames = [
-        $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+        $.extend(new Rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
     ];
     return {frames};
 }
 
 
 function attackAnimation(actorCanvas) {
-    var hitBox = rectangle(36, 18, 24, 42);
-    var neutralFrame = $.extend(rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
-    var prepareFrame = $.extend(rectangle(96 * 3, 0, 96, 64), {image: actorCanvas, hitBox});
-    var attackFrame = $.extend(rectangle(96 * 4, 0, 96, 64), {image: actorCanvas, hitBox});
+    var hitBox = new Rectangle(36, 18, 24, 42);
+    var neutralFrame = $.extend(new Rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
+    var prepareFrame = $.extend(new Rectangle(96 * 3, 0, 96, 64), {image: actorCanvas, hitBox});
+    var attackFrame = $.extend(new Rectangle(96 * 4, 0, 96, 64), {image: actorCanvas, hitBox});
     return {frames: [prepareFrame, attackFrame, prepareFrame, neutralFrame]};
 }
 
 function characterMysteryAttackAnimation() {
         var xSize = 32,
         ySize = 32,
-        hitBox = rectangle(0, -32, 40, 64),
+        hitBox = new Rectangle(0, -32, 40, 64),
         frames = [
-            $.extend(rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
+            $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+            $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
         ];
         return {frames};
 }
