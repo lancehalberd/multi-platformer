@@ -155,6 +155,9 @@ function updateActor(actor) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
+    if (!isPlayerTouchingTeleporter(actor)) actor.canTeleport = true;
+    //console.log('can teleport: ' + actor.canTeleport);
+    console.log('touching teleporter: ' + isPlayerTouchingTeleporter(actor));
 }
 
 function isTileX(row, column, property) {
@@ -187,6 +190,20 @@ var getGlobalSpriteHitBox = (sprite) => {
 
 function canCharacterAirDash(character) {
     return character.canAirDashUntil > now();
+}
+
+function isPlayerTouchingTeleporter(actor) {
+    var allTeleporters = [];
+    if (localSprites.length > 0) {
+        for (var i = 0; i < localSprites.length; i++) {
+            if (localSprites[i].type === TRIGGER_TYPE_TELEPORTER) {
+                allTeleporters.push(localSprites[i]);
+            }
+            for (var j = 0; j < allTeleporters.length; j++) {
+                return rectanglesOverlap(getGlobalSpriteHitBox(actor), allTeleporters[j].hitBox); //for some reason using actor/mainCharacter.hitBox here doesn't work, nor does getGlobalSpriteHitBox(allTeleporters[j]).
+            }
+        }
+    }
 }
 
 function isPlayerCompelledByOctopusTouch(character) {

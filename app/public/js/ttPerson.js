@@ -282,6 +282,7 @@ function initializePersonGraphics() {
     mainCharacter.originalX = mainCharacter.x;
     mainCharacter.originalY = mainCharacter.y;
     mainCharacter.invulnerableUntil = now();
+    mainCharacter.canTeleport = true;
     mainCharacter.onDeathComplete = function () {
         this.health = this.maxHealth;
         this.x = this.originalX;

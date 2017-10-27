@@ -166,27 +166,6 @@ function updateLocalSprite(localSprite) {
         }
     }
     //updating various sprite types
-    if (localSprite.type === TRIGGER_TYPE_FORCE) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {
-            if (localSprite.forceType === FORCE_AMP) {
-                if (localSprite.target.vx) localSprite.target.vx *= localSprite.xForce;
-                if (localSprite.target.vy < 0) localSprite.target.vy *= localSprite.yForce;    //doesn't speed falling
-            }
-            if (localSprite.forceType === FORCE_FIXED) {
-                if (localSprite.target.vx) localSprite.target.vx += localSprite.xForce;
-                if (localSprite.target.vy) localSprite.target.vy += localSprite.yForce;
-            }
-            localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
-        }
-    }
-
-    if (localSprite.type === TRIGGER_TYPE_SPAWN) {
-        if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(localSprite.target)) && canTriggerTrigger(localSprite)) {   //I'm repeating this line of code, and should just use it once.
-            if (localSprite.spawnedObjectType === PROJECTILE_TYPE_HOMING_FIREBALL) addHomingFireballSprite(localSprite.spawnedObjectX, localSprite.spawnedObjectY, localSprite.target);
-            localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
-        }
-    }
-
     if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
         if (rectanglesOverlap(localSprite.hitBox, getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.health++;
@@ -248,7 +227,8 @@ fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
 fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
 powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
-creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
+creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
+teleporterAImage = requireImage('/gfx/environment/teleporterA.png');
 
 
 var hitBox = rectangle(0, 0, 32, 32);
