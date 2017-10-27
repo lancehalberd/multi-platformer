@@ -155,6 +155,9 @@ function updateActor(actor) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
+    if (!isPlayerTouchingTeleporter(actor)) actor.canTeleport = true;
+    //console.log('can teleport: ' + actor.canTeleport);
+    console.log('touching teleporter: ' + isPlayerTouchingTeleporter(actor));
 }
 
 function isTileX(row, column, property) {
@@ -180,6 +183,14 @@ var getLocalSpriteHitBox = (sprite) => {
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
 var canCharacterAirDash = (character) => character.canAirDashUntil > now();
+
+function isPlayerTouchingTeleporter(actor) {
+    var globalHitBox = getGlobalSpriteHitBox(actor);
+    // localSprites.filter(...) returns all the elements of localSprites that the function returns true for.
+    var allTeleporters = localSprites.filter(sprite => sprite.type === TRIGGER_TYPE_TELEPORTER);
+    // allTeleporters.some(...) returns true if any of the elements return true for the given function.
+    return allTeleporters.some(teleporter => teleporter.hitBox.overlapsRectangle(globalHitBox));
+}
 
 function isPlayerCompelledByOctopusTouch(character) {
     return character.compelledByOctopusTouch > now();

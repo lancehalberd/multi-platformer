@@ -345,6 +345,7 @@ var selectTileUnderMouse = () => {
     currentBrush = new TileBrush(tileSource);
 }
 var brushIndex = 0;
+var dummyRectangle = new Rectangle(0, 0, 32, 32);
 var brushList = [
     new ObjectBrush(stretchNine),
     new ObjectBrush(bouncyBlock),
@@ -354,11 +355,11 @@ var brushList = [
     new ObjectBrush(spikesRight),
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),
-    new TriggerBrush(new SpawnTrigger(new Rectangle(0, 0, 32, 32), 2,
+    new TriggerBrush(new SpawnTrigger(dummyRectangle, 2,
             PROJECTILE_TYPE_HOMING_FIREBALL, 0, 0
         )),
-    new TriggerBrush(new ForceTrigger(new Rectangle(0, 0, 32, 32), 0, FORCE_AMP, 1.15, 1.27)),
-    new TriggerBrush(new TeleporterTrigger(new Rectangle(0, 0, 32, 32), 2, 0, 0))
+    new TriggerBrush(new ForceTrigger(dummyRectangle, 0, FORCE_AMP, 1.15, 1.27)),
+    new TriggerBrush(new TeleporterTrigger(dummyRectangle, 0, 0, 0)),
 ];
 var selectPreviousObject = () => {
     brushIndex = ((brushIndex || 0) + brushList.length - 1) % brushList.length;

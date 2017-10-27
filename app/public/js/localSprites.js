@@ -166,7 +166,7 @@ function updateLocalSprite(localSprite) {
         }
     }
 
-
+    //updating various sprite types
     if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
         if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             mainCharacter.health++;
@@ -227,7 +227,8 @@ fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
 fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
 powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
 powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
-creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
+creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
+teleporterAImage = requireImage('/gfx/environment/teleporterA.png');
 
 var rectangleToFrames = (rectangle, image, numberOfFrames) => {
     var frames = [];

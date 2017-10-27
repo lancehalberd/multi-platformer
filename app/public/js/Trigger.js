@@ -167,8 +167,11 @@ class TeleporterTrigger extends Trigger {
     }
 
     trigger() {
-        mainCharacter.x = this.destinationX;
-        mainCharacter.y = this.destinationY;
+        if (mainCharacter.canTeleport) {
+            mainCharacter.x = this.destinationX;
+            mainCharacter.y = this.destinationY;
+            mainCharacter.canTeleport = false;
+        }
     }
 
     // Methods used by editor:
