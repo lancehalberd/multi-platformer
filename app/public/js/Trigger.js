@@ -198,4 +198,11 @@ class TeleporterTrigger extends Trigger {
         var frame = getAnimationFrame(fireballAnimation.frames, 5);
         draw.image(mainContext, frame.image, frame, target);
     }
+    /* Chris gave me this code to use as a reference for starting to srot out the teleporter's UI representation in the editor:
+        renderHUD(target) {
+       super.renderHUD(target);
+       // We should update this to draw the spawned object eventually.
+       var frame = getAnimationFrame(fireballAnimation.frames, 5);
+       draw.image(mainContext, frame.image, frame, target);
+   }*/    
 }

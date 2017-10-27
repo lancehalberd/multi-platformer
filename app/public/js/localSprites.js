@@ -243,6 +243,50 @@ var fireballAnimation = {
     frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), fireballBImage, 5)
 };
 
+
+//NOT USING THIS SPRITE YET
+function addTeleporterDoorSprite(x, y) {
+    var hitBox = rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
+    xSize = 32,
+    ySize = 32,
+    xScale = 2,
+    yScale = 2,
+    teleporterDoorAnimationCore = {
+        frames: [
+            $.extend(rectangle(0 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(1 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(2 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(3 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(4 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(5 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(6 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(7 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(8 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox})
+        ]
+    };
+    teleporterDoorAnimationSparkles = {
+        frames: [
+            $.extend(rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(10 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(11 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(12 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(13 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(14 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(15 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(16 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(17 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(18 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(19 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(20 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(21 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+            $.extend(rectangle(22 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        ]
+    };
+    teleporterDoorSprite = new SimpleSprite({teleporterAnimationCore: frames}, x, y, 0, 0, xScale, yScale);
+    teleporterDoorSprite.framesToLive = 32767;
+    return teleporterDoorSprite;
+}
+
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = PROJECTILE_TYPE_HOMING_FIREBALL;
