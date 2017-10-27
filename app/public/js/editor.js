@@ -269,13 +269,12 @@ class TriggerBrush {
         }
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedTrigger;
-            localSprites.filter(sprite => sprite.type === TRIGGER_TYPE_FORCE || sprite.type === TRIGGER_TYPE_SPAWN)
-                .forEach(sprite => {
-                    if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
-                        newSelectedTrigger = sprite;
-                        return false;
-                    }
-                });
+            localSprites.filter(sprite => sprite.isTrigger).forEach(sprite => {
+                if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                    newSelectedTrigger = sprite;
+                    return false;
+                }
+            });
             draggingTrigger = newSelectedTrigger;
             if (lastSelected === newSelectedTrigger) {
                 selectedTrigger = null;

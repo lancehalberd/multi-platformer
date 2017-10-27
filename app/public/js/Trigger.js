@@ -12,6 +12,7 @@ class Trigger {
         this.hitBox = hitBox;
         this.cooldownInSeconds = cooldownInSeconds;
         this.color = 'white';
+        this.isTrigger = true;
     }
 
     isHittingMainCharacter() {
