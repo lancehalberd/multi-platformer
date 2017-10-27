@@ -30,8 +30,8 @@ function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint, sourc
     var target = frame.moveTo(-hitBoxCenter[0], -hitBoxCenter[1]);
     if (source.renderFrame) {
         source.renderFrame(context, frame, target);
-    } else if (tint) draw.tintedImage(context, frame.image, tint, .5, frame, target)
-    else draw.image(context, frame.image, frame, target)
+    } else if (tint) draw.tintedImage(context, frame.image, tint, 0.5, frame, target);
+    else draw.image(context, frame.image, frame, target);
     context.restore();
 
     /*if (tints.length) {
@@ -54,8 +54,8 @@ function getActorTints(actor) {
         tints.push(actor.base.tint);
     }
     if (ifdefor(actor.tint)) {
-        var min = ifdefor(actor.tintMinAlpha, .5);
-        var max = ifdefor(actor.tintMaxAlpha, .5);
+        var min = ifdefor(actor.tintMinAlpha, 0.5);
+        var max = ifdefor(actor.tintMaxAlpha, 0.5);
         var center = (min + max) / 2;
         var radius = (max - min) / 2;
         tints.push([actor.tint, center + Math.cos(actor.time * 5) * radius]);

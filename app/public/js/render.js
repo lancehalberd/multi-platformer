@@ -15,8 +15,8 @@ var render = () => {
     var xPercent = cameraX / (areaRectangle.width - mainCanvas.width);
     var yPercent = cameraY / (areaRectangle.height - mainCanvas.height);
     var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
-    var target = bgSourceRectangle.scale(.6);
-    target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height))
+    var target = bgSourceRectangle.scale(0.6);
+    target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height));
 
     draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
 

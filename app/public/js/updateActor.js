@@ -156,8 +156,6 @@ function updateActor(actor) {
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
     if (!isPlayerTouchingTeleporter(actor)) actor.canTeleport = true;
-    //console.log('can teleport: ' + actor.canTeleport);
-    console.log('touching teleporter: ' + isPlayerTouchingTeleporter(actor));
 }
 
 function isTileX(row, column, property) {

@@ -227,8 +227,8 @@ var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
     fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
     powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
     powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
-    creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png');
-// teleporterAImage = requireImage('/gfx/environment/teleporterA.png');
+    creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
+    teleporterAImage = requireImage('/gfx/environment/teleporterA.png');
 
 var rectangleToFrames = (rectangle, image, numberOfFrames) => {
     var frames = [];
@@ -246,46 +246,49 @@ var fireballAnimation = {
 
 //NOT USING THIS SPRITE YET
 function addTeleporterDoorSprite(x, y) {
-    var hitBox = rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
+    var hitBox = new Rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
     xSize = 32,
     ySize = 32,
-    xScale = 2,
-    yScale = 2,
-    teleporterDoorAnimationCore = {
-        frames: [
-            $.extend(rectangle(0 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(1 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(2 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(3 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(4 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(5 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(6 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(7 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(8 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox})
-        ]
-    };
-    teleporterDoorAnimationSparkles = {
-        frames: [
-            $.extend(rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(10 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(11 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(12 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(13 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(14 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(15 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(16 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(17 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(18 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(19 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(20 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(21 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-            $.extend(rectangle(22 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        ]
-    };
-    teleporterDoorSprite = new SimpleSprite({teleporterAnimationCore: frames}, x, y, 0, 0, xScale, yScale);
+    xScale = 3,
+    yScale = 3,
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(7 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(8 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox})
+    ],
+    teleporterDoorSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    teleporterDoorSprite.msBetweenFrames = 175;
     teleporterDoorSprite.framesToLive = 32767;
-    return teleporterDoorSprite;
+    localSprites.push(teleporterDoorSprite);
+    frames = [
+        $.extend(new Rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(10 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(11 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(12 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(13 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(14 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(15 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(16 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(17 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(18 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(19 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(20 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(21 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(22 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(23 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+    ];
+    teleporterSparklesSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    teleporterSparklesSprite.msBetweenFrames = 75;
+    teleporterSparklesSprite.framesToLive = 32767;
+    localSprites.push(teleporterSparklesSprite);
 }
+
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
@@ -358,10 +361,10 @@ function addCreature(x, y, target, creatureType) {
         pacingFireballSprite.msBetweenFrames = 50;
         pacingFireballSprite.rotationPerFrame = 5;
         pacingFireballSprite.scaleOscillation = true;
-        pacingFireballSprite.xScaleMax = 1.75;
-        pacingFireballSprite.xScaleMin = 1.25;
-        pacingFireballSprite.yScaleMax = 1.75;
-        pacingFireballSprite.yScaleMin = 1.25;
+        pacingFireballSprite.xScaleMax = 1.33;
+        pacingFireballSprite.xScaleMin = 1;
+        pacingFireballSprite.yScaleMax = 1.33;
+        pacingFireballSprite.yScaleMin = 1;
         pacingFireballSprite.xScalePerFrame = 0.01;
         pacingFireballSprite.yScalePerFrame = 0.01;
         pacingFireballSprite.hasContrail = true;
@@ -404,7 +407,7 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
         particle.vy = -3;
         localSprites.push(particle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
     }
-    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {
+    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //I think collision particles should be redder, like dull ember sparks.
         var randomVX,
         randomVY;
         if (Math.random() < 0.5) {
@@ -429,13 +432,13 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
         var newParticle = addParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_FIREBALL_COLLISION);
         detonationParticles.push(newParticle);
     }
-    for (var j = 0; j < detonationParticles.length; j++) {
+    for (var j = 0; j < detonationParticles.length; j++) {  //whoa. What is this about?
 
     }
 }
 
 
-function addPowerup(x, y, powerupType, xScale, yScale, durationInSeconds, falls) {
+function addPowerup(x, y, powerupType, durationInSeconds, respawnDelayInSecondsMin, respawnDelayInSecondsMax, falls) {  //respawnDelay parameters don't do anything right now, but will be used later.
     //send powerup x, y for where its center should be
     //itemType key: 0 = heart,
     var frames = [];

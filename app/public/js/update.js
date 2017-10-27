@@ -26,17 +26,21 @@ setInterval(() => {
         sprite.update(sprite);
     }
     if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
-        addPowerup(150, 750, POWERUP_TYPE_HEART, 1, 1, 0, true);
+        addPowerup(150, 750, POWERUP_TYPE_HEART, 0, 15, 25, false);
     }
     if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
-        addPowerup(250, 700, POWERUP_TYPE_AIRDASH, 1, 1, 10, false);
+        addPowerup(250, 700, POWERUP_TYPE_AIRDASH, 10, 15, 25, false);
     }
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
     }
+    if (localSprites.length < 2 && isKeyDown('V'.charCodeAt(0))) {
+        addTeleporterDoorSprite(350, 900);
+    }
     if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
         addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
     }
+    console.log(localSprites);
     removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
