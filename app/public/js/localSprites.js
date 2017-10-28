@@ -14,6 +14,7 @@ var PARTICLE_TYPE_TELEPORTER_TELEPORTING = 'teleporterTeleportingParticle';
 
 var EFFECT_RUN_DUST = 'runDust';
 var EFFECT_JUMP_DUST = 'jumpDust';
+var EFFECT_TELEPORTATION = 'teleportationEffect';
 
 var NO_TARGET = 'targetIsNoTarget';
 
@@ -298,7 +299,7 @@ function addTeleporterDoorSprite(x, y) {
     localSprites.push(teleporterSparklesSprite);
 }
 
-function addTeleportationSprite(x, y) {
+function addEffectTeleportation(x, y) {
     var hitBox = new Rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
     xSize = 32,
     ySize = 32,
@@ -318,6 +319,8 @@ function addTeleportationSprite(x, y) {
     teleporterDoorSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
     teleporterDoorSprite.msBetweenFrames = 175;
     teleporterDoorSprite.framesToLive = (teleporterDoorSprite.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
+    teleporterDoorSprite.createdAt = now();
+    teleporterDoorSprite.type = EFFECT_TELEPORTATION;
     localSprites.push(teleporterDoorSprite);
     frames = [
         $.extend(new Rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
@@ -339,6 +342,8 @@ function addTeleportationSprite(x, y) {
     teleporterSparklesSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
     teleporterSparklesSprite.msBetweenFrames = 150;
     teleporterSparklesSprite.framesToLive = (teleporterSparklesSprite.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
+    teleporterSparklesSprite.createdAt = now();
+    teleporterSparklesSprite.type = EFFECT_TELEPORTATION;
     localSprites.push(teleporterSparklesSprite);
 }
 
