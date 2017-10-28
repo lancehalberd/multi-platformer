@@ -23,6 +23,7 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
+            // falling damage
             if (actor.fallingUncontrolled) {
                 damageSprite(actor, 1);
                 actor.fallingUncontrolled = false;
@@ -52,6 +53,7 @@ function updateActor(actor) {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
             if (actor.vy < actor.landingDustVyThreshold) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
             if (actor.vy >= actor.uncontrolledFallVyThreshold) actor.fallingUncontrolled = true;
+            if (actor.vy < actor.uncontrolledFallVyThreshold) actor.fallingUncontrolled = false;
             actor.dustScale = (actor.vy + 9) / 10; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys
             actor.dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys
             // The player is in the air/not grounded
@@ -174,7 +176,7 @@ function updateActor(actor) {
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
     }
-    // uncontrolled fall, falling damage
+    // uncontrolled fall animation
     if (actor.vy >= actor.uncontrolledFallVyThreshold) {
         actor.animation = actor.uncontrolledFallAnimation;
         actor.uncontrolledFallFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
