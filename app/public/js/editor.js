@@ -249,6 +249,7 @@ class ObjectBrush {
     }
 }
 
+
 var selectedTrigger = null, draggingTrigger = null;
 class TriggerBrush {
 

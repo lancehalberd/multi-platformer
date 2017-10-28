@@ -121,6 +121,7 @@ function createEquippedActorSource(baseImage, row, hairIndex, equipmentSourcesAr
     return actorCanvas;
 }
 
+
 class TTCharacter {
     constructor(actorCanvas, skin, hair, weapon) {
         this.canvas = actorCanvas;
@@ -134,7 +135,8 @@ class TTCharacter {
         this.hitBox = new Rectangle(-18, -63, 36, 63);
         //this.walkAnimation = characterMysteryWalkAnimation;
         this.walkAnimation = characterAlienWalkAnimation;
-        this.hasMovementStartAnimation = true;
+        this.hasMovementStartAnimation = true;  //Alien character teleports in after idling for a little while, spawning a teleportation effect.
+        this.hasMovementStopAnimation = true; // Alien character vanishes upon beginning to idle, spawning a winkOut effect.
         //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
         this.attackAnimation = characterMysteryAttackAnimation;
         //this.idleAnimation = characterMysteryIdleAnimation;
@@ -225,7 +227,8 @@ var characterAlienWalkAnimation = {frames: allAlienFrames};
 var characterAlienIdleAnimation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), teleporterAImage, 24).slice(9, 23)};
 var characterAlienJumpAnimation = {frames: allAlienFrames.slice(1, 2)};
 var characterAlienUncontrolledFallAnimation = fireballAnimation;
-var characterAlienAttackAnimation = fireballAnimation
+var characterAlienAttackAnimation = fireballAnimation;
+
 
 /*
 function characterAlienUncontrolledFallAnimation() {

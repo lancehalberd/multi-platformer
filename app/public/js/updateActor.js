@@ -209,10 +209,15 @@ function updateActor(actor) {
     }
     // movement start animation. Originally used to make alien character spawn a teleportation effect after idling as sparkles for awhile.
     // The animation played here should be genericized.
-    if (actor.vx || actor.vy !== 1) actor.wasMoving = true;
+    if (actor.vx || actor.vy !== 1) {
+        actor.wasMoving = true;
+    }
     if (!actor.vx && actor.vy === 1 && actor.wasMoving) {
         actor.hasIdledSince = now();
         actor.wasMoving = false;
+        // character "winks out" when they start idling
+        //the animation played here should be genericized, but it's the alien's winkout effect for now.
+        if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
     }
     if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
     if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1) && actor.hasIdledAwhile) {
