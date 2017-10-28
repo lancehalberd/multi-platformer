@@ -1,3 +1,7 @@
+// these two vars are used to scale the landing dust plume's size and animation speed base on player vy at time of landing.
+// these vars are global, and that's ridiculous, but they're getting the job done for now and other solutions seem very complex to me at the moment.
+var dustScale,
+dustFps;
 function updateActor(actor) {
     if (actor.stuckUntil > now()) {
         return;
@@ -25,7 +29,7 @@ function updateActor(actor) {
         if (actor.grounded) {
             //dust plume on landing
             if (actor.spawnDustOnGrounding) {
-                addEffectJumpDust(actor.x, actor.y);
+                addEffectJumpDust(actor.x, actor.y, dustScale, dustFps, 0);
                 actor.spawnDustOnGrounding = false;
             }
             //run dust
@@ -42,11 +46,13 @@ function updateActor(actor) {
                 // jump key while on the ground and not crouching.
                 actor.jump();
                 // Spawns a dust plume on jumping from a grounded state.
-                addEffectJumpDust(actor.x, actor.y);
+                addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
             }
         } else {
-            if (actor.vy > 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
+            if (actor.vy >= 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
             if (actor.vy < 16) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
+            dustScale = (actor.vy + 9) / 10; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys = 40, scaling will be 9.
+            dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer
@@ -61,6 +67,7 @@ function updateActor(actor) {
                         if (isKeyDown(KEY_LEFT))  actor.vx += 8;
                     }
                     actor.jump();
+                    addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0); // smaller, shorter-lived plume effect for air jump
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
@@ -74,6 +81,7 @@ function updateActor(actor) {
                 actor.vx += 7;
                 actor.vy -= 4;
                 actor.airDashed = true;
+                //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
             }
             if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
                 actor.vx -= 7;

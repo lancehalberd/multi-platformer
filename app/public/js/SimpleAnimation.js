@@ -37,14 +37,16 @@ function addEffectTeleportation(x, y) {
     localSprites.push(new SimpleAnimation({frames: frames.slice(9, 24)}, now(), 15, target));
 }
 
-function addEffectJumpDust(x, y) {
+function addEffectJumpDust(x, y, scale, animationSpeedInFPS, rotation) {
     var sourceRectangle = new Rectangle(0, 0, 32, 32);
     var frames = rectangleToFrames(sourceRectangle, effectJumpDustImage, 7);
-    // We draw the animation 2.5 times larger than the original.
-    var target = sourceRectangle.scale(2.5);
+    // We draw the animation [scale] times larger than the original.
+    var target = sourceRectangle.scale(scale);
     // x, y coords are given as the middle of the characters feet, which is where we want to draw the bottom of
     // the dust cloud, so we adjust the target rectangle accordingly.
-    localSprites.push(new SimpleAnimation({frames}, now(), 10, target.moveTo(x - target.width / 2, y - target.height)));
+    var jumpDust = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    jumpDust.rotation = rotation;
+    localSprites.push(jumpDust);
 }
 
 function addEffectRunDust(x, y) {
