@@ -443,10 +443,8 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
 
 
 function addPowerup(x, y, powerupType, durationInSeconds, respawnDelayInSecondsMin, respawnDelayInSecondsMax, falls) {  //respawnDelay parameters don't do anything right now, but will be used later.
-    //send powerup x, y for where its center should be
-    //itemType key: 0 = heart,
     var frames = [];
-    var powerup = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    var powerup = new SimpleSprite({frames}, x, y, 0, 0, 1, 1); //scale overwritten by scaling oscillation effect.
     if (powerupType === POWERUP_TYPE_HEART) {
         frames.push($.extend(new Rectangle(0, 0, 32, 32), {image: powerupHeartImage}));   //powerup sprites will be animated in the future
     }
@@ -455,13 +453,9 @@ function addPowerup(x, y, powerupType, durationInSeconds, respawnDelayInSecondsM
         powerup.durationInMS = durationInSeconds * 1000;
     }
     var xSize = 32,
-    ySize = 32,
-    scaledXSize = xScale * xSize,
-    scaledYSize = yScale * ySize;
+    ySize = 32;
     powerup.type = powerupType;
-    powerup.xScale = xScale;
-    powerup.yScale = yScale;
-    powerup.hitBox = Rectangle.defineByCenter(x, y, scaledXSize, scaledYSize);
+    powerup.hitBox = Rectangle.defineByCenter(x, y, xSize, ySize);
     powerup.scaleOscillation = true;
     powerup.xScaleMin = 0.875;
     powerup.yScaleMin = 0.875;
