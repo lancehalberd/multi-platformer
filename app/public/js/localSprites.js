@@ -298,6 +298,50 @@ function addTeleporterDoorSprite(x, y) {
     localSprites.push(teleporterSparklesSprite);
 }
 
+function addTeleportationSprite(x, y) {
+    var hitBox = new Rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
+    xSize = 32,
+    ySize = 32,
+    xScale = 3,
+    yScale = 3,
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(7 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(8 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox})
+    ],
+    teleporterDoorSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    teleporterDoorSprite.msBetweenFrames = 175;
+    teleporterDoorSprite.framesToLive = (teleporterDoorSprite.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
+    localSprites.push(teleporterDoorSprite);
+    frames = [
+        $.extend(new Rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(10 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(11 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(12 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(13 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(14 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(15 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(16 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(17 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(18 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(19 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(20 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(21 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(22 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+        $.extend(new Rectangle(23 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
+    ];
+    teleporterSparklesSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
+    teleporterSparklesSprite.msBetweenFrames = 150;
+    teleporterSparklesSprite.framesToLive = (teleporterSparklesSprite.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
+    localSprites.push(teleporterSparklesSprite);
+}
+
 function addEffectJumpDust (x, y) {
     var xSize = 32,
     ySize = 32,
@@ -315,7 +359,7 @@ function addEffectJumpDust (x, y) {
     jumpDust.type = EFFECT_JUMP_DUST;
     jumpDust.msBetweenFrames = 100;
     jumpDust.createdAt = now();
-    jumpDust.framesToLive = (jumpDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms.
+    jumpDust.framesToLive = (jumpDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
     localSprites.push(jumpDust);
 }
 

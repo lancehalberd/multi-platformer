@@ -169,9 +169,11 @@ class TeleporterTrigger extends Trigger {
 
     trigger() {
         if (mainCharacter.canTeleport) {
+            addTeleportationSprite(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
             mainCharacter.x = this.destinationX;
             mainCharacter.y = this.destinationY;
             mainCharacter.canTeleport = false;
+            addTeleportationSprite(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
         }
     }
 
