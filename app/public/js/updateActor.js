@@ -14,24 +14,25 @@ function updateActor(actor) {
     // Main character's movement is controlled with the keyboard.
     if (taggedId === actor.id) {
         // Have the "IT" player render as the alien.
-        actor.walkAnimation = characterAlienWalkAnimation();
+        actor.walkAnimation = characterAlienWalkAnimation;
+        actor.attackAnimation = characterAlienAttackAnimation;
         actor.hasMovementStartAnimation = true;
-        actor.idleAnimation = characterAlienIdleAnimation();
+        actor.idleAnimation = characterAlienIdleAnimation;
         actor.idleAnimationIntermittent = {};
         actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterAlienJumpAnimation();
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation();
+        actor.jumpAnimation = characterAlienJumpAnimation;
+        actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
         actor.uncontrolledLandingAnimation = {};
     } else {
         // Non "IT" characters render as the mystery cloaked character.
-        actor.walkAnimation = characterMysteryWalkAnimation();
-        actor.attackAnimation = characterMysteryAttackAnimation();
+        actor.walkAnimation = characterMysteryWalkAnimation;
+        actor.attackAnimation = characterMysteryAttackAnimation;
         actor.hasMovementStartAnimation = false;
-        actor.idleAnimation = characterMysteryIdleAnimation();
+        actor.idleAnimation = characterMysteryIdleAnimation;
         actor.idleAnimationIntermittent = {};
         actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterMysteryJumpAnimation();
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation();
+        actor.jumpAnimation = characterMysteryJumpAnimation;
+        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
         actor.uncontrolledLandingAnimation = {};
     }
     if (actor === mainCharacter && !actor.deathTime){

@@ -132,19 +132,19 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = new Rectangle(-18, -63, 36, 63);
-        //this.walkAnimation = characterMysteryWalkAnimation();
-        this.walkAnimation = characterAlienWalkAnimation();
+        //this.walkAnimation = characterMysteryWalkAnimation;
+        this.walkAnimation = characterAlienWalkAnimation;
         this.hasMovementStartAnimation = true;
         //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
-        //this.attackAnimation = characterMysteryAttackAnimation();
-        //this.idleAnimation = characterMysteryIdleAnimation();
-        this.idleAnimation = characterAlienIdleAnimation();
+        this.attackAnimation = characterMysteryAttackAnimation;
+        //this.idleAnimation = characterMysteryIdleAnimation;
+        this.idleAnimation = characterAlienIdleAnimation;
         this.idleAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
         this.idleAnimationLong = {}; //to be filled in with what the character does when they've been idling for a long time
-        this.jumpAnimation = characterAlienJumpAnimation();
-        //this.jumpAnimation = characterMysteryJumpAnimation();
-//        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation();
-        this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation(); //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
+        this.jumpAnimation = characterAlienJumpAnimation;
+        //this.jumpAnimation = characterMysteryJumpAnimation;
+//        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
+        this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation; //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
         this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move. Maybe takes damage.
         this.animation = this.walkAnimation;
         this.skin = skin;
@@ -205,80 +205,29 @@ class TTCharacter {
     }
 }
 
-
-
 var humanImage = requireImage('/gfx/person/personSprite.png'),
     characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
     characterAlienImage = requireImage('/gfx/person/characterAlien.png');
 
 var mainCharacter;
 var otherCharacters = {};
-function walkAnimation(actorCanvas) {
-    var hitBox = new Rectangle(36, 18, 24, 42);
-    var neutralFrame = $.extend(new Rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
-    var stepRight = $.extend(new Rectangle(96, 0, 96, 64), {image: actorCanvas, hitBox});
-    var stepLeft = $.extend(new Rectangle(192, 0, 96, 64), {image: actorCanvas, hitBox});
-    return {frames: [neutralFrame, stepRight, neutralFrame, stepLeft]};
-}
 
-function characterMysteryWalkAnimation() {
-    frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 4);
-    return {frames};
-}
+var allMysteryFrames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8)
+var characterMysteryWalkAnimation = {frames: allMysteryFrames.slice(0, 4)};
+var characterMysteryJumpAnimation = {frames: allMysteryFrames.slice(0, 1)};
+var characterMysteryIdleAnimation = {frames: allMysteryFrames.slice(4, 8)};
+var characterMysteryUncontrolledFallAnimation = fireballAnimation;
+var characterMysteryAttackAnimation = fireballAnimation;
 
-function characterMysteryUncontrolledFallAnimation() {
-    return fireballAnimation;
-}
 
-function characterMysteryJumpAnimation() {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(-4, -32, 40, 64),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-    ];
-    return {frames};
-}
+var allAlienFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), characterAlienImage, 9);
+var characterAlienWalkAnimation = {frames: allAlienFrames};
+var characterAlienIdleAnimation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), teleporterAImage, 24).slice(9, 23)};
+var characterAlienJumpAnimation = {frames: allAlienFrames.slice(1, 2)};
+var characterAlienUncontrolledFallAnimation = fireballAnimation;
+var characterAlienAttackAnimation = fireballAnimation
 
-function characterMysteryIdleAnimation() {
-    frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8).slice(4, 8);
-    return {frames};
-}
-
-function characterAlienWalkAnimation() {
-    var xSize = 32,
-    ySize = 36,
-    hitBox = new Rectangle(-4, -24, 40, 60),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-        $.extend(new Rectangle(8 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox})
-    ];
-    return {frames};
-}
-
-function characterAlienIdleAnimation() {
-    var sourceRectangle = new Rectangle(0, 0, 32, 32);
-    var frames = rectangleToFrames(sourceRectangle, teleporterAImage, 24).slice(9, 23);
-    var target = sourceRectangle.scale(3);
-    return {frames};
-}
-
-function characterAlienJumpAnimation() {
-    var xSize = 32,
-    ySize = 36,
-    hitBox = new Rectangle(-4, -24, 40, 60),
-    frames = [
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-    ];
-    return {frames};
-}
-
+/*
 function characterAlienUncontrolledFallAnimation() {
     var xSize = 32,
     ySize = 36,
@@ -288,6 +237,14 @@ function characterAlienUncontrolledFallAnimation() {
         $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
     ];
     return {frames};
+}*/
+
+function walkAnimation(actorCanvas) {
+    var hitBox = new Rectangle(36, 18, 24, 42);
+    var neutralFrame = $.extend(new Rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
+    var stepRight = $.extend(new Rectangle(96, 0, 96, 64), {image: actorCanvas, hitBox});
+    var stepLeft = $.extend(new Rectangle(192, 0, 96, 64), {image: actorCanvas, hitBox});
+    return {frames: [neutralFrame, stepRight, neutralFrame, stepLeft]};
 }
 
 function attackAnimation(actorCanvas) {
@@ -298,19 +255,6 @@ function attackAnimation(actorCanvas) {
     return {frames: [prepareFrame, attackFrame, prepareFrame, neutralFrame]};
 }
 
-function characterMysteryAttackAnimation() {
-        var xSize = 32,
-        ySize = 32,
-        hitBox = new Rectangle(0, -32, 40, 64),
-        frames = [
-            $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-            $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
-        ];
-        return {frames};
-}
 
 function initializeTTCharacter(playerData) {
     var actorCanvas = createEquippedActorSource(humanImage, playerData.skin, playerData.hair,

@@ -240,3 +240,13 @@ function countInstancesOfElementInArray(array, element) {
     }
     return count;
 }
+
+
+var rectangleToFrames = (rectangle, image, numberOfFrames) => {
+    var frames = [];
+    for (var i = 0; i < numberOfFrames; i++) {
+        frames[i] = rectangle.moveTo(i * rectangle.width, 0);
+        frames[i].image = image;
+    }
+    return frames;
+}

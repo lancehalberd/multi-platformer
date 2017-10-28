@@ -240,15 +240,6 @@ var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
     effectJumpDustImage = requireImage('/gfx/effects/effectJumpDust.png'),
     effectRunDustImage = requireImage('/gfx/effects/effectRunDust.png');
 
-var rectangleToFrames = (rectangle, image, numberOfFrames) => {
-    var frames = [];
-    for (var i = 0; i < numberOfFrames; i++) {
-        frames[i] = rectangle.moveTo(i * rectangle.width, 0);
-        frames[i].image = image;
-    }
-    return frames;
-}
-
 var fireballAnimation = {
     frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), fireballBImage, 5)
 };
