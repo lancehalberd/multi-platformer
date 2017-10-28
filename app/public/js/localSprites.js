@@ -12,6 +12,9 @@ var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
 var PARTICLE_TYPE_TELEPORTER_IDLING = 'teleporterIdlingParticle';
 var PARTICLE_TYPE_TELEPORTER_TELEPORTING = 'teleporterTeleportingParticle';
 
+var EFFECT_RUN_DUST = 'runDust';
+var EFFECT_JUMP_DUST = 'jumpDust';
+
 var NO_TARGET = 'targetIsNoTarget';
 
 
@@ -182,10 +185,14 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && canTriggerTrigger(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
         }
+    }
+    //THIS FUNCTION IS ONLY CALLED BY THE ADORABILIS CREATURE, AND SHOULD BE DELTED WITH THE ADORALBILIS IS UPDATED TO NOT USE IT. Or maybe we'll use it for other creatures.
+    function isCreatureReady(creature) {
+        return  now() > creature.notReadyToTriggerUntil;
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
@@ -228,7 +235,9 @@ var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
     powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
     powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
     creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
-    teleporterAImage = requireImage('/gfx/environment/teleporterA.png');
+    teleporterAImage = requireImage('/gfx/environment/teleporterA.png'),
+    effectJumpDustImage = requireImage('/gfx/effects/effectJumpDust.png'),
+    effectRunDustImage = requireImage('/gfx/effects/effectRunDust.png');
 
 var rectangleToFrames = (rectangle, image, numberOfFrames) => {
     var frames = [];
@@ -289,6 +298,49 @@ function addTeleporterDoorSprite(x, y) {
     localSprites.push(teleporterSparklesSprite);
 }
 
+function addEffectJumpDust (x, y) {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = new Rectangle(0, 0, 32, 32),
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox})
+    ];
+    var jumpDust = new SimpleSprite({frames}, x, y, 0, 0, 2.5, 2.5);
+    jumpDust.type = EFFECT_JUMP_DUST;
+    jumpDust.msBetweenFrames = 100;
+    jumpDust.createdAt = now();
+    jumpDust.framesToLive = (jumpDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms.
+    localSprites.push(jumpDust);
+}
+
+function addEffectRunDust(x, y) {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = new Rectangle(0, 0, 32, 32),
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox})
+    ];
+    var runDust = new SimpleSprite({frames}, x, y, 0, 0, 1.75, 1.75);
+    runDust.type = EFFECT_RUN_DUST;
+    runDust.msBetweenFrames = 200;
+    runDust.createdAt = now();
+    runDust.framesToLive = (runDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
+    localSprites.push(runDust);
+}
+
+
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
@@ -335,7 +387,7 @@ function addCreature(x, y, target, creatureType) {
         adorabilisSprite.maxSpeed = 0.8;
         adorabilisSprite.acceleration = 0.1;
         adorabilisSprite.notReadyToTriggerUntil = now();
-        adorabilisSprite.durationOfTouchEffectInMS = 5000;
+        adorabilisSprite.durationOfTouchEffectInMS = 10000;
         adorabilisSprite.framesToLive = 32767;
         adorabilisSprite.msBetweenFrames = 85;
         adorabilisSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
@@ -427,13 +479,8 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
 }
 
 function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
-    var detonationParticles = [];
     for (var i = 0; i < numberOfFragments; i++) {
-        var newParticle = addParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_FIREBALL_COLLISION);
-        detonationParticles.push(newParticle);
-    }
-    for (var j = 0; j < detonationParticles.length; j++) {  //whoa. What is this about?
-
+        addParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_FIREBALL_COLLISION);
     }
 }
 

@@ -10,7 +10,7 @@ function updateActor(actor) {
     }
     // User normal scaling when checking if player is under ceiling.
     actor.scale = 2;
-    actor.hitBox = new Rectangle(-20, -64, 40, 64);
+    actor.hitBox = new Rectangle(-20, -60, 40, 60); //should player with scaling and hitBox size just a little. Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -23,6 +23,16 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
+            //dust plume on landing
+            if (actor.spawnDustOnGrounding) {
+                addEffectJumpDust(actor.x, actor.y);
+                actor.spawnDustOnGrounding = false;
+            }
+            //run dust
+            if (Math.abs(actor.vx) > actor.runDustSpeed && actor.noRunDustUntil <= now()) {
+                addEffectRunDust(actor.x, actor.y);
+                actor.noRunDustUntil = now() + actor.msBetweenRunDustPlumes;
+            }
             actor.airDashed = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
@@ -31,8 +41,11 @@ function updateActor(actor) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
                 actor.jump();
+                // Spawns a dust plume on jumping from a grounded state.
+                addEffectJumpDust(actor.x, actor.y);
             }
         } else {
+            actor.spawnDustOnGrounding = true;  //for spawning dust plume on landing
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer

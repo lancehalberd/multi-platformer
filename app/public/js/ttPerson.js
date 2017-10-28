@@ -283,6 +283,9 @@ function initializePersonGraphics() {
     mainCharacter.originalY = mainCharacter.y;
     mainCharacter.invulnerableUntil = now();
     mainCharacter.canTeleport = true;
+    mainCharacter.runDustSpeed = 3; // vx over which player will spawn dust plumes behing them
+    mainCharacter.msBetweenRunDustPlumes = 200;  // ms between spawned dust plumes when player is running.
+    mainCharacter.noRunDustUntil = now();   // for knowing when to spawn a new run dust plume
     mainCharacter.onDeathComplete = function () {
         this.health = this.maxHealth;
         this.x = this.originalX;
