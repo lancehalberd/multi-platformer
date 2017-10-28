@@ -12,7 +12,30 @@ function updateActor(actor) {
     actor.scale = 2;
     actor.hitBox = new Rectangle(-20, -60, 40, 60); //should player with scaling and hitBox size just a little. Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
+    if (taggedId === actor.id) {
+        // Have the "IT" player render as the alien.
+        actor.walkAnimation = characterAlienWalkAnimation();
+        actor.hasMovementStartAnimation = true;
+        actor.idleAnimation = characterAlienIdleAnimation();
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterAlienJumpAnimation();
+        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation();
+        actor.uncontrolledLandingAnimation = {};
+    } else {
+        // Non "IT" characters render as the mystery cloaked character.
+        actor.walkAnimation = characterMysteryWalkAnimation();
+        actor.attackAnimation = characterMysteryAttackAnimation();
+        actor.hasMovementStartAnimation = false;
+        actor.idleAnimation = characterMysteryIdleAnimation();
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterMysteryJumpAnimation();
+        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation();
+        actor.uncontrolledLandingAnimation = {};
+    }
     if (actor === mainCharacter && !actor.deathTime){
+
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
@@ -178,11 +201,11 @@ function updateActor(actor) {
         actor.currentFrame = actor.jumpFrame;
     }
     // uncontrolled fall animation
-    //if (actor.vy >= actor.uncontrolledFallVyThreshold) {
+    if (actor.vy >= actor.uncontrolledFallVyThreshold) {
         actor.animation = actor.uncontrolledFallAnimation;
         actor.uncontrolledFallFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.uncontrolledFallFrame;
-    //}
+    }
     // movement start animation. Originally used to make alien character spawn a teleportation effect after idling as sparkles for awhile.
     // The animation played here should be genericized.
     if (actor.vx || actor.vy !== 1) actor.wasMoving = true;

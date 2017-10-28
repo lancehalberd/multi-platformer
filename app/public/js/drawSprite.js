@@ -13,7 +13,7 @@ function drawSprite(context, sprite) {
         sprite.x, sprite.y,
         ifdefor(sprite.xScale, 1) * scale, ifdefor(sprite.yScale, 1) * scale,
         ifdefor(sprite.rotation, 0),
-        (sprite.id === taggedId) ? 'red' : ((sprite.untaggableUntil > now()) ? 'blue' : null),
+        null,
         sprite
     );
 }

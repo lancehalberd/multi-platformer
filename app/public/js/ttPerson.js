@@ -200,9 +200,6 @@ class TTCharacter {
     }
 
     renderFrame(context, frame, target) {
-        if (taggedId === this.id) {
-            var frame = getAnimationFrame(fireballAnimation.frames, 5);
-        }
         draw.solidTintedImage(context, frame.image, this.color, frame, target);
         draw.image(context, frame.image, frame.translate(0, frame.height), target);
     }
@@ -230,17 +227,7 @@ function characterMysteryWalkAnimation() {
 }
 
 function characterMysteryUncontrolledFallAnimation() {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(0, -64, 64, 64),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-        $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
-    ];
-    return {frames};
+    return fireballAnimation;
 }
 
 function characterMysteryJumpAnimation() {
