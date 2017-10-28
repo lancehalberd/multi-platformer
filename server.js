@@ -50,7 +50,7 @@ var writeZoneToFile = (zoneId, map) => {
     if (files.length > 100) {
         return;
     }
-    fs.writeFile(`data/zones/${zoneId}.json`, JSON.stringify(map.composite), function(err) {
+    fs.writeFile(`data/zones/${zoneId}.json`, JSON.stringify(map), function(err) {
         if(err) {
             return console.log(err);
         }
@@ -61,14 +61,20 @@ var readZoneFromFile = zoneId => {
     if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
         return makeEmptyMap();
     }
-    var grid = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
-    return {
-        objects: [],
-        tileSize: 32,
-        width: grid[0].length,
-        height: grid.length,
-        composite: grid
-    };
+    var map = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
+    // Old map files just stored the grid
+    if (!map.composite) {
+        return {
+            entities: [],
+            tileSize: 32,
+            width: map[0].length,
+            height: map.length,
+            composite: map
+        };
+    } else {
+        // New map files store all map data.
+        return map;
+    }
 }
 
 // Every ten seconds, write all updated files to disk and mark them as not updated.
@@ -270,6 +276,31 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {mapObject: data.mapObject, position: data.position});
                 map.isDirty = true;
                 return;
+            }
+            if (data.action === 'createEntity') {
+                map.entities = map.entities || [];
+                map.entities.push(data.entity);
+                broadcast(player.zoneId, {createdEntity: data.entity});
+                map.isDirty = true;
+            }
+            if (data.action === 'updateEntity') {
+                var index = _.findIndex(map.entities, {id: data.entity.id});
+                if (index >= 0) {
+                    map.entities[index] = data.entity;
+                    broadcast(player.zoneId, {updatedEntity: data.entity});
+                } else {
+                    // Tell the player that send this update that the object doesn't exist on the server.
+                    connection.sendUTF(JSON.stringify({deletedEntityId: data.entity.id}));
+                }
+            }
+            if (data.action === 'deleteEntity') {
+                // This returns the first index of entities that has an object that matches
+                // all properties of data.entity. Note that it could have additional properties
+                // so this isn't an exact match.
+                var index = _.findIndex(map.entities, {id: data.entityId});
+                if (index >= 0) map.entities.splice(index, 1);
+                broadcast(player.zoneId, {deletedEntityId: data.entityId});
+                map.isDirty = true;
             }
             if (data.action === 'tagged') {
                 tagPlayer(data.id);

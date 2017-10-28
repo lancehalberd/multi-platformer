@@ -206,5 +206,5 @@ class TeleporterTrigger extends Trigger {
        // We should update this to draw the spawned object eventually.
        var frame = getAnimationFrame(fireballAnimation.frames, 5);
        draw.image(mainContext, frame.image, frame, target);
-   }*/    
+   }*/
 }

@@ -18,11 +18,7 @@ class Rectangle {
         );
     }
 
-    constructor(left, top, width, height) {
-        if (typeof left !== 'number') throw new Error(`Invalid value for left: ${left}`);
-        if (typeof top !== 'number') throw new Error(`Invalid value for top: ${top}`);
-        if (typeof width !== 'number') throw new Error(`Invalid value for width: ${width}`);
-        if (typeof height !== 'number') throw new Error(`Invalid value for height: ${height}`);
+    constructor(left = 0, top = 0, width = 0, height = 0) {
         this.left = left;
         this.top = top;
         this.width = width;

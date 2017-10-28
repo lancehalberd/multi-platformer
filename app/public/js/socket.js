@@ -23,6 +23,11 @@ socket.addEventListener('message', event => {
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
         currentMap = data.map;
+        // Create initial set of entities from the map definition.
+        // Originally these just consisted of Triggers.
+        for (var entity of (currentMap.entities || [])) {
+            localSprites.push(unserializeEntity(entity));
+        }
         // The new player is always tagged by default.
         setTaggedId(publicId);
         return;
@@ -59,6 +64,40 @@ socket.addEventListener('message', event => {
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);
     }
+    if (data.createdEntity) {
+        //console.log("created entity", data.createdEntity);
+        var entity = unserializeEntity(data.createdEntity);
+        localSprites.push(entity);
+        // Change selected Trigger to the version we created from the server
+        // rather than the locall created copy.
+        if (selectedTrigger && selectedTrigger.id === entity.id) {
+            selectedTrigger = entity;
+        }
+    }
+    if (data.deletedEntityId) {
+        //console.log("deleted entity", data.deletedEntityId);
+        var index = _.findIndex(localSprites, {id: data.deletedEntityId});
+        if (index >= 0) {
+            localSprites.splice(index, 1);
+        } else {
+            console.log(`Couldn't find entity to delete: ${data.deletedEntityId}`);
+        }
+        if (selectedTrigger && selectedTrigger.id === data.deletedEntityId) {
+            selectedTrigger = null;
+        }
+    }
+    if (data.updatedEntity) {
+        //console.log("updated entity", data.updatedEntity);
+        var index = _.findIndex(localSprites, {id: data.updatedEntity.id});
+        if (index >= 0 ) {
+            localSprites[index] = unserializeEntity(data.updatedEntity);
+        } else {
+            console.log(`Couldn't find entity to update: ${data.updatedEntity.id}`);
+        }
+        if (selectedTrigger && selectedTrigger.id === data.updatedEntity.id) {
+            selectedTrigger = localSprites[index];
+        }
+    }
 });
 var getPlayerById = (id) => {
     if (id === publicId) return mainCharacter;
@@ -83,11 +122,7 @@ var setTaggedId = (id) => {
 }
 var currentMap = null;
 var sendData = data => socket.readyState === socket.OPEN && socket.send(JSON.stringify(data));
-var serializePlayer = player => ({
-    x: player.x, y: player.y, vx: player.vx, vy: player.vy, isCrouching: player.isCrouching,
-    hair: player.hair, skin: player.skin, weapon: player.weapon,
-    zoneId: player.zoneId,
-});
+var serializePlayer = player => _.pick(player, ['x', 'y', 'vx', 'vy', 'isCrouching', 'hair', 'skin', 'weapon', 'zoneId']);
 var sendTaggedPlayer = (id) => {
     //console.log('tagging', id);
     privateId && sendData({privateId, action: 'tagged', id: id})
@@ -97,3 +132,28 @@ var sendPlayerMoved = () => privateId && sendData({privateId, action: 'move', pl
 var sendPlayerAttacked = () => privateId && sendData({privateId, action: 'attack'});
 var sendTileUpdate = (tileData, position) => privateId && sendData({privateId, action: 'updateTile', tileData, position});
 var sendMapObject = (mapObject, position) => privateId && sendData({privateId, action: 'createMapObject', mapObject, position});
+var sendCreateEntity = (entity) => {
+    if (!privateId) return;
+    // Set a unique entity id before sending it to the server. This will be used when updating/deleting this entity in the future.
+    entity.id = getUniqueEntityId();
+    sendData({privateId, action: 'createEntity', entity: serializeEntity(entity)});
+};
+var sendUpdateEntity = (entity) => privateId && sendData({privateId, action: 'updateEntity', entity: serializeEntity(entity)});
+var sendDeleteEntity = (entityId) => privateId && sendData({privateId, action: 'deleteEntity', entityId});
+
+// Creates an entity id that is not currently in use and cannot be simultaneously created by another player.
+// This second condition is enforced by using the current player's publicId as a prefix for this id.
+var getUniqueEntityId = () => {
+    var uniqueId;
+    do {
+        uniqueId = publicId + randomString(5);
+    } while (_.find(localSprites, {id: uniqueId}));
+    return uniqueId
+}
+
+function randomString(length) {
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split('');
+    choices = [];
+    while (choices.length < length) choices.push(_.sample(possible));
+    return choices.join('');
+}

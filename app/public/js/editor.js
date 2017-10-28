@@ -264,7 +264,7 @@ class TriggerBrush {
         var mouseCoords = getMouseCoords();
         var pixelMouseCoords = getPixelMouseCoords();
         if (selectedTrigger && isKeyDown(KEY_BACK_SPACE)) {
-            localSprites.splice(localSprites.indexOf(selectedTrigger), 1);
+            sendDeleteEntity(selectedTrigger.id);
             selectedTrigger = null;
         }
         if (!this.wasMouseDown && mouseDown) {
@@ -293,15 +293,19 @@ class TriggerBrush {
                 var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
                 if (!selectedTrigger) {
                     selectedTrigger = this.sourceTrigger.clone();
-                    localSprites.push(selectedTrigger);
                     selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                    selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+                    sendCreateEntity(selectedTrigger);
+                } else {
+                    selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+                    sendUpdateEntity(selectedTrigger);
                 }
-                selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
                 objectStartCoords = null;
             }
         }
         if (rightMouseDown && selectedTrigger) {
             selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+            sendUpdateEntity(selectedTrigger);
         }
         this.wasMouseDown = mouseDown;
     }
@@ -315,7 +319,6 @@ class TriggerBrush {
         this.sourceTrigger.renderHUD(target);
     }
 }
-
 
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 
