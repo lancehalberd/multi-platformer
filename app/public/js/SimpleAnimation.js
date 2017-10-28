@@ -25,6 +25,18 @@ class SimpleAnimation {
     }
 }
 
+function addEffectTeleportation(x, y) {
+    var sourceRectangle = new Rectangle(0, 0, 32, 32);
+    // The teleporter image contains 2 animations, one in frames [0, 8] and the other in frames [9,23].
+    // I put all the frames into this variable and then slice them out below to create each animation.
+    var frames = rectangleToFrames(sourceRectangle, teleporterAImage, 24);
+    var target = sourceRectangle.scale(3);
+    // Both animations are drawn in the same target rectangle, but they have different FPS.
+    target = target.moveTo(x - target.width / 2, y - target.height);
+    localSprites.push(new SimpleAnimation({frames: frames.slice(0, 9)}, now(), 9, target));
+    localSprites.push(new SimpleAnimation({frames: frames.slice(9, 24)}, now(), 15, target));
+}
+
 function addEffectJumpDust(x, y) {
     var sourceRectangle = new Rectangle(0, 0, 32, 32);
     var frames = rectangleToFrames(sourceRectangle, effectJumpDustImage, 7);
