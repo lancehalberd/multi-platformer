@@ -61,6 +61,7 @@ function updateActor(actor) {
                         if (isKeyDown(KEY_LEFT))  actor.vx += 8;
                     }
                     actor.jump();
+                    addEffectJumpDust(actor.x, actor.y);
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
