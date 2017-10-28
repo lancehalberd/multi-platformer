@@ -214,15 +214,20 @@ function updateActor(actor) {
     }
     if (!actor.vx && actor.vy === 1 && actor.wasMoving) {
         actor.hasIdledSince = now();
+        actor.wasIdling = true;
         actor.wasMoving = false;
         // character "winks out" when they start idling
         //the animation played here should be genericized, but it's the alien's winkout effect for now.
         if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
     }
     if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
-    if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1) && actor.hasIdledAwhile) {
-        addEffectTeleportation(actor.x, actor.y);
+    if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1)) {
+        // winking in when start moving/come out of idle
+        if (actor.wasIdling) addEffectWinkOut(actor.x, actor.y);
+        // bigger teleport in on coming out of idle if have been idling for awhile.
+        if (actor.hasIdledAwhile) addEffectTeleportation(actor.x, actor.y);
         actor.hasIdledAwhile = false;
+        actor.wasIdling = false;
     }
     // dies falling off of map
     if (actor.y - actor.hitBox.height > currentMap.tileSize * currentMap.height) {
