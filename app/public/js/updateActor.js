@@ -1,7 +1,3 @@
-// these two vars are used to scale the landing dust plume's size and animation speed base on player vy at time of landing.
-// these vars are global, and that's ridiculous, but they're getting the job done for now and other solutions seem very complex to me at the moment.
-var dustScale,
-dustFps;
 function updateActor(actor) {
     if (actor.stuckUntil > now()) {
         return;
@@ -27,9 +23,14 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
+            // falling damage
+            if (actor.fallingUncontrolled) {
+                damageSprite(actor, 1);
+                actor.fallingUncontrolled = false;
+            }
             //dust plume on landing
             if (actor.spawnDustOnGrounding) {
-                addEffectJumpDust(actor.x, actor.y, dustScale, dustFps, 0);
+                addEffectJumpDust(actor.x, actor.y, actor.dustScale, actor.dustFps, 0);
                 actor.spawnDustOnGrounding = false;
             }
             //run dust
@@ -49,10 +50,12 @@ function updateActor(actor) {
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
             }
         } else {
-            if (actor.vy >= 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
-            if (actor.vy < 16) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
-            dustScale = (actor.vy + 9) / 10; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys = 40, scaling will be 9.
-            dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys
+            if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
+            if (actor.vy < actor.landingDustVyThreshold) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
+            if (actor.vy >= actor.uncontrolledFallVyThreshold) actor.fallingUncontrolled = true;
+            if (actor.vy < actor.uncontrolledFallVyThreshold) actor.fallingUncontrolled = false;
+            actor.dustScale = (actor.vy + 9) / 10; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys
+            actor.dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer
@@ -67,7 +70,11 @@ function updateActor(actor) {
                         if (isKeyDown(KEY_LEFT))  actor.vx += 8;
                     }
                     actor.jump();
-                    addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0); // smaller, shorter-lived plume effect for air jump
+                     // smaller, shorter-lived plume effect for air jump
+                     // BROKEN: trying to fix bug where a plume spawns on triple-jump, even if there's no jump.
+                     //     But if currentJumps < maxJumps, nothing spawns even on double jump,
+                     //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
+                    if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
@@ -149,27 +156,50 @@ function updateActor(actor) {
     // Rather than have the player get imperceptibly slower and slower, we just bring
     // them to a full stop once their speed is less than .5.
     if (!actor.slipping && Math.abs(actor.vx) < 0.5) actor.vx = 0;
-
+    // gravity
     actor.vy++;
-    if (!actor.grounded) {
-        actor.animation = actor.walkAnimation;
-        actor.currentFrame = actor.walkFrame = 2;
-    }
+
     if (!actor.attacking) {
         if (actor.vx) {
             actor.animation = actor.walkAnimation;
             actor.currentFrame = actor.walkFrame;
         }
-    } else {
+    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
     }
     if (actor.x !== targetPosition[0]) {
         actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
+    //jumping
+    if (!actor.grounded && actor.vy < actor.uncontrolledFallVyThreshold) {
+        actor.animation = actor.jumpAnimation;
+        actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.currentFrame = actor.jumpFrame;
+    }
+    // uncontrolled fall animation
+    //if (actor.vy >= actor.uncontrolledFallVyThreshold) {
+        actor.animation = actor.uncontrolledFallAnimation;
+        actor.uncontrolledFallFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.currentFrame = actor.uncontrolledFallFrame;
+    //}
+    // movement start animation. Originally used to make alien character spawn a teleportation effect after idling as sparkles for awhile.
+    // The animation played here should be genericized.
+    if (actor.vx || actor.vy !== 1) actor.wasMoving = true;
+    if (!actor.vx && actor.vy === 1 && actor.wasMoving) {
+        actor.hasIdledSince = now();
+        actor.wasMoving = false;
+    }
+    if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
+    if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1) && actor.hasIdledAwhile) {
+        addEffectTeleportation(actor.x, actor.y);
+        actor.hasIdledAwhile = false;
+    }
+    // dies falling off of map
     if (actor.y - actor.hitBox.height > currentMap.tileSize * currentMap.height) {
         actor.health = 0;
     }
+    // death
     if (actor === mainCharacter && actor.health <= 0 && !actor.deathTime) {
         actor.deathTime = now();
     }
@@ -177,6 +207,7 @@ function updateActor(actor) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
+    //prevents serial teleportation
     if (!isPlayerTouchingTeleporter(actor)) actor.canTeleport = true;
 }
 

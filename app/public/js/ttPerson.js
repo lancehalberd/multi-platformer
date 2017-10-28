@@ -132,12 +132,20 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = new Rectangle(-18, -63, 36, 63);
-        /*this.walkAnimation = walkAnimation(actorCanvas);
-        this.attackAnimation = attackAnimation(actorCanvas);
-        this.idleAnimation = walkAnimation(actorCanvas);*/
-        this.walkAnimation = characterMysteryWalkAnimation();
-        this.attackAnimation = characterMysteryAttackAnimation();
-        this.idleAnimation = characterMysteryIdleAnimation();
+        //this.walkAnimation = characterMysteryWalkAnimation();
+        this.walkAnimation = characterAlienWalkAnimation();
+        this.hasMovementStartAnimation = true;
+        //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
+        //this.attackAnimation = characterMysteryAttackAnimation();
+        //this.idleAnimation = characterMysteryIdleAnimation();
+        this.idleAnimation = characterAlienIdleAnimation();
+        this.idleAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
+        this.idleAnimationLong = {}; //to be filled in with what the character does when they've been idling for a long time
+        this.jumpAnimation = characterAlienJumpAnimation();
+        //this.jumpAnimation = characterMysteryJumpAnimation();
+//        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation();
+        this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation(); //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
+        this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move. Maybe takes damage.
         this.animation = this.walkAnimation;
         this.skin = skin;
         this.hair = hair;
@@ -202,8 +210,9 @@ class TTCharacter {
 
 
 
-var humanImage = requireImage('/gfx/person/personSprite.png');
-var characterMysteryImage = requireImage('/gfx/person/characterMystery.png');
+var humanImage = requireImage('/gfx/person/personSprite.png'),
+    characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
+    characterAlienImage = requireImage('/gfx/person/characterAlien.png');
 
 var mainCharacter;
 var otherCharacters = {};
@@ -220,8 +229,77 @@ function characterMysteryWalkAnimation() {
     return {frames};
 }
 
+function characterMysteryUncontrolledFallAnimation() {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = new Rectangle(0, -64, 64, 64),
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+        $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox})
+    ];
+    return {frames};
+}
+
+function characterMysteryJumpAnimation() {
+    var xSize = 32,
+    ySize = 32,
+    hitBox = new Rectangle(-4, -32, 40, 64),
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
+    ];
+    return {frames};
+}
+
 function characterMysteryIdleAnimation() {
     frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8).slice(4, 8);
+    return {frames};
+}
+
+function characterAlienWalkAnimation() {
+    var xSize = 32,
+    ySize = 36,
+    hitBox = new Rectangle(-4, -24, 40, 60),
+    frames = [
+        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        $.extend(new Rectangle(8 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox})
+    ];
+    return {frames};
+}
+
+function characterAlienIdleAnimation() {
+    var sourceRectangle = new Rectangle(0, 0, 32, 32);
+    var frames = rectangleToFrames(sourceRectangle, teleporterAImage, 24).slice(9, 23);
+    var target = sourceRectangle.scale(3);
+    return {frames};
+}
+
+function characterAlienJumpAnimation() {
+    var xSize = 32,
+    ySize = 36,
+    hitBox = new Rectangle(-4, -24, 40, 60),
+    frames = [
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+    ];
+    return {frames};
+}
+
+function characterAlienUncontrolledFallAnimation() {
+    var xSize = 32,
+    ySize = 36,
+    hitBox = new Rectangle(-4, -24, 40, 60),
+    frames = [
+        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
+        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+    ];
     return {frames};
 }
 
@@ -265,7 +343,9 @@ function initializePersonGraphics() {
     mainCharacter.originalX = mainCharacter.x;
     mainCharacter.originalY = mainCharacter.y;
     mainCharacter.invulnerableUntil = now();
+    mainCharacter.uncontrolledFallVyThreshold = 30;
     mainCharacter.canTeleport = true;
+    mainCharacter.landingDustVyThreshold = 16; //vy at/over which the player will produce a landing dust plume on touchdown
     mainCharacter.runDustSpeed = 3; // vx over which player will spawn dust plumes behing them
     mainCharacter.msBetweenRunDustPlumes = 200;  // ms between spawned dust plumes when player is running.
     mainCharacter.noRunDustUntil = now();   // for knowing when to spawn a new run dust plume
