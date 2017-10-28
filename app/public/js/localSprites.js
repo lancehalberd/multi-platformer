@@ -298,50 +298,6 @@ function addTeleporterDoorSprite(x, y) {
     localSprites.push(teleporterSparklesSprite);
 }
 
-function addEffectJumpDust (x, y) {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(0, 0, 32, 32),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox}),
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: effectJumpDustImage, hitBox})
-    ];
-    var jumpDust = new SimpleSprite({frames}, x, y, 0, 0, 2.5, 2.5);
-    jumpDust.type = EFFECT_JUMP_DUST;
-    jumpDust.msBetweenFrames = 100;
-    jumpDust.createdAt = now();
-    jumpDust.framesToLive = (jumpDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms.
-    localSprites.push(jumpDust);
-}
-
-function addEffectRunDust(x, y) {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(0, 0, 32, 32),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox}),
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: effectRunDustImage, hitBox})
-    ];
-    var runDust = new SimpleSprite({frames}, x, y, 0, 0, 1.75, 1.75);
-    runDust.type = EFFECT_RUN_DUST;
-    runDust.msBetweenFrames = 200;
-    runDust.createdAt = now();
-    runDust.framesToLive = (runDust.msBetweenFrames * frames.length) / 50; //'/ 50' puts ms into game frames. I.e. game is at 50fps, or an animation frame every 20ms. Probably need to more accurately get the game's actual, current fps?
-    localSprites.push(runDust);
-}
-
-
-
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = PROJECTILE_TYPE_HOMING_FIREBALL;

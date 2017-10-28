@@ -23,7 +23,7 @@ exports.getMustacheData = (zoneId) => {
     };
     addScripts([
         'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'tiles', 'main', 'ttPerson',
-        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'localSprites', 'Trigger', 'editor',
+        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'localSprites', 'SimpleAnimation', 'Trigger', 'editor',
     ]);
     var addStyleSheets = fileNames => {
         for (var fileName of fileNames) {
