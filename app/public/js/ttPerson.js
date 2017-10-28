@@ -216,31 +216,14 @@ function walkAnimation(actorCanvas) {
 }
 
 function characterMysteryWalkAnimation() {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(-4, -32, 40, 64),
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(3 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox})
-    ];
+    frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 4);
     return {frames};
 }
 
 function characterMysteryIdleAnimation() {
-    var xSize = 32,
-    ySize = 32,
-    hitBox = new Rectangle(-4, -32, 40, 64),
-    frames = [
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(5 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-        $.extend(new Rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterMysteryImage, hitBox}),
-    ];
+    frames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8).slice(4, 8);
     return {frames};
 }
-
 
 function attackAnimation(actorCanvas) {
     var hitBox = new Rectangle(36, 18, 24, 42);
