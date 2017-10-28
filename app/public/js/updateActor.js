@@ -45,7 +45,8 @@ function updateActor(actor) {
                 addEffectJumpDust(actor.x, actor.y);
             }
         } else {
-            actor.spawnDustOnGrounding = true;  //for spawning dust plume on landing
+            if (actor.vy > 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
+            if (actor.vy < 16) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer
