@@ -208,9 +208,9 @@ class TTCharacter {
 
 
 
-var humanImage = requireImage('/gfx/person/personSprite.png');
-var characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
-characterAlienImage = requireImage('/gfx/person/characterAlien.png');
+var humanImage = requireImage('/gfx/person/personSprite.png'),
+    characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
+    characterAlienImage = requireImage('/gfx/person/characterAlien.png');
 
 var mainCharacter;
 var otherCharacters = {};
