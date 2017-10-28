@@ -91,7 +91,7 @@ function updateActor(actor) {
     }
 
     if (isPlayerCompelledByOctopusTouch(actor) && actor.grounded) {
-            actor.vy -= 14;
+        actor.vy -= 14;
     }
 
 
@@ -144,7 +144,7 @@ function updateActor(actor) {
     actor.vy++;
     if (!actor.grounded) {
         actor.animation = actor.walkAnimation;
-        actor.walkFrame = 2;
+        actor.currentFrame = actor.walkFrame = 2;
     }
     if (!actor.attacking) {
         if (actor.vx) {
