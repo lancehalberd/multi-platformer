@@ -154,7 +154,7 @@ function updateActor(actor) {
     // Rather than have the player get imperceptibly slower and slower, we just bring
     // them to a full stop once their speed is less than .5.
     if (!actor.slipping && Math.abs(actor.vx) < 0.5) actor.vx = 0;
-
+    // gravity
     actor.vy++;
     if (!actor.attacking) {
         if (actor.vx) {
@@ -174,15 +174,29 @@ function updateActor(actor) {
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
     }
-    // uncontrolled fall
+    // uncontrolled fall, falling damage
     if (actor.vy >= actor.uncontrolledFallVyThreshold) {
         actor.animation = actor.uncontrolledFallAnimation;
         actor.uncontrolledFallFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.uncontrolledFallFrame;
     }
+    // movement start animation. Originally used to make alien character spawn a teleportation effect after idling as sparkles for awhile.
+    // The animation played here should be genericized.
+    if (actor.vx || actor.vy !== 1) actor.wasMoving = true;
+    if (!actor.vx && actor.vy === 1 && actor.wasMoving) {
+        actor.hasIdledSince = now();
+        actor.wasMoving = false;
+    }
+    if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
+    if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1) && actor.hasIdledAwhile) {
+        addEffectTeleportation(actor.x, actor.y);
+        actor.hasIdledAwhile = false;
+    }
+    // dies falling off of map
     if (actor.y - actor.hitBox.height > currentMap.tileSize * currentMap.height) {
         actor.health = 0;
     }
+    // death
     if (actor === mainCharacter && actor.health <= 0 && !actor.deathTime) {
         actor.deathTime = now();
     }
@@ -190,6 +204,7 @@ function updateActor(actor) {
         actor.deathComplete = true;
         if (actor.onDeathComplete) actor.onDeathComplete();
     }
+    //prevents serial teleportation
     if (!isPlayerTouchingTeleporter(actor)) actor.canTeleport = true;
 }
 

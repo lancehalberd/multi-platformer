@@ -132,15 +132,17 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = new Rectangle(-18, -63, 36, 63);
-        this.walkAnimation = characterMysteryWalkAnimation();
-        //this.walkAnimation = characterAlienWalkAnimation();
-        this.attackAnimation = characterMysteryAttackAnimation();
-        this.idleAnimation = characterMysteryIdleAnimation();
-        //this.idleAnimation = characterAlienIdleAnimation();
+        //this.walkAnimation = characterMysteryWalkAnimation();
+        this.walkAnimation = characterAlienWalkAnimation();
+        this.hasMovementStartAnimation = true;
+        //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
+        //this.attackAnimation = characterMysteryAttackAnimation();
+        //this.idleAnimation = characterMysteryIdleAnimation();
+        this.idleAnimation = characterAlienIdleAnimation();
         this.idleAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
         this.idleAnimationLong = {}; //to be filled in with what the character does when they've been idling for a long time
-        //this.jumpAnimation = characterAlienJumpAnimation();
-        this.jumpAnimation = characterMysteryJumpAnimation();
+        this.jumpAnimation = characterAlienJumpAnimation();
+        //this.jumpAnimation = characterMysteryJumpAnimation();
 //        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation();
         this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation(); //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
         this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move. Maybe takes damage.
@@ -290,12 +292,9 @@ function characterAlienWalkAnimation() {
 }
 
 function characterAlienIdleAnimation() {
-    var xSize = 32,
-    ySize = 36,
-    hitBox = new Rectangle(-4, -24, 40, 60),
-    frames = [
-        $.extend(new Rectangle(7 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
-    ];
+    var sourceRectangle = new Rectangle(0, 0, 32, 32);
+    var frames = rectangleToFrames(sourceRectangle, teleporterAImage, 24).slice(9, 23);
+    var target = sourceRectangle.scale(3);
     return {frames};
 }
 
