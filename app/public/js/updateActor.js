@@ -49,10 +49,10 @@ function updateActor(actor) {
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
             }
         } else {
-            if (actor.vy > 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
+            if (actor.vy >= 16) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
             if (actor.vy < 16) actor.spawnDustOnGrounding = false; //if the player slows down again before touching down (i.e. double jumps to slow themselves), they don't spawn the plume.
-            dustScale = (actor.vy + 4) / 8; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys // with these values ((actor.vy - 6) / 4) minimum landing plume witll be at actor.vy = 16, which will give a "normal-scaled" (i.e. like jumping, 2.5) on a double-jump landing. At actor.vy = 40, scaling will be 9.
-            dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys // with these values (actor.vy / 160), actor.vy of 16 (double jump) will yield 10fps. 20 will yield 8. 40 will yield 4.
+            dustScale = (actor.vy + 9) / 10; // aiming for 2.5 when actor.vy = 16, and getting larger with higher vys = 40, scaling will be 9.
+            dustFps = (48 / actor.vy) + 7; //aiming for 10 when actor.vy = 16, and getting smaller with higher vys
             // The player is in the air/not grounded
             if (actor.jumpKeyReleased) {
                 // Once the actor releases the jump key while jumping, they can no longer
