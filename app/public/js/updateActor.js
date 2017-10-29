@@ -288,8 +288,10 @@ function isPlayerUnderCeiling(player) {
         topRow = Math.floor(hitBox.top / currentMap.tileSize),
         leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
         rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
-    if (isTileX(topRow, leftColumn, TILE_SOLID * TILE_UP) || isTileX(topRow, rightColumn, TILE_SOLID * TILE_UP)) return true;
-    else return false;
+    for (var column = leftColumn; column <= rightColumn; column++) {
+        if (isTileX(topRow, column, TILE_SOLID * TILE_UP)) return true;
+    }
+    return false;
 }
 
 function moveSpriteInDirection(sprite, amount, direction) {
