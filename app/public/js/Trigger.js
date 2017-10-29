@@ -83,7 +83,8 @@ class ForceTrigger extends Trigger {
         this.forceType = forceType;
         this.xForce = xForce;
         this.yForce = yForce;
-        this.color = 'purple';
+        if (this.xForce < 1 && this.yForce < 1) this.color = 'green';
+        else this.color = 'purple';
     }
 
     clone() {
