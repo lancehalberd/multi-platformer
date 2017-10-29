@@ -270,7 +270,7 @@ class TriggerBrush {
         }
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedTrigger;
-            localSprites.filter(sprite => sprite.isTrigger).forEach(sprite => {
+            localSprites.filter(sprite => (sprite instanceof Trigger)).forEach(sprite => {
                 if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                     newSelectedTrigger = sprite;
                     return false;
@@ -292,21 +292,27 @@ class TriggerBrush {
             draggingTrigger = null;
             if (objectStartCoords) {
                 var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
-                if (!selectedTrigger) {
-                    selectedTrigger = this.sourceTrigger.clone();
-                    selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                    selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
-                    sendCreateEntity(selectedTrigger);
-                } else {
-                    selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
-                    sendUpdateEntity(selectedTrigger);
+                // Don't do anything if the rectangle the selected is off screen
+                if (drawnRectangle.overlapsRectangle(new Rectangle(0, 0, currentMap.width, currentMap.height), false)) {
+                    if (!selectedTrigger) {
+                        selectedTrigger = cloneEntity(this.sourceTrigger);
+                        selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                        selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+                        sendCreateEntity(selectedTrigger);
+                    } else {
+                        selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+                        sendUpdateEntity(selectedTrigger);
+                    }
                 }
                 objectStartCoords = null;
             }
         }
         if (rightMouseDown && selectedTrigger) {
-            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-            sendUpdateEntity(selectedTrigger);
+            var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
+            if (levelRectangle.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                sendUpdateEntity(selectedTrigger);
+            }
         }
         this.wasMouseDown = mouseDown;
     }
@@ -364,7 +370,10 @@ var brushList = [
     new TriggerBrush(new ForceTrigger(dummyRectangle, 0, FORCE_AMP, 1.15, 1.27)),
     new TriggerBrush(new ForceTrigger(dummyRectangle, 0, FORCE_AMP, 0.8, 0.8)),
     new TriggerBrush(new TeleporterTrigger(dummyRectangle, 0, 0, 0)),
+    new TriggerBrush(new LifePowerup(dummyRectangle, 10)),
+    new TriggerBrush(new AirDashPowerup(dummyRectangle, 10, 10)),
 ];
+
 var selectPreviousObject = () => {
     brushIndex = ((brushIndex || 0) + brushList.length - 1) % brushList.length;
     currentBrush = brushList[brushIndex];

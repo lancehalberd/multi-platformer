@@ -1,22 +1,22 @@
-var TRIGGER_TYPE_FORCE = 'forceTrigger';
-var TRIGGER_TYPE_SPAWN = 'spawnTrigger';
-var TRIGGER_TYPE_TELEPORTER = 'teleporter'
-
 var FORCE_AMP = 'playerVelocityMultiplied';
 var FORCE_FIXED = 'fixedForceAddedToPlayer';
 
 class Trigger {
 
-    constructor(type, hitBox, cooldownInSeconds) {
-        this.type = type;
+    constructor(hitBox, cooldownInSeconds) {
         this.hitBox = hitBox;
         this.cooldownInSeconds = cooldownInSeconds;
         this.color = 'white';
-        this.isTrigger = true;
+    }
+
+    // This method can be defined on subclasses to give some dynamic behavior,
+    // like bobbing and pulsing powerups.
+    getHitBox() {
+        return this.hitBox;
     }
 
     isHittingMainCharacter() {
-        return this.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter));
+        return this.getHitBox().overlapsRectangle(getGlobalSpriteHitBox(mainCharacter));
     }
 
     isOnCooldown() {
@@ -32,14 +32,14 @@ class Trigger {
         if (!this.isHittingMainCharacter()) {
             return;
         }
-        if (this.cooldownInSeconds) {
+        if (this.trigger() && this.cooldownInSeconds) {
             this.onCooldownUntil = now() + this.cooldownInSeconds * 1000;
         }
-        this.trigger();
     }
 
     trigger() {
         // This should be overriden by the specific trigger subclasses.
+        return false;
     }
 
     render() {
@@ -62,14 +62,15 @@ class Trigger {
             draw.fillRectangle(mainContext, target, this.color);
         }
         if (selectedTrigger === this) {
-            mainContext.save();
-            mainContext.globalAlpha = 1;
-            mainContext.strokeStyle = 'white';
-            mainContext.beginPath();
-            draw.rectangle(mainContext, this.hitBox);
-            mainContext.stroke();
-            mainContext.restore();
+            this.renderSelectedBox();
         }
+    }
+
+    renderSelectedBox() {
+        mainContext.save();
+        mainContext.globalAlpha = 1;
+        draw.strokeRectangle(mainContext, this.hitBox, 'white');
+        mainContext.restore();
     }
 
     renderHUD(target) {
@@ -79,18 +80,12 @@ class Trigger {
 
 class ForceTrigger extends Trigger {
     constructor(hitBox, cooldownInSeconds, forceType, xForce, yForce) {
-        super(TRIGGER_TYPE_FORCE, hitBox, cooldownInSeconds);
+        super(hitBox, cooldownInSeconds);
         this.forceType = forceType;
         this.xForce = xForce;
         this.yForce = yForce;
         if (this.xForce < 1 && this.yForce < 1) this.color = 'green';
         else this.color = 'purple';
-    }
-
-    clone() {
-        return new ForceTrigger($.extend({}, this.hitBox),
-            this.cooldownInSeconds, this.forceType, this.xForce, this.yForce
-        );
     }
 
     trigger() {
@@ -102,6 +97,7 @@ class ForceTrigger extends Trigger {
             if (mainCharacter.vx) mainCharacter.vx += this.xForce;
             if (mainCharacter.vy) mainCharacter.vy += this.yForce;
         }
+        return true;
     }
 
     // Methods used by editor:
@@ -110,7 +106,7 @@ class ForceTrigger extends Trigger {
 class SpawnTrigger extends Trigger {
 
     constructor(hitBox, cooldownInSeconds, spawnedObjectType, spawnX, spawnY) {
-        super(TRIGGER_TYPE_SPAWN, hitBox, cooldownInSeconds);
+        super(hitBox, cooldownInSeconds);
         this.spawnedObjectType = spawnedObjectType;
         this.spawnX = spawnX;
         this.spawnY = spawnY;
@@ -127,6 +123,7 @@ class SpawnTrigger extends Trigger {
         if (this.spawnedObjectType === PROJECTILE_TYPE_HOMING_FIREBALL) {
             addHomingFireballSprite(this.spawnX, this.spawnY, mainCharacter);
         }
+        return true;
     }
 
     // Methods used by editor:
@@ -157,16 +154,10 @@ class SpawnTrigger extends Trigger {
 class TeleporterTrigger extends Trigger {
 
     constructor(hitBox, cooldownInSeconds, destinationX, destinationY) {
-        super(TRIGGER_TYPE_TELEPORTER, hitBox, cooldownInSeconds);
+        super(hitBox, cooldownInSeconds);
         this.destinationX = destinationX;
         this.destinationY = destinationY;
         this.color = 'blue';
-    }
-
-    clone() {
-        return new TeleporterTrigger($.extend({}, this.hitBox),
-            this.cooldownInSeconds, this.destinationX, this.destinationY
-        );
     }
 
     trigger() {
@@ -176,7 +167,9 @@ class TeleporterTrigger extends Trigger {
             mainCharacter.y = this.destinationY;
             mainCharacter.canTeleport = false;
             addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
+            return true;
         }
+        return false;
     }
 
     // Methods used by editor:
@@ -189,7 +182,7 @@ class TeleporterTrigger extends Trigger {
         super.renderPreview(target);
         if (selectedTrigger === this) {
             // We should update this to draw the spawned object eventually.
-            var frame = getAnimationFrame(fireballAnimation.frames, 5);
+            var frame = getAnimationFrame(portalAnimation.frames, 5);
             // Draw a fireball clip where the fireball will spawn.
             draw.image(mainContext, frame.image, frame,
                 Rectangle.defineByCenter(this.destinationX, this.destinationY, frame.width, frame.height)

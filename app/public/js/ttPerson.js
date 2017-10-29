@@ -207,37 +207,16 @@ class TTCharacter {
     }
 }
 
-var humanImage = requireImage('/gfx/person/personSprite.png'),
-    characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
-    characterAlienImage = requireImage('/gfx/person/characterAlien.png');
+var humanImage = requireImage('/gfx/person/personSprite.png');
 
 var mainCharacter;
 var otherCharacters = {};
 
-var allMysteryFrames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8)
-var characterMysteryWalkAnimation = {frames: allMysteryFrames.slice(0, 4)};
-var characterMysteryJumpAnimation = {frames: allMysteryFrames.slice(0, 1)};
-var characterMysteryIdleAnimation = {frames: allMysteryFrames.slice(4, 8)};
-var characterMysteryUncontrolledFallAnimation = fireballAnimation;
-var characterMysteryAttackAnimation = fireballAnimation;
-
-
-var allAlienFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), characterAlienImage, 9);
-var characterAlienWalkAnimation = {frames: allAlienFrames};
-var characterAlienIdleAnimation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), teleporterAImage, 24).slice(9, 23)};
-var characterAlienJumpAnimation = {frames: allAlienFrames.slice(1, 2)};
-var characterAlienUncontrolledFallAnimation = fireballAnimation;
-var characterAlienAttackAnimation = fireballAnimation;
-
-
 /*
 function characterAlienUncontrolledFallAnimation() {
-    var xSize = 32,
-    ySize = 36,
-    hitBox = new Rectangle(-4, -24, 40, 60),
     frames = [
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, xSize, ySize), {image: fireballBImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, xSize, ySize), {image: characterAlienImage, hitBox}),
+        ...fireballAnimation.slice(6, 7),
+        ...allAlienFrames.slice(1, 2),
     ];
     return {frames};
 }*/

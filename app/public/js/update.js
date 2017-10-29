@@ -25,17 +25,8 @@ setInterval(() => {
     ) {
         sprite.update(sprite);
     }
-    if (localSprites.length < 2 && isKeyDown('H'.charCodeAt(0))) {
-        addPowerup(150, 750, POWERUP_TYPE_HEART, 0, 15, 25, false);
-    }
-    if (localSprites.length < 2 && isKeyDown('G'.charCodeAt(0))) {
-        addPowerup(250, 700, POWERUP_TYPE_AIRDASH, 10, 15, 25, false);
-    }
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
-    }
-    if (localSprites.length < 2 && isKeyDown('V'.charCodeAt(0))) {
-        addTeleporterDoorSprite(350, 900);
     }
     if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
         addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);

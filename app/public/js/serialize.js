@@ -1,5 +1,10 @@
 var classes = {
-    Object, Rectangle, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger,
+    Object, Rectangle, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, LifePowerup, AirDashPowerup,
+};
+
+var cloneEntity = (entity) => {
+    var clone = new classes[entity.constructor.name]();
+    return Object.assign(clone, entity);
 };
 
 // Serialize an object so that it

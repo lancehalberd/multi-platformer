@@ -27,16 +27,16 @@ class Rectangle {
         this.bottom = top + height;
     }
 
-    clone() {
-        return new Rectangle(this.left, this.top, this.width, this.height);
-    }
-
     translate(dx, dy) {
         return new Rectangle(this.left + dx, this.top + dy, this.width, this.height);
     }
 
     moveTo(x, y) {
         return new Rectangle(x, y, this.width, this.height);
+    }
+
+    moveCenterTo(x, y) {
+        return this.moveTo(x - this.width / 2, y - this.height / 2);
     }
 
     resize(width, height) {
@@ -52,6 +52,11 @@ class Rectangle {
 
     scale(scale) {
         return new Rectangle(this.left * scale, this.top * scale, this.width * scale, this.height * scale);
+    }
+
+    scaleFromeCenter(scale) {
+        var center = this.getCenter();
+        return this.moveCenterTo(0, 0).scale(scale).moveCenterTo(center[0], center[1]);
     }
 
     getCenter() {
