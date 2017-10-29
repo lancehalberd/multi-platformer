@@ -17,6 +17,7 @@ function updateActor(actor) {
         actor.walkAnimation = characterAlienWalkAnimation;
         actor.attackAnimation = characterAlienAttackAnimation;
         actor.hasMovementStartAnimation = true;
+        actor.hasMovementStopAnimation = true;
         actor.idleAnimation = characterAlienIdleAnimation;
         actor.idleAnimationIntermittent = {};
         actor.idleAnimationLong = {};
@@ -28,6 +29,7 @@ function updateActor(actor) {
         actor.walkAnimation = characterMysteryWalkAnimation;
         actor.attackAnimation = characterMysteryAttackAnimation;
         actor.hasMovementStartAnimation = false;
+        actor.hasMovementStopAnimation = false;
         actor.idleAnimation = characterMysteryIdleAnimation;
         actor.idleAnimationIntermittent = {};
         actor.idleAnimationLong = {};

@@ -292,6 +292,7 @@ wsServer.on('request', function(request) {
                     // Tell the player that send this update that the object doesn't exist on the server.
                     connection.sendUTF(JSON.stringify({deletedEntityId: data.entity.id}));
                 }
+                map.isDirty = true;
             }
             if (data.action === 'deleteEntity') {
                 // This returns the first index of entities that has an object that matches
