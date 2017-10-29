@@ -167,6 +167,7 @@ class TeleporterTrigger extends Trigger {
             mainCharacter.y = this.destinationY;
             mainCharacter.canTeleport = false;
             addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
+            mainCharacter.currentNumberOfJumps = 0;
             return true;
         }
         return false;
