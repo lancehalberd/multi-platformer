@@ -16,7 +16,7 @@ class Trigger {
     }
 
     isHittingMainCharacter() {
-        return this.getHitBox().overlapsRectangle(getGlobalSpriteHitBox(mainCharacter));
+        return this.getHitBox().overlapsRectangle(getGlobalSpriteHitBox(mainCharacter), false);
     }
 
     isOnCooldown() {
