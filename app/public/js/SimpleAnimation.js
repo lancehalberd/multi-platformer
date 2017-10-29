@@ -1,4 +1,4 @@
-var effectWinkOutImage = requireImage('/gfx/effects/effectWinkout.png');
+var effectWinkOutImage = requireImage('/gfx/effects/effectWinkOut.png');
 
 class SimpleAnimation {
 
