@@ -96,7 +96,8 @@ class ForceTrigger extends Trigger {
     trigger() {
         if (this.forceType === FORCE_AMP) {
             if (mainCharacter.vx) mainCharacter.vx *= this.xForce;
-            if (mainCharacter.vy < 0) mainCharacter.vy *= this.yForce;    //doesn't speed falling
+            if (this.xForce < 1 && this.yForce < 1) mainCharacter.vy *= this.xForce; //if trigger is force dampening, falling is slowed
+            else if (mainCharacter.vy < 0) mainCharacter.vy *= this.yForce;    // if trigger if force amp, it doesn't speed falling
         } else if (this.forceType === FORCE_FIXED) {
             if (mainCharacter.vx) mainCharacter.vx += this.xForce;
             if (mainCharacter.vy) mainCharacter.vy += this.yForce;
