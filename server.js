@@ -303,6 +303,9 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {deletedEntityId: data.entityId});
                 map.isDirty = true;
             }
+            if (data.action === 'entityOnCooldown') {
+                broadcast(player.zoneId, {entityOnCooldown: data.entityId});
+            }
             if (data.action === 'tagged') {
                 tagPlayer(data.id);
                 broadcast(player.zoneId, {tagged: data.id});

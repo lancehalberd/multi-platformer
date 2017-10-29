@@ -23,6 +23,12 @@ class Trigger {
         return now() < this.onCooldownUntil;
     }
 
+    putOnCooldown() {
+        if (this.cooldownInSeconds) {
+            this.onCooldownUntil = now() + this.cooldownInSeconds * 1000;
+        }
+    }
+
     update() {
         // Triggers currently do nothing while on cooldown.
         if (this.isOnCooldown()) {
@@ -33,7 +39,8 @@ class Trigger {
             return;
         }
         if (this.trigger() && this.cooldownInSeconds) {
-            this.onCooldownUntil = now() + this.cooldownInSeconds * 1000;
+            this.putOnCooldown();
+            sendEntityOnCooldown(this.id);
         }
     }
 
