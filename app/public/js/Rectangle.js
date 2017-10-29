@@ -73,3 +73,8 @@ class Rectangle {
             || this.right <= rectangle.left || this.left >= rectangle.right);
     }
 }
+
+
+if (typeof(module) !== 'undefined') {
+    module.exports = Rectangle;
+}
