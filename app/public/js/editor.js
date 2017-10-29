@@ -362,6 +362,7 @@ var brushList = [
             PROJECTILE_TYPE_HOMING_FIREBALL, 0, 0
         )),
     new TriggerBrush(new ForceTrigger(dummyRectangle, 0, FORCE_AMP, 1.15, 1.27)),
+    new TriggerBrush(new ForceTrigger(dummyRectangle, 0, FORCE_AMP, 0.8, 0.8)),
     new TriggerBrush(new TeleporterTrigger(dummyRectangle, 0, 0, 0)),
 ];
 var selectPreviousObject = () => {
