@@ -23,6 +23,10 @@ socket.addEventListener('message', event => {
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
         currentMap = data.map;
+        if (currentMap.respawnPoint) {
+            mainCharacter.x = mainCharacter.originalX = currentMap.respawnPoint.x;
+            mainCharacter.y = mainCharacter.originalY = currentMap.respawnPoint.y;
+        }
         // Create initial set of entities from the map definition.
         // Originally these just consisted of Triggers.
         for (var entity of (currentMap.entities || [])) {

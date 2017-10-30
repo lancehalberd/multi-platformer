@@ -57,9 +57,9 @@ var writeZoneToFile = (zoneId, map) => {
     });
 };
 
-var readZoneFromFile = zoneId => {
+var readZoneFromFile = (zoneId, width, height) => {
     if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
-        return makeEmptyMap();
+        return makeEmptyMap(width, height);
     }
     var map = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
     // Old map files just stored the grid
@@ -88,9 +88,9 @@ setInterval(() => {
     }
 }, 10000);
 
-var getZone = zoneId => {
+var getZone = (zoneId, width, height) => {
     if (!zonesInMemory[zoneId]) {
-        zonesInMemory[zoneId] = readZoneFromFile(zoneId);
+        zonesInMemory[zoneId] = readZoneFromFile(zoneId, width, height);
         zonesInMemory[zoneId].id = zoneId;
         // Remove zones once we hit 20. This may remove an active zone,
         // but active zones will be reloaded so only the inactive ones
@@ -114,6 +114,12 @@ app.get('/zones/:zoneId', (request, response, next) => {
     var zoneId = request.params.zoneId;
     if (zoneId.length > 32) {
         return sendResponse(response, 'Zone Id must be less than 32 characters.');
+    }
+    // If w/h are specified the first time a map is requested, it will spawn with the given width+height.
+    var width = parseInt(request.query.w);
+    var height = parseInt(request.query.h);
+    if (!isNaN(width) && !isNaN(height)) {
+        var map = getZone(zoneId, width, height);
     }
     var indexView = require('./app/views/index.js');
     lastActiveZoneId = zoneId;
