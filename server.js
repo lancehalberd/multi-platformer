@@ -313,8 +313,9 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {entityOnCooldown: data.entityId});
             }
             if (data.action === 'tagged') {
-                tagPlayer(data.id);
-                broadcast(player.zoneId, {tagged: data.id});
+                // The tag is only final if the `tagCompleted` flag is true.
+                if (data.tagCompleted) tagPlayer(data.id);
+                broadcast(player.zoneId, {tagged: data.id, tagCompleted: data.tagCompleted});
                 return;
             }
             return;
@@ -341,6 +342,7 @@ wsServer.on('request', function(request) {
                         var taggedPlayer = _.sample(playersInZone);
                         tagPlayer(taggedPlayer.id);
                         message.tagged = taggedPlayer.id;
+                        message.tagCompleted = true;
                     }
                 }
                 broadcast(player.zoneId, message);

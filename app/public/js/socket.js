@@ -1,6 +1,7 @@
 
 var privateId, publicId, connected = false;
 var taggedId = null;
+var canCompleteTagUntil = null;
 // Create WebSocket connection.
 socket = new WebSocket(`ws://${window.location.host}`);
 // Connection opened
@@ -60,7 +61,10 @@ socket.addEventListener('message', event => {
         }
     }
     if (data.tagged) {
-        setTaggedId(data.tagged);
+        if (data.tagCompleted) setTaggedId(data.tagged);
+        else if (data.tagged === publicId) {
+            canCompleteTagUntil = now() + 500;
+        }
     }
     if (typeof(data.tileData) !== 'undefined') {
         applyTileToMap(currentMap, data.tileData, data.position);
@@ -133,9 +137,9 @@ var setTaggedId = (id) => {
 var currentMap = null;
 var sendData = data => socket.readyState === socket.OPEN && socket.send(JSON.stringify(data));
 var serializePlayer = player => _.pick(player, ['x', 'y', 'vx', 'vy', 'isCrouching', 'hair', 'skin', 'weapon', 'zoneId']);
-var sendTaggedPlayer = (id) => {
+var sendTaggedPlayer = (id, tagCompleted) => {
     //console.log('tagging', id);
-    privateId && sendData({privateId, action: 'tagged', id: id})
+    privateId && sendData({privateId, action: 'tagged', id: id, tagCompleted});
 };
 var sendPlayerJoined = () => connected && sendData({privateId, action: 'join', player: serializePlayer(mainCharacter)});
 var sendPlayerMoved = () => privateId && sendData({privateId, action: 'move', player: _.omit(serializePlayer(mainCharacter), ['hair','skin'])});

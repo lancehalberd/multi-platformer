@@ -52,6 +52,9 @@ setInterval(() => {
         }
     }
     updateEditor();
+    // When the Tagged player touches another on his client, he sends a message indicating that he has done
+    // this. This sets a window of 500 milliseconds in which if that character client sees the tagged player
+    // tag them, then they will send a message indicating they are now the Tagged player.
     if (publicId === taggedId) {
         for (var id in otherCharacters) {
             var target = otherCharacters[id];
@@ -60,6 +63,15 @@ setInterval(() => {
                 sendTaggedPlayer(id);
                 break;
             }
+        }
+    }
+    // If we are still within the window of confirming that the local main character has been tagged, check if they
+    // are in contact with the tagged character and send the final tagged message with their id if so.
+    if (canCompleteTagUntil > now()) {
+        var taggedCharacter = otherCharacters[taggedId];
+        if (taggedCharacter && getGlobalSpriteHitBox(mainCharacter).overlapsRectangle(getGlobalSpriteHitBox(taggedCharacter))) {
+            sendTaggedPlayer(publicId, true);
+            canCompleteTagUntil = null;
         }
     }
 }, frameMilliseconds);
