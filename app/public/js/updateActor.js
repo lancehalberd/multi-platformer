@@ -253,12 +253,12 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.canAirDashUntil > now();
+var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH;
 
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);
     // localSprites.filter(...) returns all the elements of localSprites that the function returns true for.
-    var allTeleporters = localSprites.filter(sprite => sprite.type === TRIGGER_TYPE_TELEPORTER);
+    var allTeleporters = localSprites.filter(sprite => sprite instanceof TeleporterTrigger);
     // allTeleporters.some(...) returns true if any of the elements return true for the given function.
     return allTeleporters.some(teleporter => teleporter.hitBox.overlapsRectangle(globalHitBox));
 }
@@ -272,12 +272,14 @@ function isPlayerUnderCeiling(player) {
         topRow = Math.floor(hitBox.top / currentMap.tileSize),
         leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
         rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
-    if (isTileX(topRow, leftColumn, TILE_SOLID * TILE_UP) || isTileX(topRow, rightColumn, TILE_SOLID * TILE_UP)) return true;
-    else return false;
+    for (var column = leftColumn; column <= rightColumn; column++) {
+        if (isTileX(topRow, column, TILE_SOLID * TILE_UP)) return true;
+    }
+    return false;
 }
 
 function moveSpriteInDirection(sprite, amount, direction) {
-    var splits = Math.max(1, Math.ceil(2 * amount / currentMap.tileSize));
+    var splits = Math.max(1, Math.ceil(2 * Math.abs(amount) / currentMap.tileSize));
     var amount = amount / splits;
     for (var i = 0; i < splits; i++) {
         sprite[directionToCoordinate[direction]] += amount;

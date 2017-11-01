@@ -180,7 +180,7 @@ function updateLocalSprite(localSprite) {
 
     if (localSprite.type === POWERUP_TYPE_AIRDASH) {
         if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            mainCharacter.canAirDashUntil = now() + localSprite.durationInMS;
+            mainCharacter.currentActivatablePowerup = POWERUP_TYPE_AIRDASH;
             localSprite.shouldBeRemoved = true;
         }
     }
@@ -230,65 +230,6 @@ function removeFinishedLocalSprites() {
 }
 
 var localSprites = [];
-var twilightTilesImage = requireImage('/gfx/jetrel/twilight-tiles.png'),
-    fireballBImage = requireImage('/gfx/fireball/fireballB.png'),
-    fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png'),
-    powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
-    powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
-    creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
-    teleporterAImage = requireImage('/gfx/environment/teleporterA.png'),
-    effectJumpDustImage = requireImage('/gfx/effects/effectJumpDust.png'),
-    effectRunDustImage = requireImage('/gfx/effects/effectRunDust.png');
-
-var fireballAnimation = {
-    frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), fireballBImage, 5)
-};
-
-
-//NOT USING THIS SPRITE YET
-function addTeleporterDoorSprite(x, y) {
-    var hitBox = new Rectangle(0, 0, 32, 32),   //I would use xSize and ySize vars in the hitBox rectangle, but I've had trouble with that not working.
-    xSize = 32,
-    ySize = 32,
-    xScale = 3,
-    yScale = 3,
-    frames = [
-        $.extend(new Rectangle(0 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(1 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(2 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(3 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(4 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(5 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(6 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(7 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(8 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox})
-    ],
-    teleporterDoorSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
-    teleporterDoorSprite.msBetweenFrames = 175;
-    teleporterDoorSprite.framesToLive = 32767;
-    localSprites.push(teleporterDoorSprite);
-    frames = [
-        $.extend(new Rectangle(9 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(10 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(11 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(12 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(13 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(14 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(15 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(16 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(17 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(18 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(19 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(20 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(21 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(22 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-        $.extend(new Rectangle(23 * xSize, 0 * ySize, 32, 32), {image: teleporterAImage, hitBox}),
-    ];
-    teleporterSparklesSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
-    teleporterSparklesSprite.msBetweenFrames = 75;
-    teleporterSparklesSprite.framesToLive = 32767;
-    localSprites.push(teleporterSparklesSprite);
-}
 
 function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
@@ -432,36 +373,4 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
     }
 }
 
-
-function addPowerup(x, y, powerupType, durationInSeconds, respawnDelayInSecondsMin, respawnDelayInSecondsMax, falls) {  //respawnDelay parameters don't do anything right now, but will be used later.
-    var frames = [];
-    var powerup = new SimpleSprite({frames}, x, y, 0, 0, 1, 1); //scale overwritten by scaling oscillation effect.
-    if (powerupType === POWERUP_TYPE_HEART) {
-        frames.push($.extend(new Rectangle(0, 0, 32, 32), {image: powerupHeartImage}));   //powerup sprites will be animated in the future
-    }
-    if (powerupType === POWERUP_TYPE_AIRDASH) {
-        frames.push($.extend(new Rectangle(0, 0, 32, 32), {image: powerupAirDashImage}));
-        powerup.durationInMS = durationInSeconds * 1000;
-    }
-    var xSize = 32,
-    ySize = 32;
-    powerup.type = powerupType;
-    powerup.hitBox = Rectangle.defineByCenter(x, y, xSize, ySize);
-    powerup.scaleOscillation = true;
-    powerup.xScaleMin = 0.875;
-    powerup.yScaleMin = 0.875;
-    powerup.xScaleMax = 1.125;
-    powerup.yScaleMax = 1.125;
-    powerup.xScalePerFrame = 0.008;
-    powerup.yScalePerFrame = 0.008;
-    powerup.bobs = true;
-    powerup.bobHeightPerFrame = 0.67;
-    powerup.bobMaxY = 12;
-    powerup.originalY = y;
-    powerup.framesToLive = 32767;
-/*    if (falls) {          //for powerups to fall and settle on the ground, they'd need geometry collision, which I don't want to tackle right now.
-        powerup.vy += 5;    //for some reason this line wasn't working.
-    }*/
-    localSprites.push(powerup);
-}
 

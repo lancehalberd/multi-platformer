@@ -169,10 +169,28 @@ var draw = {
         if (fillStyle) {
             context.save();
             context.fillStyle = fillStyle;
-            context.fillRect(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
+            context.beginPath();
+            draw.rectangle(context, rectangle);
+            context.fill();
             context.restore();
         } else {
-            context.fillRect(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
+            context.beginPath();
+            draw.rectangle(context, rectangle);
+            context.fill();
+        }
+    },
+    strokeRectangle(context, rectangle, strokeStyle) {
+        if (strokeStyle) {
+            context.save();
+            context.strokeStyle = strokeStyle;
+            context.beginPath();
+            draw.rectangle(context, rectangle);
+            context.stroke();
+            context.restore();
+        } else {
+            context.beginPath();
+            draw.rectangle(context, rectangle);
+            context.stroke();
         }
     },
     rectangle(context, rectangle) {

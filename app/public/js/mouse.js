@@ -4,7 +4,7 @@ var mousePosition = [140, 20];
 $(document).on("mousemove", updateMousePosition);
 var mouseDown = false;
 var rightMouseDown = false;
-$(document).on('mousedown', function (event) {
+$('.js-mouseContainer').on('mousedown', function (event) {
     if (event.which == 1) mouseDown = true;
     else if (event.which == 3) rightMouseDown = true;
 });

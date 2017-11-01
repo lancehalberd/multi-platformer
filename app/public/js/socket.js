@@ -23,6 +23,10 @@ socket.addEventListener('message', event => {
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
         currentMap = data.map;
+        if (currentMap.respawnPoint) {
+            mainCharacter.x = mainCharacter.originalX = currentMap.respawnPoint.x;
+            mainCharacter.y = mainCharacter.originalY = currentMap.respawnPoint.y;
+        }
         // Create initial set of entities from the map definition.
         // Originally these just consisted of Triggers.
         for (var entity of (currentMap.entities || [])) {
@@ -98,6 +102,12 @@ socket.addEventListener('message', event => {
             selectedTrigger = localSprites[index];
         }
     }
+    if (data.entityOnCooldown) {
+        var index = _.findIndex(localSprites, {id: data.entityOnCooldown});
+        if (index >= 0 ) {
+            localSprites[index].putOnCooldown();
+        }
+    }
 });
 var getPlayerById = (id) => {
     if (id === publicId) return mainCharacter;
@@ -132,6 +142,7 @@ var sendPlayerMoved = () => privateId && sendData({privateId, action: 'move', pl
 var sendPlayerAttacked = () => privateId && sendData({privateId, action: 'attack'});
 var sendTileUpdate = (tileData, position) => privateId && sendData({privateId, action: 'updateTile', tileData, position});
 var sendMapObject = (mapObject, position) => privateId && sendData({privateId, action: 'createMapObject', mapObject, position});
+var sendEntityOnCooldown = (entityId) => privateId && sendData({privateId, action: 'entityOnCooldown', entityId});
 var sendCreateEntity = (entity) => {
     if (!privateId) return;
     // Set a unique entity id before sending it to the server. This will be used when updating/deleting this entity in the future.
