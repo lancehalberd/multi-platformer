@@ -1,4 +1,10 @@
+var CHARACTER_VICTORIA = 'victoriaCharacter';
+var CHARACTER_COWBOT = 'cowbotCharacter';
+var CHARACTER_MYSTERY = 'mysteryCharacter';
+var CHARACTER_ALIEN = 'alienCharacter';
+
 function updateActor(actor) {
+    console.log(actor.currentActivatablePowerup);
     if (actor.stuckUntil > now()) {
         return;
     }
@@ -15,14 +21,15 @@ function updateActor(actor) {
     // Main character's movement is controlled with the keyboard.
     // change character
     if (taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
+        // Have the "IT" player render as the alien.
         changeCharacterToAlien(actor);
     } else {
         // Non "IT" characters render as...
         //changeCharacterToMystery(actor);
-        changeCharacterToVictoria(actor);
+        //changeCharacterToVictoria(actor);
+        changeCharacterToCowbot(actor);
     }
     if (actor === mainCharacter && !actor.deathTime){
-
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
@@ -48,6 +55,17 @@ function updateActor(actor) {
                 addEffectRunDust(actor.x, actor.y);
                 actor.noRunDustUntil = now() + actor.msBetweenRunDustPlumes;
             }
+            if (actor.type === CHARACTER_COWBOT) {
+                // cowbot's steam plume
+                if (actor.noSteamPlumeUntil <= now() || !actor.noSteamPlumeUntil) { // the '|| !actor.SteamPlumeUntil' accomodates the first time this line is encountered, before actor.noSteamPlumeUntil is defined. Alternatively, it could be defined in the "changeCharacterTo..." function, but for now that's being called every frame, so that doesn't work.
+                    var scale = Math.abs(actor.vx) + 2.33 / 4,
+                    animationSpeedInFPS = 30 / scale,
+                    steamVy = -Math.abs(actor.vx);
+                    addEffectSteamPlume(actor.x, actor.y - 77, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '77,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
+                    actor.msBetweenSteamPlumes = actor.msBetweenSteamPlumesBase / ((Math.abs(actor.vx) / 2.5) + 1);
+                    actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
+                }
+            }
             actor.airDashed = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
@@ -58,6 +76,7 @@ function updateActor(actor) {
                 actor.jump();
                 // Spawns a dust plume on jumping from a grounded state.
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
+                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, -10, 3, 7); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
             }
         } else {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
@@ -85,6 +104,8 @@ function updateActor(actor) {
                      //     But if currentJumps < maxJumps, nothing spawns even on double jump,
                      //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
                     if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
+                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, -10, 1.5, 11); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
+
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
@@ -204,14 +225,18 @@ function updateActor(actor) {
         actor.wasMoving = false;
         // character "winks out" when they start idling
         //the animation played here should be genericized, but it's the alien's winkout effect for now.
-        if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
+        if (actor.type === CHARACTER_ALIEN) {
+            if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
+        }
     }
     if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
     if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1)) {
         // winking in when start moving/come out of idle
-        if (actor.wasIdling) addEffectWinkOut(actor.x, actor.y);
-        // bigger teleport in on coming out of idle if have been idling for awhile.
-        if (actor.hasIdledAwhile) addEffectTeleportation(actor.x, actor.y);
+        if (actor.type === CHARACTER_ALIEN) {
+            if (actor.wasIdling) addEffectWinkOut(actor.x, actor.y);
+            // bigger teleport in on coming out of idle if have been idling for awhile.
+            if (actor.hasIdledAwhile) addEffectTeleportation(actor.x, actor.y);
+        }
         actor.hasIdledAwhile = false;
         actor.wasIdling = false;
     }
@@ -422,7 +447,6 @@ function damageSprite(sprite, amount) {
 }
 
 function changeCharacterToAlien(actor) {
-        // Have the "IT" player render as the alien.
         actor.walkAnimation = characterAlienWalkAnimation;
         actor.attackAnimation = characterAlienAttackAnimation;
         actor.hasMovementStartAnimation = true;
@@ -438,6 +462,7 @@ function changeCharacterToAlien(actor) {
         actor.msBetweenIdleFrames = 200;
         actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
         actor.scale = 1.75;
+        actor.type = CHARACTER_ALIEN;
 }
 
 function changeCharacterToVictoria(actor) {
@@ -456,6 +481,7 @@ function changeCharacterToVictoria(actor) {
         actor.msBetweenIdleFrames = 200;
         actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
         actor.scale = 1.75;
+        actor.type = CHARACTER_VICTORIA;
 }
 
 function changeCharacterToMystery(actor) {
@@ -474,4 +500,26 @@ function changeCharacterToMystery(actor) {
         actor.msBetweenIdleFrames = 200;
         actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
         actor.scale = 2;
+        actor.type = CHARACTER_MYSTERY;
+}
+
+function changeCharacterToCowbot(actor) {
+        actor.walkAnimation = characterCowbotWalkAnimation;
+        actor.attackAnimation = characterCowbotAttackAnimation;
+        actor.hasMovementStartAnimation = false;
+        actor.hasMovementStopAnimation = false;
+        actor.idleAnimation = characterCowbotIdleAnimation;
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterCowbotJumpAnimation;
+        actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
+        actor.uncontrolledLandingAnimation = {};
+        actor.msBetweenWalkFrames = 150;
+        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+        actor.msBetweenIdleFrames = 150;
+        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+        actor.scale = 1.75;
+        actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
+        //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+        actor.type = CHARACTER_COWBOT;
 }

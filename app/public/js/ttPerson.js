@@ -210,7 +210,9 @@ class TTCharacter {
 var humanImage = requireImage('/gfx/person/personSprite.png'),
     characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
     characterAlienImage = requireImage('/gfx/person/characterAlien.png'),
-    characterVictoriaImage = requireImage('gfx/person/characterVictoria.png');
+    characterVictoriaImage = requireImage('/gfx/person/characterVictoria.png'),
+    teleporterAImage = requireImage('/gfx/environment/teleporterA.png'),
+    characterCowbotImage = requireImage('/gfx/person/characterCowbot.png');
 
 var mainCharacter;
 var otherCharacters = {};
@@ -226,6 +228,8 @@ var allCharacterVictoriaFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), 
 var characterVictoriaWalkAnimation = {frames: allCharacterVictoriaFrames.slice(0, 8)};
 var characterVictoriaIdleAnimation = {frames: allCharacterVictoriaFrames.slice(8, 11)};
 var characterVictoriaJumpAnimation = {frames: allCharacterVictoriaFrames.slice(1, 2)};
+var characterVictoriaUncontrolledFallAnimation = fireballAnimation;
+var characterVictoriaAttackAnimation = fireballAnimation;
 
 var allAlienFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), characterAlienImage, 9);
 var characterAlienWalkAnimation = {frames: allAlienFrames};
@@ -234,6 +238,12 @@ var characterAlienJumpAnimation = {frames: allAlienFrames.slice(1, 2)};
 var characterAlienUncontrolledFallAnimation = fireballAnimation;
 var characterAlienAttackAnimation = fireballAnimation;
 
+var allCharacterCowbotFrames = rectangleToFrames(new Rectangle(0, 0, 32, 44), characterCowbotImage, 6);
+var characterCowbotWalkAnimation = {frames: allCharacterCowbotFrames.slice(0, 6)};
+var characterCowbotIdleAnimation = {frames: allCharacterCowbotFrames.slice(0, 6)};
+var characterCowbotJumpAnimation = {frames: allCharacterCowbotFrames.slice(0, 1)};
+var characterCowbotUncontrolledFallAnimation = fireballAnimation;
+var characterCowbotAttackAnimation = fireballAnimation;
 /*
 function characterAlienUncontrolledFallAnimation() {
     frames = [

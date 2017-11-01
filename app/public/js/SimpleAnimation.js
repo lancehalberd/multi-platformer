@@ -65,3 +65,15 @@ function addEffectRunDust(x, y) {
     // the dust cloud, so we adjust the target rectangle accordingly.
     localSprites.push(new SimpleAnimation({frames}, now(), 10, target.moveTo(x - target.width / 2, y - target.height)));
 }
+
+function addEffectSteamPlume(x, y, vy, scale, animationSpeedInFPS) {
+    var sourceRectangle = new Rectangle(0, 0, 32, 32);
+    var frames = rectangleToFrames(sourceRectangle, effectRunDustImage, 7);
+    // We draw the animation 1.75 times larger than the original.
+    var target = sourceRectangle.scale(scale);
+    // x, y coords are given as the middle of the characters feet, which is where we want to draw the bottom of
+    // the dust cloud, so we adjust the target rectangle accordingly.
+    var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    steamPlume.vy = vy;
+    localSprites.push(steamPlume);
+}

@@ -170,21 +170,6 @@ function updateLocalSprite(localSprite) {
         }
     }
 
-    //updating various sprite types
-    if (localSprite.type === POWERUP_TYPE_HEART && mainCharacter.health < mainCharacter.maxHealth) {
-        if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            mainCharacter.health++;
-            localSprite.shouldBeRemoved = true;
-        }
-    }
-
-    if (localSprite.type === POWERUP_TYPE_AIRDASH) {
-        if (localSprite.hitBox.overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
-            mainCharacter.currentActivatablePowerup = POWERUP_TYPE_AIRDASH;
-            localSprite.shouldBeRemoved = true;
-        }
-    }
-
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
