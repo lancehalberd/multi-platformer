@@ -135,7 +135,7 @@ class TTCharacter {
         this.hitBox = new Rectangle(-18, -63, 36, 63);
         //this.walkAnimation = characterMysteryWalkAnimation;
         this.walkAnimation = characterAlienWalkAnimation;
-        this.hasMovementStartAnimation = true;  //Alien character teleports in after idling for a little while, spawning a teleportation effect.
+        this.hasMovementStartAnimation = true;  //Alien character teleports in after idling.
         this.hasMovementStopAnimation = true; // Alien character vanishes upon beginning to idle, spawning a winkOut effect.
         //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
         this.attackAnimation = characterMysteryAttackAnimation;
@@ -209,18 +209,24 @@ class TTCharacter {
 
 var humanImage = requireImage('/gfx/person/personSprite.png'),
     characterMysteryImage = requireImage('/gfx/person/characterMystery.png'),
-    characterAlienImage = requireImage('/gfx/person/characterAlien.png');
+    characterAlienImage = requireImage('/gfx/person/characterAlien.png'),
+    characterVictoriaImage = requireImage('gfx/person/characterVictoria.png');
 
 var mainCharacter;
 var otherCharacters = {};
 
-var allMysteryFrames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8)
+var allMysteryFrames = rectangleToFrames(new Rectangle(0, 0, 32, 32), characterMysteryImage, 8);
 var characterMysteryWalkAnimation = {frames: allMysteryFrames.slice(0, 4)};
 var characterMysteryJumpAnimation = {frames: allMysteryFrames.slice(0, 1)};
 var characterMysteryIdleAnimation = {frames: allMysteryFrames.slice(4, 8)};
 var characterMysteryUncontrolledFallAnimation = fireballAnimation;
 var characterMysteryAttackAnimation = fireballAnimation;
 
+// WRONG: Victoria's FPS should be higher than Alien's, so that she sort of shuffles quickly.
+var allCharacterVictoriaFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), characterVictoriaImage, 12);
+var characterVictoriaWalkAnimation = {frames: allCharacterVictoriaFrames.slice(0, 8)};
+var characterVictoriaIdleAnimation = {frames: allCharacterVictoriaFrames.slice(8, 11)};
+var characterVictoriaJumpAnimation = {frames: allCharacterVictoriaFrames.slice(1, 2)};
 
 var allAlienFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), characterAlienImage, 9);
 var characterAlienWalkAnimation = {frames: allAlienFrames};

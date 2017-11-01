@@ -9,31 +9,17 @@ function updateActor(actor) {
         else actor.vx *= 0.9;
     }
     // User normal scaling when checking if player is under ceiling.
-    actor.scale = 2;
-    actor.hitBox = new Rectangle(-20, -60, 40, 60); //should player with scaling and hitBox size just a little. Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
+    // scale is set in character defintion area now
+    //actor.scale = actor.scale;
+    actor.hitBox = new Rectangle(-20, -60, 40, 60); //Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
-    if (taggedId === actor.id) {
-        // Have the "IT" player render as the alien.
-        actor.walkAnimation = characterAlienWalkAnimation;
-        actor.attackAnimation = characterAlienAttackAnimation;
-        actor.hasMovementStartAnimation = true;
-        actor.idleAnimation = characterAlienIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterAlienJumpAnimation;
-        actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
+    // change character
+    if (taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
+        changeCharacterToAlien(actor);
     } else {
-        // Non "IT" characters render as the mystery cloaked character.
-        actor.walkAnimation = characterMysteryWalkAnimation;
-        actor.attackAnimation = characterMysteryAttackAnimation;
-        actor.hasMovementStartAnimation = false;
-        actor.idleAnimation = characterMysteryIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterMysteryJumpAnimation;
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
+        // Non "IT" characters render as...
+        //changeCharacterToMystery(actor);
+        changeCharacterToVictoria(actor);
     }
     if (actor === mainCharacter && !actor.deathTime){
 
@@ -138,7 +124,7 @@ function updateActor(actor) {
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
-        actor.scale = 1; //normal scale is 2, so this is half normal size. This affects visual representation only.
+        actor.scale = actor.scale / 2; // This affects visual representation only.
         actor.hitBox = new Rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
@@ -158,7 +144,7 @@ function updateActor(actor) {
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.walkAnimation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
@@ -173,7 +159,7 @@ function updateActor(actor) {
 
     if (actor.grounded && !actor.vx && !actor.attacking) {
         actor.animation = actor.idleAnimation;
-        actor.idleFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.idleFrame =  Math.floor(now() / (actor.slipping ? actor.msBetweenIdleFramesWhileSlipping : actor.msBetweenIdleFrames)) % actor.animation.frames.length;
         actor.currentFrame = actor.idleFrame;
     }
 
@@ -433,4 +419,57 @@ function damageSprite(sprite, amount) {
     sprite.invulnerableUntil = now() + 1000;
 }
 
-//localSprites.push(addHomingFireballSprite(400, 150, {x: 200, y:500}));
+function changeCharacterToAlien(actor) {
+        // Have the "IT" player render as the alien.
+        actor.walkAnimation = characterAlienWalkAnimation;
+        actor.attackAnimation = characterAlienAttackAnimation;
+        actor.hasMovementStartAnimation = true;
+        actor.hasMovementStopAnimation = false;
+        actor.idleAnimation = characterAlienIdleAnimation;
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterAlienJumpAnimation;
+        actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
+        actor.uncontrolledLandingAnimation = {};
+        actor.msBetweenWalkFrames = 200;
+        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+        actor.msBetweenIdleFrames = 200;
+        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+        actor.scale = 1.75;
+}
+
+function changeCharacterToVictoria(actor) {
+        actor.walkAnimation = characterVictoriaWalkAnimation;
+        actor.attackAnimation = characterMysteryAttackAnimation;
+        actor.hasMovementStartAnimation = false;
+        actor.hasMovementStopAnimation = false;
+        actor.idleAnimation = characterVictoriaIdleAnimation;
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterVictoriaJumpAnimation;
+        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+        actor.uncontrolledLandingAnimation = {};
+        actor.msBetweenWalkFrames = 125;
+        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+        actor.msBetweenIdleFrames = 200;
+        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+        actor.scale = 1.75;
+}
+
+function changeCharacterToMystery(actor) {
+        actor.walkAnimation = characterMysteryWalkAnimation;
+        actor.attackAnimation = characterMysteryAttackAnimation;
+        actor.hasMovementStartAnimation = false;
+        actor.hasMovementStopAnimation = false;
+        actor.idleAnimation = characterVictoriaIdleAnimation;
+        actor.idleAnimationIntermittent = {};
+        actor.idleAnimationLong = {};
+        actor.jumpAnimation = characterVictoriaJumpAnimation;
+        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+        actor.uncontrolledLandingAnimation = {};
+        actor.msBetweenWalkFrames = 200;
+        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+        actor.msBetweenIdleFrames = 200;
+        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+        actor.scale = 2;
+}
