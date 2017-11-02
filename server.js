@@ -318,6 +318,9 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {tagged: data.id, tagCompleted: data.tagCompleted});
                 return;
             }
+            if (data.action === 'startTagRound') {
+                broadcast(player.zoneId, {tagRound: data.tagRound});
+            }
             return;
         }
         connection.sendUTF(JSON.stringify({errorMessage: `Player id ${data.privateId} not found.`}));

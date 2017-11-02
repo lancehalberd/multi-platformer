@@ -12,7 +12,7 @@ function updateActor(actor) {
     actor.scale = 2;
     actor.hitBox = new Rectangle(-20, -60, 40, 60); //should player with scaling and hitBox size just a little. Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
-    if (taggedId === actor.id) {
+    if (TagGame.taggedId === actor.id) {
         // Have the "IT" player render as the alien.
         actor.walkAnimation = characterAlienWalkAnimation;
         actor.attackAnimation = characterAlienAttackAnimation;
@@ -434,7 +434,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
 function damageSprite(sprite, amount) {
     if (sprite.invulnerableUntil && now() < sprite.invulnerableUntil) return;
     sprite.health -= amount;
-    sprite.invulnerableUntil = now() + 1000;
+    sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
 }
 
 //localSprites.push(addHomingFireballSprite(400, 150, {x: 200, y:500}));

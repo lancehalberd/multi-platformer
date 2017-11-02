@@ -193,9 +193,9 @@ class TTCharacter {
         if (this.deathTime) {
             // The player fades to invisible before respawning when they die.
             mainContext.globalAlpha = Math.max(0, 1 - (now() - this.deathTime) / 1000);
-        } else if (this.invulnerableUntil > now() || this.untaggableUntil > now()) {
-            // The character flashes transparent when they are invulnerable.
-            mainContext.globalAlpha = Math.cos((this.invulnerableUntil - now()) / 10) / 8 + 0.6;
+        } else if (this.blinkUntil > now()) {
+            // Certain effects like being tagged or injured make the sprite blink for a period.
+            mainContext.globalAlpha = Math.cos((this.blinkUntil - now()) / 10) / 8 + 0.6;
         }
         drawSprite(mainContext, this);
         mainContext.restore();
@@ -255,7 +255,6 @@ function initializePersonGraphics() {
     mainCharacter.maxHealth = 5;
     mainCharacter.originalX = mainCharacter.x;
     mainCharacter.originalY = mainCharacter.y;
-    mainCharacter.invulnerableUntil = now();
     mainCharacter.uncontrolledFallVyThreshold = 30;
     mainCharacter.canTeleport = true;
     mainCharacter.landingDustVyThreshold = 16; //vy at/over which the player will produce a landing dust plume on touchdown
@@ -268,7 +267,7 @@ function initializePersonGraphics() {
         this.y = this.originalY;
         this.vx = this.vy = 0;
         this.deathComplete = false;
-        this.invulnerableUntil = now() + 2000;
+        this.blinkUntil = this.invulnerableUntil = now() + 2000;
         delete this.deathTime;
         sendPlayerMoved();
     };

@@ -1,7 +1,5 @@
 
 var privateId, publicId, connected = false;
-var taggedId = null;
-var canCompleteTagUntil = null;
 // Create WebSocket connection.
 socket = new WebSocket(`ws://${window.location.host}`);
 // Connection opened
@@ -33,21 +31,14 @@ socket.addEventListener('message', event => {
         for (var entity of (currentMap.entities || [])) {
             localSprites.push(unserializeEntity(entity));
         }
-        // The new player is always tagged by default.
-        setTaggedId(publicId);
-        return;
     }
     // Don't process any messages from the server until we have the character data.
     if (!privateId) return;
     if (data.playerJoined) {
         otherCharacters[data.playerJoined.id] = initializeTTCharacter(data.playerJoined);
-        setTaggedId(data.playerJoined.id);
     }
     if (data.playerLeft) {
         delete otherCharacters[data.playerLeft];
-        if (_.isEmpty(otherCharacters)) {
-            taggedId = null;
-        }
     }
     if (data.playerAttacked) {
         if (data.playerAttacked === publicId) return;
@@ -58,12 +49,6 @@ socket.addEventListener('message', event => {
         if (data.player.id === publicId) return;
         for (var i in data.player) {
             otherCharacters[data.player.id][i] = data.player[i];
-        }
-    }
-    if (data.tagged) {
-        if (data.tagCompleted) setTaggedId(data.tagged);
-        else if (data.tagged === publicId) {
-            canCompleteTagUntil = now() + 500;
         }
     }
     if (typeof(data.tileData) !== 'undefined') {
@@ -112,49 +97,37 @@ socket.addEventListener('message', event => {
             localSprites[index].putOnCooldown();
         }
     }
+
+    TagGame.handleServerData(data);
 });
 var getPlayerById = (id) => {
     if (id === publicId) return mainCharacter;
     return otherCharacters[id];
 }
-var setTaggedId = (id) => {
-    // Everyone gets full life when a new player is tagged.
-    if (id !== taggedId) mainCharacter.health = mainCharacter.maxHealth;
-    // No one should be tagged if only one player is present
-    if (_.isEmpty(otherCharacters)) {
-        taggedId = null;
-        return;
-    }
-    // The player who tagged the other player cannot be tagged for 5 seconds.
-    var currentlyTaggedPlayer = getPlayerById(taggedId);
-    if (currentlyTaggedPlayer) currentlyTaggedPlayer.untaggableUntil = now() + 5000;
-    // It is hard to keep 'stuck' players in sync, and maybe not necessary for the
-    // game to work.
-    // var newlyTaggedPlayer = getPlayerById(id);
-    // if (newlyTaggedPlayer) newlyTaggedPlayer.stuckUntil = now() + 2000;
-    taggedId = id;
-}
 var currentMap = null;
-var sendData = data => socket.readyState === socket.OPEN && socket.send(JSON.stringify(data));
-var serializePlayer = player => _.pick(player, ['x', 'y', 'vx', 'vy', 'isCrouching', 'hair', 'skin', 'weapon', 'zoneId']);
-var sendTaggedPlayer = (id, tagCompleted) => {
-    //console.log('tagging', id);
-    privateId && sendData({privateId, action: 'tagged', id: id, tagCompleted});
-};
-var sendPlayerJoined = () => connected && sendData({privateId, action: 'join', player: serializePlayer(mainCharacter)});
-var sendPlayerMoved = () => privateId && sendData({privateId, action: 'move', player: _.omit(serializePlayer(mainCharacter), ['hair','skin'])});
-var sendPlayerAttacked = () => privateId && sendData({privateId, action: 'attack'});
-var sendTileUpdate = (tileData, position) => privateId && sendData({privateId, action: 'updateTile', tileData, position});
-var sendMapObject = (mapObject, position) => privateId && sendData({privateId, action: 'createMapObject', mapObject, position});
-var sendEntityOnCooldown = (entityId) => privateId && sendData({privateId, action: 'entityOnCooldown', entityId});
+var sendData = (data, force) => {
+    // Unless force is set, don't send any messages until this client has received its private id.
+    if (!force && !privateId) return;
+    // We can't send message if the socket is open (either because this is too early, or maybe the connection broke)
+    if (socket.readyState !== socket.OPEN) return;
+    if (privateId) data.privateId = privateId;
+    socket.send(JSON.stringify(data));
+}
+var serializePlayer = player => _.pick(player, ['x', 'y', 'vx', 'vy', 'isCrouching', 'hair', 'skin', 'weapon', 'zoneId', 'score', 'coins']);
+var sendPlayerJoined = () => connected && sendData({action: 'join', player: serializePlayer(mainCharacter)}, true);
+var sendPlayerMoved = () =>  sendData({action: 'move', player: _.omit(serializePlayer(mainCharacter), ['hair','skin'])});
+var sendPlayerAttacked = () => sendData({action: 'attack'});
+var sendTileUpdate = (tileData, position) => sendData({privateId, action: 'updateTile', tileData, position});
+var sendMapObject = (mapObject, position) => sendData({privateId, action: 'createMapObject', mapObject, position});
+var sendEntityOnCooldown = (entityId) => sendData({privateId, action: 'entityOnCooldown', entityId});
 var sendCreateEntity = (entity) => {
     if (!privateId) return;
     // Set a unique entity id before sending it to the server. This will be used when updating/deleting this entity in the future.
     entity.id = getUniqueEntityId();
     sendData({privateId, action: 'createEntity', entity: serializeEntity(entity)});
 };
-var sendUpdateEntity = (entity) => privateId && sendData({privateId, action: 'updateEntity', entity: serializeEntity(entity)});
-var sendDeleteEntity = (entityId) => privateId && sendData({privateId, action: 'deleteEntity', entityId});
+var sendUpdateEntity = (entity) => sendData({privateId, action: 'updateEntity', entity: serializeEntity(entity)});
+var sendDeleteEntity = (entityId) => sendData({privateId, action: 'deleteEntity', entityId});
 
 // Creates an entity id that is not currently in use and cannot be simultaneously created by another player.
 // This second condition is enforced by using the current player's publicId as a prefix for this id.

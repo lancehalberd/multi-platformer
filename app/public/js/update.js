@@ -28,9 +28,10 @@ setInterval(() => {
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
     }
-    if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
-        addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
-    }
+    // T Is currently used to start a Tag Game.
+    //if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
+    //    addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
+    //}
     removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
@@ -42,36 +43,17 @@ setInterval(() => {
     cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
 
     // If the character is moving or was moving at last update, send an update to inform the server.
-    if (mainCharacter.vx !== 0 || mainCharacter.vy < 0 || mainCharacterWasMoving ||
+    if (mainCharacter.x !== mainCharacter.lastX || mainCharacter.y !== mainCharacter.lastY || mainCharacterWasMoving ||
         mainCharacter.wasCrouching !== mainCharacter.isCrouching) {
         if (now() - lastUpdate > 50) {
             sendPlayerMoved();
             lastUpdate = now();
             mainCharacter.wasCrouching = mainCharacter.isCrouching;
             mainCharacterWasMoving = (mainCharacter.vx !== 0 || mainCharacter.vy < 0);
+            mainCharacter.lastX = mainCharacter.x;
+            mainCharacter.lastY = mainCharacter.y;
         }
     }
     updateEditor();
-    // When the Tagged player touches another on his client, he sends a message indicating that he has done
-    // this. This sets a window of 500 milliseconds in which if that character client sees the tagged player
-    // tag them, then they will send a message indicating they are now the Tagged player.
-    if (publicId === taggedId) {
-        for (var id in otherCharacters) {
-            var target = otherCharacters[id];
-            if (target.untaggableUntil > now()) continue;
-            if (getGlobalSpriteHitBox(mainCharacter).overlapsRectangle(getGlobalSpriteHitBox(target))) {
-                sendTaggedPlayer(id);
-                break;
-            }
-        }
-    }
-    // If we are still within the window of confirming that the local main character has been tagged, check if they
-    // are in contact with the tagged character and send the final tagged message with their id if so.
-    if (canCompleteTagUntil > now()) {
-        var taggedCharacter = otherCharacters[taggedId];
-        if (taggedCharacter && getGlobalSpriteHitBox(mainCharacter).overlapsRectangle(getGlobalSpriteHitBox(taggedCharacter))) {
-            sendTaggedPlayer(publicId, true);
-            canCompleteTagUntil = null;
-        }
-    }
+    TagGame.update();
 }, frameMilliseconds);
