@@ -118,18 +118,19 @@ function updateActor(actor) {
                 actor.currentJumpDuration++;
             }
             //air dash
-            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_SHIFT) && !actor.airDashed && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
-                actor.vx += 10;
+            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+                actor.vx += actor.airDashMagnitude;
                 actor.airDashed = true;
+                actor.vy = 0;
                 actor.currentAirDashDuration++;
                 //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
             }
-            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_SHIFT) && !actor.airDashed && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
-                actor.vx -= 14;
+            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+                actor.vx -= actor.airDashMagnitude;
                 actor.airDashed = true;
+                actor.vy = 0;
                 actor.currentAirDashDuration++;
             }
-            if (actor.airDashed && !isKeyDown(KEY_SHIFT)) actor.airDashKeyReleased = true;
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -192,7 +193,7 @@ function updateActor(actor) {
     // them to a full stop once their speed is less than .5.
     if (!actor.slipping && Math.abs(actor.vx) < 0.5) actor.vx = 0;
     // gravity
-    if (isCharacterAffectedByGravity) actor.vy++;
+    actor.vy++;
 
     if (!actor.attacking) {
         if (actor.vx) {
@@ -283,11 +284,6 @@ var getLocalSpriteHitBox = (sprite) => {
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
 var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH;
-
-function isCharacterAffectedByGravity(character) {
-    if (character.currentAirDashDuration <= character.maxAirDashDuration && character.currentAirDashDuration > 0 && isKeyDown(KEY_SHIFT) && !character.airDashKeyReleased) return false;
-    else return true;
-}
 
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);
