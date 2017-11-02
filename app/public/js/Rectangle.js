@@ -54,7 +54,7 @@ class Rectangle {
         return new Rectangle(this.left * scale, this.top * scale, this.width * scale, this.height * scale);
     }
 
-    scaleFromeCenter(scale) {
+    scaleFromCenter(scale) {
         var center = this.getCenter();
         return this.moveCenterTo(0, 0).scale(scale).moveCenterTo(center[0], center[1]);
     }

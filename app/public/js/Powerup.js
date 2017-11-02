@@ -21,7 +21,7 @@ class Powerup extends Trigger {
         // The powerup bobs up and down if the bobs flag is true.
         if (this.constructor.bobs) target = target.translate(0, 12 * Math.sin(now() / 300));
         // The powerup scales up and down if the pulses flag is true.
-        if (this.constructor.pulses) target = target.scaleFromeCenter(1 + 0.125 * Math.sin(now() / 200));
+        if (this.constructor.pulses) target = target.scaleFromCenter(1 + 0.125 * Math.sin(now() / 200));
         return target;
     }
 
