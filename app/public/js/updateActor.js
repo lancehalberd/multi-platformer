@@ -452,79 +452,79 @@ function damageSprite(sprite, amount) {
 }
 
 function changeCharacterToAlien(actor) {
-        actor.walkAnimation = characterAlienWalkAnimation;
-        actor.attackAnimation = characterAlienAttackAnimation;
-        actor.hasMovementStartAnimation = true;
-        actor.hasMovementStopAnimation = false;
-        actor.idleAnimation = characterAlienIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterAlienJumpAnimation;
-        actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
-        actor.msBetweenWalkFrames = 200;
-        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
-        actor.msBetweenIdleFrames = 200;
-        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-        actor.scale = 1.75;
-        actor.type = CHARACTER_ALIEN;
+    actor.walkAnimation = characterAlienWalkAnimation;
+    actor.attackAnimation = characterAlienAttackAnimation;
+    actor.hasMovementStartAnimation = true;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterAlienIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterAlienJumpAnimation;
+    actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 200;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.75;
+    actor.type = CHARACTER_ALIEN;
 }
 
 function changeCharacterToVictoria(actor) {
-        actor.walkAnimation = characterVictoriaWalkAnimation;
-        actor.attackAnimation = characterMysteryAttackAnimation;
-        actor.hasMovementStartAnimation = false;
-        actor.hasMovementStopAnimation = false;
-        actor.idleAnimation = characterVictoriaIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterVictoriaJumpAnimation;
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
-        actor.msBetweenWalkFrames = 125;
-        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
-        actor.msBetweenIdleFrames = 200;
-        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-        actor.scale = 1.75;
-        actor.type = CHARACTER_VICTORIA;
+    actor.walkAnimation = characterVictoriaWalkAnimation;
+    actor.attackAnimation = characterMysteryAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterVictoriaIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 125;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.75;
+    actor.type = CHARACTER_VICTORIA;
 }
 
 function changeCharacterToMystery(actor) {
-        actor.walkAnimation = characterMysteryWalkAnimation;
-        actor.attackAnimation = characterMysteryAttackAnimation;
-        actor.hasMovementStartAnimation = false;
-        actor.hasMovementStopAnimation = false;
-        actor.idleAnimation = characterVictoriaIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterVictoriaJumpAnimation;
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
-        actor.msBetweenWalkFrames = 200;
-        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
-        actor.msBetweenIdleFrames = 200;
-        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-        actor.scale = 2;
-        actor.type = CHARACTER_MYSTERY;
+    actor.walkAnimation = characterMysteryWalkAnimation;
+    actor.attackAnimation = characterMysteryAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterVictoriaIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 200;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 2;
+    actor.type = CHARACTER_MYSTERY;
 }
 
 function changeCharacterToCowbot(actor) {
-        actor.walkAnimation = characterCowbotWalkAnimation;
-        actor.attackAnimation = characterCowbotAttackAnimation;
-        actor.hasMovementStartAnimation = false;
-        actor.hasMovementStopAnimation = false;
-        actor.idleAnimation = characterCowbotIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterCowbotJumpAnimation;
-        actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
-        actor.msBetweenWalkFrames = 150;
-        actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
-        actor.msBetweenIdleFrames = 150;
-        actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-        actor.scale = 1.5;
-        actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
-        //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
-        actor.type = CHARACTER_COWBOT;
+    actor.walkAnimation = characterCowbotWalkAnimation;
+    actor.attackAnimation = characterCowbotAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterCowbotIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterCowbotJumpAnimation;
+    actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 150;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 150;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.5;
+    actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
+    //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+    actor.type = CHARACTER_COWBOT;
 }
