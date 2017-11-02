@@ -69,7 +69,7 @@ function updateActor(actor) {
             // airDash resets on grounding
             actor.airDashed = false;
             actor.currentAirDashDuration = 0;
-            actor.airDashKeyReleased = false;
+            actor.superJumped = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
@@ -118,19 +118,33 @@ function updateActor(actor) {
                 actor.currentJumpDuration++;
             }
             //air dash
-            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+            if (isKeyDown(KEY_RIGHT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
                 actor.vx += actor.airDashMagnitude;
-                actor.airDashed = true;
                 actor.vy = 0;
                 actor.currentAirDashDuration++;
                 //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
             }
-            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+            if (isKeyDown(KEY_LEFT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
                 actor.vx -= actor.airDashMagnitude;
-                actor.airDashed = true;
                 actor.vy = 0;
                 actor.currentAirDashDuration++;
             }
+        }
+        // super jump
+            // charging phase
+        if (isKeyDown(KEY_SHIFT) && canCharacterSuperJump(actor) && actor.currentSuperJumpMagnitude < actor.maxSuperJumpMagnitude) {
+            actor.superJumpCharged = true;
+            actor.currentSuperJumpMagnitude++;
+            actor.isCrouching = true;   // WRONG: this I think is overriding the .vx = 0, letting you move a little bit while charging. Maybe ok?
+            actor.vy = 0;
+            actor.vx = 0;
+        }
+            // jump phase
+        if ((!isKeyDown(KEY_SHIFT) || actor.currentSuperJumpMagnitude >= actor.maxSuperJumpMagnitude) && actor.superJumpCharged) {
+            actor.vy = -actor.currentSuperJumpMagnitude / 2.75;
+            actor.superJumpCharged = false;
+            actor.superJumped = true;
+            actor.currentSuperJumpMagnitude = 0;
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -283,7 +297,10 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH;
+var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
+
+var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped;
+
 
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);

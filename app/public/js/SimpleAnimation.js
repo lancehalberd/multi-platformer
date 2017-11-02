@@ -103,8 +103,8 @@ function addEffectSteamPlume(x, y, vx, vy, scale, animationSpeedInFPS) {
     var target = sourceRectangle.scale(scale);
     // x, y coords are given as the middle of the characters feet, which is where we want to draw the bottom of
     // the dust cloud, so we adjust the target rectangle accordingly.
-    //var steamPlume = new SimpleMovingAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height, vx, vy)); // BROKEN: draws occasional, brief, glitchy clouds.
-    var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    var steamPlume = new SimpleMovingAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy); // BROKEN: draws occasional, brief, glitchy clouds.
+    //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
     steamPlume.type = EFFECT_STEAM_PLUME;
     localSprites.push(steamPlume);
 }
