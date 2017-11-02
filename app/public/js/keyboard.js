@@ -21,11 +21,12 @@ var KEY_MAPPINGS = {
 // https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API
 var GAME_PAD_MAPPINGS = {
     [KEY_UP]: 0,// Could change this to KEY_JUMP
-    [KEY_SPACE]: 2,
+    [KEY_SPACE]: 2, // A
     //12: KEY_UP,// Right now up => jump, but on a game pad we don't want that. We should probably make up not jump and uncomment this.
     [KEY_DOWN]: 13,
     [KEY_LEFT]: 14,
     [KEY_RIGHT]: 15,
+    [KEY_SHIFT]: 5  // R bumper
 };
 
 var physicalKeysDown = {};

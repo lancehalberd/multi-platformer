@@ -12,10 +12,6 @@ var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
 var PARTICLE_TYPE_TELEPORTER_IDLING = 'teleporterIdlingParticle';
 var PARTICLE_TYPE_TELEPORTER_TELEPORTING = 'teleporterTeleportingParticle';
 
-var EFFECT_RUN_DUST = 'runDust';
-var EFFECT_JUMP_DUST = 'jumpDust';
-var EFFECT_TELEPORTATION = 'teleportationEffect';
-
 var NO_TARGET = 'targetIsNoTarget';
 
 

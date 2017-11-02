@@ -4,7 +4,6 @@ var CHARACTER_MYSTERY = 'mysteryCharacter';
 var CHARACTER_ALIEN = 'alienCharacter';
 
 function updateActor(actor) {
-    console.log(actor.currentActivatablePowerup);
     if (actor.stuckUntil > now()) {
         return;
     }
@@ -60,13 +59,17 @@ function updateActor(actor) {
                 if (actor.noSteamPlumeUntil <= now() || !actor.noSteamPlumeUntil) { // the '|| !actor.SteamPlumeUntil' accomodates the first time this line is encountered, before actor.noSteamPlumeUntil is defined. Alternatively, it could be defined in the "changeCharacterTo..." function, but for now that's being called every frame, so that doesn't work.
                     var scale = Math.abs(actor.vx) + 2.33 / 4,
                     animationSpeedInFPS = 30 / scale,
-                    steamVy = -Math.abs(actor.vx);
-                    addEffectSteamPlume(actor.x, actor.y - 77, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '77,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
+                    steamVy = -Math.abs(actor.vx),
+                    steamVx = 0;
+                    addEffectSteamPlume(actor.x, actor.y - 77, steamVx, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '77,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
                     actor.msBetweenSteamPlumes = actor.msBetweenSteamPlumesBase / ((Math.abs(actor.vx) / 2.5) + 1);
                     actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
                 }
             }
+            // airDash resets on grounding
             actor.airDashed = false;
+            actor.currentAirDashDuration = 0;
+            actor.airDashKeyReleased = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
@@ -76,7 +79,7 @@ function updateActor(actor) {
                 actor.jump();
                 // Spawns a dust plume on jumping from a grounded state.
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
-                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, -10, 3, 7); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
+                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, 0, -10, 3, 7); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
             }
         } else {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
@@ -104,7 +107,7 @@ function updateActor(actor) {
                      //     But if currentJumps < maxJumps, nothing spawns even on double jump,
                      //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
                     if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
-                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, -10, 1.5, 11); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
+                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, 0, -10, 1.5, 11); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
 
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
@@ -115,17 +118,18 @@ function updateActor(actor) {
                 actor.currentJumpDuration++;
             }
             //air dash
-            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
-                actor.vx += 7;
-                actor.vy -= 4;
+            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_SHIFT) && !actor.airDashed && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+                actor.vx += 10;
                 actor.airDashed = true;
+                actor.currentAirDashDuration++;
                 //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
             }
-            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
-                actor.vx -= 7;
-                actor.vy -= 4;
+            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_SHIFT) && !actor.airDashed && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor))) {
+                actor.vx -= 14;
                 actor.airDashed = true;
+                actor.currentAirDashDuration++;
             }
+            if (actor.airDashed && !isKeyDown(KEY_SHIFT)) actor.airDashKeyReleased = true;
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -188,7 +192,7 @@ function updateActor(actor) {
     // them to a full stop once their speed is less than .5.
     if (!actor.slipping && Math.abs(actor.vx) < 0.5) actor.vx = 0;
     // gravity
-    actor.vy++;
+    if (isCharacterAffectedByGravity) actor.vy++;
 
     if (!actor.attacking) {
         if (actor.vx) {
@@ -279,6 +283,11 @@ var getLocalSpriteHitBox = (sprite) => {
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
 var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH;
+
+function isCharacterAffectedByGravity(character) {
+    if (character.currentAirDashDuration <= character.maxAirDashDuration && character.currentAirDashDuration > 0 && isKeyDown(KEY_SHIFT) && !character.airDashKeyReleased) return false;
+    else return true;
+}
 
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);
@@ -518,7 +527,7 @@ function changeCharacterToCowbot(actor) {
         actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
         actor.msBetweenIdleFrames = 150;
         actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-        actor.scale = 1.75;
+        actor.scale = 1.5;
         actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
         //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
         actor.type = CHARACTER_COWBOT;

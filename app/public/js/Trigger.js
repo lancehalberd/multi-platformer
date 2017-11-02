@@ -169,12 +169,13 @@ class TeleporterTrigger extends Trigger {
 
     trigger() {
         if (mainCharacter.canTeleport) {
-            addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
+            addEffectTeleportation(mainCharacter.x, mainCharacter.y);
             mainCharacter.x = this.destinationX;
             mainCharacter.y = this.destinationY;
             mainCharacter.canTeleport = false;
-            addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
-            mainCharacter.currentNumberOfJumps = 0;
+            addEffectTeleportation(mainCharacter.x, mainCharacter.y);
+            mainCharacter.currentNumberOfJumps = 0; // teleporting resets double-jumping
+            mainCharacter.airDashed = false; // teleporting resets airDashing
             return true;
         }
         return false;

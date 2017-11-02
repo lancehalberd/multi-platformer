@@ -54,13 +54,13 @@ class LifePowerup extends Powerup {
 LifePowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupHeartImage, 1)};
 
 class AirDashPowerup extends Powerup {
-    constructor(hitBox, cooldownInSeconds, durationInSeconds) {
+    constructor(hitBox, cooldownInSeconds) {
         super(hitBox, cooldownInSeconds);
-        this.durationInSeconds = durationInSeconds;
+        this.type = POWERUP_TYPE_AIRDASH;
     }
 
     trigger() {
-        mainCharacter.canAirDashUntil = now() + this.durationInSeconds * 1000;
+        mainCharacter.currentActivatablePowerup = POWERUP_TYPE_AIRDASH;
         return true;
     }
 }
