@@ -61,7 +61,7 @@ function updateActor(actor) {
                     animationSpeedInFPS = 30 / scale,
                     steamVy = -Math.abs(actor.vx),
                     steamVx = 0;
-                    addEffectSteamPlume(actor.x, actor.y - 77, steamVx, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '77,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
+                    addEffectSteamPlume(actor.x, actor.y - 66, steamVx, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '66,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
                     actor.msBetweenSteamPlumes = actor.msBetweenSteamPlumesBase / ((Math.abs(actor.vx) / 2.5) + 1);
                     actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
                 }
@@ -79,7 +79,7 @@ function updateActor(actor) {
                 actor.jump();
                 // Spawns a dust plume on jumping from a grounded state.
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
-                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, 0, -10, 3, 7); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
+                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 3, 7); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
             }
         } else {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
@@ -107,7 +107,7 @@ function updateActor(actor) {
                      //     But if currentJumps < maxJumps, nothing spawns even on double jump,
                      //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
                     if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
-                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 77, 0, -10, 1.5, 11); // WRONG the '77' should be actor.hitBox.height, which I don't know how to call right now
+                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 1.5, 11); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
 
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
