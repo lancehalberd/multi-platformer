@@ -1,10 +1,12 @@
 var POWERUP_TYPE_AIRDASH = 'airDashPowerup';
 var POWERUP_TYPE_HEART = 'heartPowerup';
 var POWERUP_TYPE_SUPERJUMP = 'superJumpPowerup';
+var POWERUP_TYPE_COIN = 'coinPowerup';
 
 var powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
     powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
-    powerupSuperJumpImage = requireImage('/gfx/powerups/powerupSuperJump.png');
+    powerupSuperJumpImage = requireImage('/gfx/powerups/powerupSuperJump.png'),
+    powerupCoinImage = requireImage('/gfx/powerups/powerupCoin.png');
 
 class Powerup extends Trigger {
 
@@ -48,6 +50,7 @@ Powerup.bobs = true;
 Powerup.pulses = true;
 
 class LifePowerup extends Powerup {
+    //this.type = POWERUP_TYPE_HEART; //where could this go?
     trigger() {
         // The player can only collect a life powerup if they are missing health.
         if (mainCharacter.health >= mainCharacter.maxHealth) return false;
@@ -74,6 +77,7 @@ AirDashPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32
 class CoinPowerup extends Powerup {
     constructor(hitBox, cooldownInSeconds) {
         super(hitBox, cooldownInSeconds);
+        this.type = POWERUP_TYPE_COIN;
     }
 
     trigger() {
@@ -83,7 +87,7 @@ class CoinPowerup extends Powerup {
         return true;
     }
 }
-CoinPowerup.animation = fireballAnimation;
+CoinPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupCoinImage, 14)};
 
 class SuperJumpPowerup extends Powerup {
     constructor(hitBox, cooldownInSeconds) {
