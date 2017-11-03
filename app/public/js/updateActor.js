@@ -388,7 +388,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
                     break;
                 case TILE_LEFT:
                 case TILE_RIGHT:
-                    sprite.vy *= 0.5;
+                    if (sprite.vy > 0) sprite.vy *= 0.5;
                     sprite.currentNumberOfJumps = 0;
                     sprite.currentJumpDuration = sprite.maxJumpDuration;
             }
