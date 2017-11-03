@@ -177,6 +177,7 @@ class TeleporterTrigger extends Trigger {
             mainCharacter.currentNumberOfJumps = 0; // teleporting resets double-jumping
             mainCharacter.airDashed = false; // teleporting resets airDashing
             mainCharacter.currentAirDashDuration = 0; //teleporting resets airDashing
+            mainCharacter.superJumped = false;
             return true;
         }
         return false;
