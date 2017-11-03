@@ -1,5 +1,10 @@
+var POWERUP_TYPE_AIRDASH = 'airDashPowerup';
+var POWERUP_TYPE_HEART = 'heartPowerup';
+var POWERUP_TYPE_SUPERJUMP = 'superJumpPowerup';
+
 var powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
-    powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png');
+    powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
+    powerupSuperJumpImage = requireImage('/gfx/powerups/powerupSuperJump.png');
 
 class Powerup extends Trigger {
 
@@ -54,18 +59,17 @@ class LifePowerup extends Powerup {
 LifePowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupHeartImage, 1)};
 
 class AirDashPowerup extends Powerup {
-    constructor(hitBox, cooldownInSeconds, durationInSeconds) {
+    constructor(hitBox, cooldownInSeconds) {
         super(hitBox, cooldownInSeconds);
-        this.durationInSeconds = durationInSeconds;
+        this.type = POWERUP_TYPE_AIRDASH;
     }
 
     trigger() {
-        mainCharacter.canAirDashUntil = now() + this.durationInSeconds * 1000;
+        mainCharacter.currentActivatablePowerup = POWERUP_TYPE_AIRDASH;
         return true;
     }
 }
 AirDashPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupAirDashImage, 1)};
-
 
 class CoinPowerup extends Powerup {
     constructor(hitBox, cooldownInSeconds) {
@@ -80,4 +84,17 @@ class CoinPowerup extends Powerup {
     }
 }
 CoinPowerup.animation = fireballAnimation;
+
+class SuperJumpPowerup extends Powerup {
+    constructor(hitBox, cooldownInSeconds) {
+        super(hitBox, cooldownInSeconds);
+        this.type = POWERUP_TYPE_SUPERJUMP;
+    }
+
+    trigger() {
+        mainCharacter.currentActivatablePowerup = POWERUP_TYPE_SUPERJUMP;
+        return true;
+    }
+}
+SuperJumpPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupSuperJumpImage, 1)};
 

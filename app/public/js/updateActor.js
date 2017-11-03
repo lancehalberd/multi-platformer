@@ -1,3 +1,8 @@
+var CHARACTER_VICTORIA = 'victoriaCharacter';
+var CHARACTER_COWBOT = 'cowbotCharacter';
+var CHARACTER_MYSTERY = 'mysteryCharacter';
+var CHARACTER_ALIEN = 'alienCharacter';
+
 function updateActor(actor) {
     if (actor.stuckUntil > now()) {
         return;
@@ -9,36 +14,21 @@ function updateActor(actor) {
         else actor.vx *= 0.9;
     }
     // User normal scaling when checking if player is under ceiling.
-    actor.scale = 2;
-    actor.hitBox = new Rectangle(-20, -60, 40, 60); //should player with scaling and hitBox size just a little. Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
+    // scale is set in character defintion area now
+    //actor.scale = actor.scale;
+    actor.hitBox = new Rectangle(-20, -60, 40, 60); //Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
-    if (TagGame.taggedId === actor.id) {
+    // change character
+    if (TagGame.taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
         // Have the "IT" player render as the alien.
-        actor.walkAnimation = characterAlienWalkAnimation;
-        actor.attackAnimation = characterAlienAttackAnimation;
-        actor.hasMovementStartAnimation = true;
-        actor.hasMovementStopAnimation = true;
-        actor.idleAnimation = characterAlienIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterAlienJumpAnimation;
-        actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
+        changeCharacterToAlien(actor);
     } else {
-        // Non "IT" characters render as the mystery cloaked character.
-        actor.walkAnimation = characterMysteryWalkAnimation;
-        actor.attackAnimation = characterMysteryAttackAnimation;
-        actor.hasMovementStartAnimation = false;
-        actor.hasMovementStopAnimation = false;
-        actor.idleAnimation = characterMysteryIdleAnimation;
-        actor.idleAnimationIntermittent = {};
-        actor.idleAnimationLong = {};
-        actor.jumpAnimation = characterMysteryJumpAnimation;
-        actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
-        actor.uncontrolledLandingAnimation = {};
+        // Non "IT" characters render as...
+        //changeCharacterToMystery(actor);
+        //changeCharacterToVictoria(actor);
+        changeCharacterToCowbot(actor);
     }
     if (actor === mainCharacter && !actor.deathTime){
-
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
@@ -64,7 +54,22 @@ function updateActor(actor) {
                 addEffectRunDust(actor.x, actor.y);
                 actor.noRunDustUntil = now() + actor.msBetweenRunDustPlumes;
             }
+            if (actor.type === CHARACTER_COWBOT) {
+                // cowbot's steam plume
+                if (actor.noSteamPlumeUntil <= now() || !actor.noSteamPlumeUntil) { // the '|| !actor.SteamPlumeUntil' accomodates the first time this line is encountered, before actor.noSteamPlumeUntil is defined. Alternatively, it could be defined in the "changeCharacterTo..." function, but for now that's being called every frame, so that doesn't work.
+                    var scale = Math.abs(actor.vx) + 2.33 / 4,
+                    animationSpeedInFPS = 30 / scale,
+                    steamVy = -Math.abs(actor.vx),
+                    steamVx = 0;
+                    addEffectSteamPlume(actor.x, actor.y - 66, steamVx, steamVy, scale, animationSpeedInFPS);    // WRONG: this should actor's sprite height instead of '66,' but I'm not sure how to call that. // WRONG: I'd like to be able to store this effect to be spawned on/as a parameter of the actor (defined in the changeCharacterTo... function), then just call that parameter here.
+                    actor.msBetweenSteamPlumes = actor.msBetweenSteamPlumesBase / ((Math.abs(actor.vx) / 2.5) + 1);
+                    actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
+                }
+            }
+            // airDash resets on grounding
             actor.airDashed = false;
+            actor.currentAirDashDuration = 0;
+            actor.superJumped = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
                 actor.isCrouching = true;
@@ -74,6 +79,7 @@ function updateActor(actor) {
                 actor.jump();
                 // Spawns a dust plume on jumping from a grounded state.
                 addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
+                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 3, 7); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
             }
         } else {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
@@ -101,6 +107,8 @@ function updateActor(actor) {
                      //     But if currentJumps < maxJumps, nothing spawns even on double jump,
                      //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
                     if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
+                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 1.5, 11); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
+
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
@@ -110,17 +118,33 @@ function updateActor(actor) {
                 actor.currentJumpDuration++;
             }
             //air dash
-            if (isKeyDown(KEY_RIGHT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
-                actor.vx += 7;
-                actor.vy -= 4;
-                actor.airDashed = true;
+            if (isKeyDown(KEY_RIGHT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
+                actor.vx += actor.airDashMagnitude;
+                actor.vy = 0;
+                actor.currentAirDashDuration++;
                 //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
             }
-            if (isKeyDown(KEY_LEFT) && (isKeyDown(KEY_DOWN) && !actor.airDashed && canCharacterAirDash(actor))) {
-                actor.vx -= 7;
-                actor.vy -= 4;
-                actor.airDashed = true;
+            if (isKeyDown(KEY_LEFT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
+                actor.vx -= actor.airDashMagnitude;
+                actor.vy = 0;
+                actor.currentAirDashDuration++;
             }
+        }
+        // super jump
+            // charging phase
+        if (isKeyDown(KEY_SHIFT) && canCharacterSuperJump(actor) && actor.currentSuperJumpMagnitude < actor.maxSuperJumpMagnitude) {
+            actor.superJumpCharged = true;
+            actor.currentSuperJumpMagnitude++;
+            actor.isCrouching = true;   // WRONG: this I think is overriding the .vx = 0, letting you move a little bit while charging. Maybe ok?
+            actor.vy = 0;
+            actor.vx = 0;
+        }
+            // jump phase
+        if ((!isKeyDown(KEY_SHIFT) || actor.currentSuperJumpMagnitude >= actor.maxSuperJumpMagnitude) && actor.superJumpCharged) {
+            actor.vy = -actor.currentSuperJumpMagnitude / 2.75;
+            actor.superJumpCharged = false;
+            actor.superJumped = true;
+            actor.currentSuperJumpMagnitude = 0;
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -140,7 +164,7 @@ function updateActor(actor) {
 
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
-        actor.scale = 1; //normal scale is 2, so this is half normal size. This affects visual representation only.
+        actor.scale = actor.scale / 2; // This affects visual representation only.
         actor.hitBox = new Rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
@@ -160,7 +184,7 @@ function updateActor(actor) {
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.walkAnimation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
@@ -175,7 +199,7 @@ function updateActor(actor) {
 
     if (actor.grounded && !actor.vx && !actor.attacking) {
         actor.animation = actor.idleAnimation;
-        actor.idleFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
+        actor.idleFrame =  Math.floor(now() / (actor.slipping ? actor.msBetweenIdleFramesWhileSlipping : actor.msBetweenIdleFrames)) % actor.animation.frames.length;
         actor.currentFrame = actor.idleFrame;
     }
 
@@ -220,14 +244,18 @@ function updateActor(actor) {
         actor.wasMoving = false;
         // character "winks out" when they start idling
         //the animation played here should be genericized, but it's the alien's winkout effect for now.
-        if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
+        if (actor.type === CHARACTER_ALIEN) {
+            if (actor.hasMovementStopAnimation) addEffectWinkOut(actor.x, actor.y);
+        }
     }
     if (!actor.vx && actor.vy === 1 && actor.hasIdledSince < now() - 750) actor.hasIdledAwhile = true;
     if (actor.hasMovementStartAnimation && (actor.vx || actor.vy !== 1)) {
         // winking in when start moving/come out of idle
-        if (actor.wasIdling) addEffectWinkOut(actor.x, actor.y);
-        // bigger teleport in on coming out of idle if have been idling for awhile.
-        if (actor.hasIdledAwhile) addEffectTeleportation(actor.x, actor.y);
+        if (actor.type === CHARACTER_ALIEN) {
+            if (actor.wasIdling) addEffectWinkOut(actor.x, actor.y);
+            // bigger teleport in on coming out of idle if have been idling for awhile.
+            if (actor.hasIdledAwhile) addEffectTeleportation(actor.x, actor.y);
+        }
         actor.hasIdledAwhile = false;
         actor.wasIdling = false;
     }
@@ -269,7 +297,10 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.canAirDashUntil > now();
+var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
+
+var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped;
+
 
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);
@@ -437,4 +468,80 @@ function damageSprite(sprite, amount) {
     sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
 }
 
-//localSprites.push(addHomingFireballSprite(400, 150, {x: 200, y:500}));
+function changeCharacterToAlien(actor) {
+    actor.walkAnimation = characterAlienWalkAnimation;
+    actor.attackAnimation = characterAlienAttackAnimation;
+    actor.hasMovementStartAnimation = true;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterAlienIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterAlienJumpAnimation;
+    actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 200;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.75;
+    actor.type = CHARACTER_ALIEN;
+}
+
+function changeCharacterToVictoria(actor) {
+    actor.walkAnimation = characterVictoriaWalkAnimation;
+    actor.attackAnimation = characterMysteryAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterVictoriaIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 125;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.75;
+    actor.type = CHARACTER_VICTORIA;
+}
+
+function changeCharacterToMystery(actor) {
+    actor.walkAnimation = characterMysteryWalkAnimation;
+    actor.attackAnimation = characterMysteryAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterVictoriaIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 200;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 200;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 2;
+    actor.type = CHARACTER_MYSTERY;
+}
+
+function changeCharacterToCowbot(actor) {
+    actor.walkAnimation = characterCowbotWalkAnimation;
+    actor.attackAnimation = characterCowbotAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterCowbotIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterCowbotJumpAnimation;
+    actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 150;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 150;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.5;
+    actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
+    //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+    actor.type = CHARACTER_COWBOT;
+}

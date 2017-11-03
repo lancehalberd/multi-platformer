@@ -48,7 +48,7 @@ class Trigger {
         // This should be overriden by the specific trigger subclasses.
         return false;
     }
-
+    //NOTE: if I put this code into specific triggers, I can make them render other things.
     render() {
         mainContext.save();
         mainContext.globalAlpha = .4;
@@ -169,12 +169,14 @@ class TeleporterTrigger extends Trigger {
 
     trigger() {
         if (mainCharacter.canTeleport) {
-            addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
+            addEffectTeleportation(mainCharacter.x, mainCharacter.y);
             mainCharacter.x = this.destinationX;
             mainCharacter.y = this.destinationY;
             mainCharacter.canTeleport = false;
-            addEffectTeleportation(mainCharacter.x, mainCharacter.y);  // WRONG: this really isn't the right animation for this.
-            mainCharacter.currentNumberOfJumps = 0;
+            addEffectTeleportation(mainCharacter.x, mainCharacter.y);
+            mainCharacter.currentNumberOfJumps = 0; // teleporting resets double-jumping
+            mainCharacter.airDashed = false; // teleporting resets airDashing
+            mainCharacter.currentAirDashDuration = 0; //teleporting resets airDashing
             return true;
         }
         return false;
