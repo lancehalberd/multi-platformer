@@ -140,6 +140,10 @@ function updateActor(actor) {
             actor.vx = 0;
             var chargeEffectScale = 2 + (actor.currentSuperJumpMagnitude / 65);
             if (!doesArrayContainSuperJumpChargeWind(localSprites)) addEffectJumpWind(actor.x, actor.y, chargeEffectScale); //BROKEN: need to make this only happen when the last-spawned instance of this dies.
+            if (actor.noSuperJumpChargeRingUntil <= now() || !actor.noSuperJumpChargeRingUntil) {
+                addEffectJumpDust(actor.x, actor.y, 2.5, 9, 0);
+                actor.noSuperJumpChargeRingUntil = now() + 250;
+            }
         }
             // super jump jump phase
         if ((!isKeyDown(KEY_SHIFT) || actor.currentSuperJumpMagnitude >= actor.maxSuperJumpMagnitude) && actor.superJumpCharged) {
@@ -148,7 +152,9 @@ function updateActor(actor) {
             actor.superJumped = true;
             actor.hasSuperJumpContrail = true;
             actor.currentSuperJumpMagnitude = 0;
+            actor.superJumpKeyReleased = false;
         }
+        if (!isKeyDown(KEY_SHIFT) && actor.superJumped) actor.superJumpKeyReleased = true;
             // super jump contrail
         if (actor.hasSuperJumpContrail) {
             if (actor.vy > 0) actor.hasSuperJumpContrail = false;   //WRONG: this isn't really a good condition by which to judge that your super jump is over.
@@ -167,6 +173,7 @@ function updateActor(actor) {
         else if (actor.grounded) actor.vx += dx;
         else actor.vx += dx / 1.5;
         actor.jumpKeyReleased = !isKeyDown(KEY_UP);
+        if (!isKeyDown(KEY_SHIFT) && !actor.superJumped) actor.superJumpKeyReleased = true;
     }
 
     if (isPlayerCompelledByOctopusTouch(actor) && actor.grounded) {
@@ -312,7 +319,8 @@ var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(s
 
 var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
 
-var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped;
+var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
+
 
 
 function isPlayerTouchingTeleporter(actor) {
