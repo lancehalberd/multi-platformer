@@ -1,4 +1,5 @@
-var effectWinkOutImage = requireImage('/gfx/effects/effectWinkOut.png');
+var effectWinkOutImage = requireImage('/gfx/effects/effectWinkOut.png'),
+    effectJumpWindImage = requireImage('/gfx/effects/effectJumpWind.png');
 
 var EFFECT_RUN_DUST = 'runDust';
 var EFFECT_JUMP_DUST = 'jumpDust';
@@ -7,6 +8,7 @@ var EFFECT_TELEPORTATION = 'teleportationEffect';
 var EFFECT_TELEPORTATION_PORTAL = 'teleportationEffect';
 var EFFECT_TELEPORTATION_SPARKLES = 'teleportationEffect';
 var EFFECT_WINKOUT = 'winkoutEffect';
+var EFFECT_JUMP_WIND = 'jumpWindEffect';
 
 class SimpleAnimation {
 
@@ -95,6 +97,19 @@ function addEffectRunDust(x, y) {
     runDust.type = EFFECT_RUN_DUST;
     localSprites.push(runDust);
 }
+
+function addEffectJumpWind(x, y, scale) {
+    var sourceRectangle = new Rectangle(0, 0, 32, 32);
+    var frames = rectangleToFrames(sourceRectangle, effectJumpWindImage, 4);
+    // We draw the animation 1.75 times larger than the original.
+    var target = sourceRectangle.scale(scale);
+    // x, y coords are given as the middle of the characters feet, which is where we want to draw the bottom of
+    // the dust cloud, so we adjust the target rectangle accordingly.
+    var jumpWind = new SimpleAnimation({frames}, now(), 10, target.moveTo(x - target.width / 2, y - target.height));
+    jumpWind.type = EFFECT_JUMP_WIND;
+    localSprites.push(jumpWind);
+}
+
 
 function addEffectSteamPlume(x, y, vx, vy, scale, animationSpeedInFPS) {
     var sourceRectangle = new Rectangle(0, 0, 32, 32);

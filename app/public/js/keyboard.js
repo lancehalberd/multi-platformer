@@ -26,7 +26,8 @@ var GAME_PAD_MAPPINGS = {
     [KEY_DOWN]: 13,
     [KEY_LEFT]: 14,
     [KEY_RIGHT]: 15,
-    [KEY_SHIFT]: 5  // R bumper
+    [KEY_SHIFT]: 5,  // R bumper
+    [KEY_SHIFT]: 3  // Y
 };
 
 var physicalKeysDown = {};

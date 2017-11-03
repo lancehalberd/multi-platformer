@@ -164,6 +164,7 @@ class TTCharacter {
         this.airDashMagnitude = 2; //vx applied per frame of airDash key being down during airdash
         this.currentSuperJumpMagnitude = 0;  //increases as charge button is held
         this.maxSuperJumpMagnitude = 67;
+        this.noSuperJumpContrailUntil = now();
         this.isCrouching = false; //is crouched or not
         this.weapon = weapon;
         this.color = 'white';

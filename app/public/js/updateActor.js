@@ -131,20 +131,33 @@ function updateActor(actor) {
             }
         }
         // super jump
-            // charging phase
+            // super jump charging phase
         if (isKeyDown(KEY_SHIFT) && canCharacterSuperJump(actor) && actor.currentSuperJumpMagnitude < actor.maxSuperJumpMagnitude) {
             actor.superJumpCharged = true;
             actor.currentSuperJumpMagnitude++;
             actor.isCrouching = true;   // WRONG: this I think is overriding the .vx = 0, letting you move a little bit while charging. Maybe ok?
             actor.vy = 0;
             actor.vx = 0;
+            var chargeEffectScale = 2 + (actor.currentSuperJumpMagnitude / 65);
+            if (!doesArrayContainSuperJumpChargeWind(localSprites)) addEffectJumpWind(actor.x, actor.y, chargeEffectScale); //BROKEN: need to make this only happen when the last-spawned instance of this dies.
         }
-            // jump phase
+            // super jump jump phase
         if ((!isKeyDown(KEY_SHIFT) || actor.currentSuperJumpMagnitude >= actor.maxSuperJumpMagnitude) && actor.superJumpCharged) {
             actor.vy = -actor.currentSuperJumpMagnitude / 2.75;
             actor.superJumpCharged = false;
             actor.superJumped = true;
+            actor.hasSuperJumpContrail = true;
             actor.currentSuperJumpMagnitude = 0;
+        }
+            // super jump contrail
+        if (actor.hasSuperJumpContrail) {
+            if (actor.vy > 0) actor.hasSuperJumpContrail = false;   //WRONG: this isn't really a good condition by which to judge that your super jump is over.
+            var contrailScale = -actor.vy / 10,
+                contrailFPS = 200 / -actor.vy;
+            if (actor.noSuperJumpContrailUntil <= now()) {
+                addEffectJumpDust(actor.x, actor.y, contrailScale, contrailFPS, 0);
+                actor.noSuperJumpContrailUntil = now() + (1500 / -actor.vy);
+            }
         }
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
@@ -466,6 +479,14 @@ function damageSprite(sprite, amount) {
     if (sprite.invulnerableUntil && now() < sprite.invulnerableUntil) return;
     sprite.health -= amount;
     sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
+}
+
+//this function should be a super-simple arrow function using .filter or indexOf or something
+function doesArrayContainSuperJumpChargeWind(array) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i].type === EFFECT_JUMP_WIND) return true;
+    }
+    return false;
 }
 
 function changeCharacterToAlien(actor) {
