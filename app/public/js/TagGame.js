@@ -25,7 +25,15 @@ class TagGame {
         if (data.tagRound) {
             TagGame.tagRound = data.tagRound;
             TagGame.nextScoreUpdate = now() + TagGame.tagRound.interval * 1000;
+            for (var character of TagGame.getAllPlayers()) {
+                character.score = 0;
+                character.coins = 0;
+            }
         }
+    }
+
+    static getAllPlayers() {
+        return [mainCharacter, ...Object.values(otherCharacters)];
     }
 
     static update() {
@@ -33,11 +41,10 @@ class TagGame {
             TagGame.sendStartTagRound();
         }
         if (TagGame.nextScoreUpdate && now() >= TagGame.nextScoreUpdate) {
-            var allCharacters = [mainCharacter, ...Object.values(otherCharacters)]
-            for (var character of allCharacters) {
-                character.score += (character.coins || 0);
+            for (var character of TagGame.getAllPlayers()) {
+                character.score = (character.score || 0) + (character.coins || 0);
             }
-            if (!allCharacters.some(character => character.score >= TagGame.tagRound.goal)) {
+            if (!TagGame.getAllPlayers().some(character => character.score >= TagGame.tagRound.goal)) {
                 TagGame.nextScoreUpdate = now() + TagGame.tagRound.interval * 1000;
             } else {
                 TagGame.nextScoreUpdate = null;
@@ -68,10 +75,13 @@ class TagGame {
     }
 
     static render() {
+        if (!TagGame.tagRound) return;
         mainContext.textAlign = 'right'
         mainContext.textBaseline = 'top';
         mainContext.font = '18px sans-serif';
-        var allCharacters = [mainCharacter, ...Object.values(otherCharacters)];
+
+        // Draw scores to HUD
+        var allCharacters = TagGame.getAllPlayers();
         for (var i = 0; i < allCharacters.length; i++) {
             var coins = allCharacters[i].coins || 0;
             var score = allCharacters[i].score || 0;
@@ -82,6 +92,52 @@ class TagGame {
             mainContext.fillText(`${score} (+${coins})`, mainCanvas.width - 10, 10 + 35 * i);
             mainContext.fillStyle = allCharacters[i].color;
             mainContext.fillText(`${score} (+${coins})`, mainCanvas.width - 10 - 1, 10 + 35 * i - 1);
+        }
+
+
+        // Draw offscreen player indicators to HUD
+        var screenRectangle = new Rectangle(cameraX, cameraY, mainCanvas.width, mainCanvas.height).pad(-8);
+        var centerY = (mainCharacter.y  - getLocalSpriteHitBox(mainCharacter).height / 2);
+        for (var character of Object.values(otherCharacters)) {
+            // If the character is 4 pixels in from the edge of the screen, no need to draw an indicator.
+            if (screenRectangle.pad(4).containsPoint(character.x, character.y)) continue;
+            var hitBox = getLocalSpriteHitBox(character);
+            var dx = character.x - mainCharacter.x;
+            var dy = (character.y - hitBox.height / 2) - centerY;
+
+            // This formula for placing the circles tells you the exact direction they are in relation to your character
+            // but it doesn't feel as intuitive as the bottom formula which just brings them inside the screen rectangle.
+            // Maybe doing it relative to the center of the screen would be better.
+            /*var distanceFactor = 1;
+            if (dx > 0) distanceFactor = Math.min(distanceFactor, (screenRectangle.right - mainCharacter.x) / dx);
+            if (dx < 0) distanceFactor = Math.min(distanceFactor, -(mainCharacter.x - screenRectangle.left) / dx);
+            if (dy > 0) distanceFactor = Math.min(distanceFactor, (screenRectangle.bottom - centerY) / dy);
+            if (dy < 0) distanceFactor = Math.min(distanceFactor, -(centerY - screenRectangle.top) / dy);
+
+            var tx = mainCharacter.x - cameraX + dx * distanceFactor;
+            var ty = centerY - cameraY + dy * distanceFactor;*/
+
+            var tx = Math.min(Math.max(character.x, screenRectangle.left), screenRectangle.right) - cameraX;
+            var ty = Math.min(Math.max((character.y - hitBox.height / 2), screenRectangle.top), screenRectangle.bottom) - cameraY;
+
+            var scale = ifdefor(character.scale, 1) * .5 * Math.min(1, Math.max(.6, 2 - Math.sqrt(dx * dx + dy * dy) / 800));
+
+            mainContext.fillStyle = 'white';
+            mainContext.strokeStyle = character.color;
+            mainContext.lineWidth = 3;
+            mainContext.beginPath();
+            mainContext.arc(tx, ty, 20 * scale, 0, 2 * Math.PI, false);
+            mainContext.stroke();
+            mainContext.fill();
+
+            drawFrameTo(mainContext,
+                character.animation.frames[character.currentFrame],
+                tx, ty + hitBox.height * scale / 4,
+                ifdefor(character.xScale, 1) * scale, ifdefor(character.yScale, 1) * scale,
+                ifdefor(character.rotation, 0),
+                null,
+                character
+            );
         }
     }
 
@@ -108,9 +164,13 @@ class TagGame {
         }
         // It is hard to keep 'stuck' players in sync, and maybe not necessary for the
         // game to work.
-        // var newlyTaggedPlayer = getPlayerById(id);
-        // if (newlyTaggedPlayer) newlyTaggedPlayer.stuckUntil = now() + 2000;
         TagGame.taggedId = id;
+        var newlyTaggedPlayer = getPlayerById(TagGame.taggedId);
+        if (newlyTaggedPlayer) {
+            // The player gets half of the coins of the player they tagged.
+            if (currentlyTaggedPlayer) currentlyTaggedPlayer.coins = Math.floor(newlyTaggedPlayer.coins / 2);
+            newlyTaggedPlayer.coins = 0;
+        }
     }
 }
 // The id of the player who was most recently tagged, aka, IT.

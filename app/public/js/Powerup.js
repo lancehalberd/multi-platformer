@@ -66,3 +66,18 @@ class AirDashPowerup extends Powerup {
 }
 AirDashPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupAirDashImage, 1)};
 
+
+class CoinPowerup extends Powerup {
+    constructor(hitBox, cooldownInSeconds) {
+        super(hitBox, cooldownInSeconds);
+    }
+
+    trigger() {
+        // The tagged player may not collect coins.
+        if (mainCharacter.id === TagGame.taggedId) return false;
+        mainCharacter.coins = (mainCharacter.coins || 0) + 1;
+        return true;
+    }
+}
+CoinPowerup.animation = fireballAnimation;
+

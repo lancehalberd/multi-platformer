@@ -266,6 +266,7 @@ function initializePersonGraphics() {
         this.x = this.originalX;
         this.y = this.originalY;
         this.vx = this.vy = 0;
+        this.coins = 0;
         this.deathComplete = false;
         this.blinkUntil = this.invulnerableUntil = now() + 2000;
         delete this.deathTime;

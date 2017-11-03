@@ -372,6 +372,7 @@ var brushList = [
     new TriggerBrush(new TeleporterTrigger(dummyRectangle, 0, 0, 0)),
     new TriggerBrush(new LifePowerup(dummyRectangle, 10)),
     new TriggerBrush(new AirDashPowerup(dummyRectangle, 10, 10)),
+    new TriggerBrush(new CoinPowerup(dummyRectangle, 10)),
 ];
 
 var selectPreviousObject = () => {
