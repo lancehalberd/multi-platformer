@@ -42,7 +42,7 @@ class TagGame {
         }
         if (TagGame.nextScoreUpdate && now() >= TagGame.nextScoreUpdate) {
             for (var character of TagGame.getAllPlayers()) {
-                character.score = (character.score || 0) + (character.coins + sumBeaconScoreInfluences(character) || 0);
+                character.score = (character.score || 0) + (character.coins || 0) + sumBeaconScoreInfluences(character);
             }
             if (!TagGame.getAllPlayers().some(character => character.score >= TagGame.tagRound.goal)) {
                 TagGame.nextScoreUpdate = now() + TagGame.tagRound.interval * 1000;
@@ -83,7 +83,7 @@ class TagGame {
         // Draw scores to HUD
         var allCharacters = TagGame.getAllPlayers();
         for (var i = 0; i < allCharacters.length; i++) {
-            var coins = (allCharacters[i].coins + sumBeaconScoreInfluences(allCharacters[i])) || 0;
+            var coins = (allCharacters[i].coins || 0) + sumBeaconScoreInfluences(allCharacters[i]);
             var score = allCharacters[i].score || 0;
             mainContext.globalAlpha = 0.8;
             draw.fillRectangle(mainContext, new Rectangle(mainCanvas.width - 85, 5 + 35 * i, 80, 30), 'black');
@@ -184,11 +184,10 @@ TagGame.nextScoreUpdate = null;
 TagGame.tagRound = null;
 
 function sumBeaconScoreInfluences(character) {
-    if (character.beaconsInfluencing.length > 0) {
-        var summedBeaconInfluence = 0;
-        for (var i = 0; i < character.beaconsInfluencing.length; i++) {
-            summedBeaconInfluence += character.beaconsInfluencing[i].currentScoreRate;
-        }
-        return summedBeaconInfluence;
+    character.beaconsInfluencing = character.beaconsInfluencing || [];
+    var summedBeaconInfluence = 0;
+    for (var i = 0; i < character.beaconsInfluencing.length; i++) {
+        summedBeaconInfluence += character.beaconsInfluencing[i].currentScoreRate;
     }
+    return summedBeaconInfluence;
 }
