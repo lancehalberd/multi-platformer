@@ -12,14 +12,22 @@ var render = () => {
         return;
     }
 
-    var xPercent = (cameraX / (areaRectangle.width - mainCanvas.width)) || 1;
-    var yPercent = (cameraY / (areaRectangle.height - mainCanvas.height)) || 1;
     var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
     var target = bgSourceRectangle.scale(0.6);
+    var xPercent = (cameraX / (Math.max(areaRectangle.width, target.width) - mainCanvas.width)) || 0;
+    var yPercent = (cameraY / (Math.max(areaRectangle.height, target.height) - mainCanvas.height)) || 0;
     target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height));
 
-
-    draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
+    if (isKeyDown(KEY_SPACE)) {
+        console.log(xPercent, yPercent);
+        console.log(target);
+    }
+    var taggedPlayer = TagGame.getTaggedPlayer();
+    if (taggedPlayer) {
+        draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)
+    } else {
+        draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
+    }
 
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));

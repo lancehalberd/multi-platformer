@@ -1,5 +1,5 @@
 
-var globalTintCanvas = createCanvas(400, 300);
+var globalTintCanvas = createCanvas(1920, 1080);
 var globalTintContext = globalTintCanvas.getContext('2d');
 var globalCompositeCanvas = createCanvas(150, 150);
 var globalCompositeContext = globalCompositeCanvas.getContext('2d');
@@ -50,7 +50,7 @@ var draw = {
         // First make a solid color in the shape of the image to tint.
         globalTintContext.save();
         var tintRectangle = source.moveTo(0, 0);
-        draw.clearRectangle(globalTintContext, tintRectangle)
+        draw.clearRectangle(globalTintContext, tintRectangle);
         globalTintContext.drawImage(image, source.left, source.top, source.width, source.height, 0, 0, source.width, source.height);
         globalTintContext.globalCompositeOperation = "source-in";
         draw.fillRectangle(globalTintContext, tintRectangle, tint);

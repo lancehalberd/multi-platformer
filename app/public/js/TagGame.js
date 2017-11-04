@@ -36,6 +36,11 @@ class TagGame {
         return [mainCharacter, ...Object.values(otherCharacters)];
     }
 
+    static getTaggedPlayer() {
+        if (TagGame.taggedId === publicId) return mainCharacter;
+        else return otherCharacters[TagGame.taggedId];
+    }
+
     static update() {
         if (isKeyDown('T'.charCodeAt(0))) {
             TagGame.sendStartTagRound();
