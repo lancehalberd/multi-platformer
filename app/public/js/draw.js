@@ -1,5 +1,5 @@
 
-var globalTintCanvas = createCanvas(1920, 1080);
+var globalTintCanvas = createCanvas(800, 600);
 var globalTintContext = globalTintCanvas.getContext('2d');
 var globalCompositeCanvas = createCanvas(150, 150);
 var globalCompositeContext = globalCompositeCanvas.getContext('2d');

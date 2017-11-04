@@ -23,11 +23,11 @@ var render = () => {
         console.log(target);
     }
     var taggedPlayer = TagGame.getTaggedPlayer();
-    if (taggedPlayer) {
-        draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)
-    } else {
+    //if (taggedPlayer) {
+    //    draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)
+    //} else {
         draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
-    }
+    //}
 
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
