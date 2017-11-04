@@ -9,8 +9,8 @@ var BEACON_TYPE_SCORE_DEPRESSOR = 'scoreDepressorBeacon';
 
 
 var BEACON_FALLOFF_CURVE_LINEAR = 'linearFalloffCurve'; // i.e. 1-to-1 relationship between distance and score boost
-var BEACON_FALLOFF_CURVE_HARD = 'hardFalloffCurve'; // i.e. lots of score at the edge, not much more as you get closer
-var BEACON_FALLOFF_CURVE_SOFT = 'softFalloffCurve'; // i.e. not much score at the edge, a lot more toward the center
+var BEACON_FALLOFF_CURVE_HARD = 'hardFalloffCurve'; // i.e. not much score at the edge, a lot more toward the center
+var BEACON_FALLOFF_CURVE_SOFT = 'softFalloffCurve'; // i.e. lots of score at the edge, not much more as you get closer
 //end hshould be moved to Beacon.js
 
 var powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
@@ -128,8 +128,8 @@ class ScoreBeacon extends Powerup {
     update() {
         var falloffFactor;
         if (this.falloff === BEACON_FALLOFF_CURVE_LINEAR) falloffFactor = 1;
-        if (this.falloff === BEACON_FALLOFF_CURVE_HARD) falloffFactor = 0.5;
-        if (this.falloff === BEACON_FALLOFF_CURVE_SOFT) falloffFactor = 2;
+        if (this.falloff === BEACON_FALLOFF_CURVE_HARD) falloffFactor = 2;
+        if (this.falloff === BEACON_FALLOFF_CURVE_SOFT) falloffFactor = 0.5;
         var xDistanceToMainCharacter = mainCharacter.x - (this.hitBox.left + (this.hitBox.width / 2)),
             yDistanceToMainCharacter = mainCharacter.y - (this.hitBox.top + (this.hitBox.height / 2)),
             distanceToMainCharacter = Math.sqrt(xDistanceToMainCharacter * xDistanceToMainCharacter + yDistanceToMainCharacter * yDistanceToMainCharacter);
