@@ -8,9 +8,9 @@ var BEACON_TYPE_SCORE_EXCITER = 'scoreExciterBeacon';
 var BEACON_TYPE_SCORE_DEPRESSOR = 'scoreDepressorBeacon';
 
 
-var BEACON_FALLOFF_CURVE_LINEAR = 'linearFalloffCurve';
-var BEACON_FALLOFF_CURVE_STEEP = 'steepFalloffCurve';
-var BEACON_FALLOFF_CURVE_SOFT = 'softFalloffCurve';
+var BEACON_FALLOFF_CURVE_LINEAR = 'linearFalloffCurve'; // i.e. 1-to-1 relationship between distance and score boost
+var BEACON_FALLOFF_CURVE_HARD = 'hardFalloffCurve'; // i.e. lots of score at the edge, not much more as you get closer
+var BEACON_FALLOFF_CURVE_SOFT = 'softFalloffCurve'; // i.e. not much score at the edge, a lot more toward the center
 //end hshould be moved to Beacon.js
 
 var powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
@@ -119,18 +119,22 @@ class ScoreBeacon extends Powerup {
         super(hitBox);
         this.radius = radius;
         this.maxScoreRate = 5;  // WRONG: making this 'maxScoreRate' seemed to be giving it the value of 'undefined,' even though 'this.radius = radius' seems to be working fine.
-        this.falloff = falloff; // not used yet
+        this.falloff = falloff;
         this.bobs = false; //beacons shouldn't bob, just pulse.
         this.currentScoreRate = 0;
         if (this.maxScoreRate >= 0) this.type = BEACON_TYPE_SCORE_EXCITER;
         else this.type = BEACON_TYPE_SCORE_DEPRESSOR;
     }
     update() {
+        var falloffFactor;
+        if (this.falloff === BEACON_FALLOFF_CURVE_LINEAR) falloffFactor = 1;
+        if (this.falloff === BEACON_FALLOFF_CURVE_HARD) falloffFactor = 0.5;
+        if (this.falloff === BEACON_FALLOFF_CURVE_SOFT) falloffFactor = 2;
         var xDistanceToMainCharacter = mainCharacter.x - (this.hitBox.left + (this.hitBox.width / 2)),
             yDistanceToMainCharacter = mainCharacter.y - (this.hitBox.top + (this.hitBox.height / 2)),
             distanceToMainCharacter = Math.sqrt(xDistanceToMainCharacter * xDistanceToMainCharacter + yDistanceToMainCharacter * yDistanceToMainCharacter);
         if (distanceToMainCharacter < this.radius) {
-            this.currentScoreRate = Math.round(Math.min(this.radius / distanceToMainCharacter, this.maxScoreRate));
+            this.currentScoreRate = Math.round(Math.min(this.radius / (distanceToMainCharacter * falloffFactor), this.maxScoreRate));
         } else this.currentScoreRate = 0;
     }
 }
