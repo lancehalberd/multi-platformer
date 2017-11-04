@@ -12,11 +12,12 @@ var render = () => {
         return;
     }
 
-    var xPercent = cameraX / (areaRectangle.width - mainCanvas.width);
-    var yPercent = cameraY / (areaRectangle.height - mainCanvas.height);
+    var xPercent = (cameraX / (areaRectangle.width - mainCanvas.width)) || 1;
+    var yPercent = (cameraY / (areaRectangle.height - mainCanvas.height)) || 1;
     var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
     var target = bgSourceRectangle.scale(0.6);
     target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height));
+
 
     draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
 
