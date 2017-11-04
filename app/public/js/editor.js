@@ -374,6 +374,7 @@ var brushList = [
     new TriggerBrush(new AirDashPowerup(dummyRectangle, 10, 10)),
     new TriggerBrush(new CoinPowerup(dummyRectangle, 10)),
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
+    new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR))
 ];
 
 var selectPreviousObject = () => {

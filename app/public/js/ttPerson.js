@@ -147,7 +147,7 @@ class TTCharacter {
         //this.jumpAnimation = characterMysteryJumpAnimation;
 //        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
         this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation; //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
-        this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move. Maybe takes damage.
+        this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move.
         this.animation = this.walkAnimation;
         this.skin = skin;
         this.hair = hair;
@@ -166,6 +166,7 @@ class TTCharacter {
         this.maxSuperJumpMagnitude = 67;
         this.noSuperJumpContrailUntil = now();
         this.isCrouching = false; //is crouched or not
+        this.beaconsInfluencing = [];
         this.weapon = weapon;
         this.color = 'white';
     }

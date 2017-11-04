@@ -3,10 +3,21 @@ var POWERUP_TYPE_HEART = 'heartPowerup';
 var POWERUP_TYPE_SUPERJUMP = 'superJumpPowerup';
 var POWERUP_TYPE_COIN = 'coinPowerup';
 
+//should be moved to Beacon.js:
+var BEACON_TYPE_SCORE_EXCITER = 'scoreExciterBeacon';
+var BEACON_TYPE_SCORE_DEPRESSOR = 'scoreDepressorBeacon';
+
+
+var BEACON_FALLOFF_CURVE_LINEAR = 'linearFalloffCurve';
+var BEACON_FALLOFF_CURVE_STEEP = 'steepFalloffCurve';
+var BEACON_FALLOFF_CURVE_SOFT = 'softFalloffCurve';
+//end hshould be moved to Beacon.js
+
 var powerupHeartImage = requireImage('/gfx/powerups/powerupHeart.png'),
     powerupAirDashImage = requireImage('/gfx/powerups/powerupAirDash.png'),
     powerupSuperJumpImage = requireImage('/gfx/powerups/powerupSuperJump.png'),
-    powerupCoinImage = requireImage('/gfx/powerups/powerupCoin.png');
+    powerupCoinImage = requireImage('/gfx/powerups/powerupCoin.png'),
+    scoreBeaconImage = requireImage('/gfx/powerups/beacon.png');
 
 class Powerup extends Trigger {
 
@@ -102,3 +113,43 @@ class SuperJumpPowerup extends Powerup {
 }
 SuperJumpPowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), powerupSuperJumpImage, 1)};
 
+//should be moved to Beacon.js:
+class ScoreBeacon extends Powerup {
+    constructor(hitBox, radius, maxScoreRate, falloff) {
+        super(hitBox);
+        this.radius = radius;
+        this.maxScoreRate = 5;  // WRONG: making this 'maxScoreRate' seemed to be giving it the value of 'undefined,' even though 'this.radius = radius' seems to be working fine.
+        this.falloff = falloff; // not used yet
+        this.bobs = false; //beacons shouldn't bob, just pulse.
+        this.currentScoreRate = 0;
+        if (this.maxScoreRate >= 0) this.type = BEACON_TYPE_SCORE_EXCITER;
+        else this.type = BEACON_TYPE_SCORE_DEPRESSOR;
+    }
+    update() {
+        var xDistanceToMainCharacter = mainCharacter.x - (this.hitBox.left + (this.hitBox.width / 2)),
+            yDistanceToMainCharacter = mainCharacter.y - (this.hitBox.top + (this.hitBox.height / 2)),
+            distanceToMainCharacter = Math.sqrt(xDistanceToMainCharacter * xDistanceToMainCharacter + yDistanceToMainCharacter * yDistanceToMainCharacter);
+        if (distanceToMainCharacter < this.radius) {
+            this.currentScoreRate = Math.round(Math.min(this.radius / distanceToMainCharacter, this.maxScoreRate));
+        } else this.currentScoreRate = 0;
+    }
+}
+ScoreBeacon.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), scoreBeaconImage, 1)};
+
+
+// only used for checking if a beacon is already in the player's .beaconsInfluencing array. Probably a much simpler way to do this, like a .filter arrow function.
+function isObjectInArray(array, object) {
+    if (array.length === 0) return false;
+    for (var i = 0; i < array.length; i++) {
+        if (array[i] === object) return true;
+    }
+    return false;
+}
+
+function beaconsToMainCharacterArray() {
+    for (var i = 0; i < localSprites.length; i++) {
+        if ((localSprites[i].type === BEACON_TYPE_SCORE_EXCITER || localSprites[i].type === BEACON_TYPE_SCORE_DEPRESSOR) && !isObjectInArray(mainCharacter.beaconsInfluencing, localSprites[i])) {
+            mainCharacter.beaconsInfluencing.push(localSprites[i]);
+        }
+    }
+}

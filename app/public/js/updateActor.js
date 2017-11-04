@@ -3,7 +3,10 @@ var CHARACTER_COWBOT = 'cowbotCharacter';
 var CHARACTER_MYSTERY = 'mysteryCharacter';
 var CHARACTER_ALIEN = 'alienCharacter';
 
+
+
 function updateActor(actor) {
+    beaconsToMainCharacterArray();
     if (actor.stuckUntil > now()) {
         return;
     }
