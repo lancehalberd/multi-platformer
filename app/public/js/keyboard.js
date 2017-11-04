@@ -27,7 +27,7 @@ var GAME_PAD_MAPPINGS = {
     [KEY_LEFT]: 14,
     [KEY_RIGHT]: 15,
     [KEY_SHIFT]: 5,  // R bumper
-    [KEY_SHIFT]: 3  // Y
+    //[KEY_SHIFT]: 3  // Y  //this would be good for arcade stick
 };
 
 var physicalKeysDown = {};
