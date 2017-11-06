@@ -28,10 +28,6 @@ setInterval(() => {
     if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
         addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
     }
-    // T Is currently used to start a Tag Game.
-    //if (localSprites.length < 2 && isKeyDown('T'.charCodeAt(0))) {
-    //    addCreature(900, 800, NO_TARGET, CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL);
-    //}
     removeFinishedLocalSprites();
 
     if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;

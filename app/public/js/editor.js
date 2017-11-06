@@ -6,7 +6,7 @@ const updateEditor = () => {
     }
     if (!isEditing) return;
     // Trigger brush uses the right click to set the target
-    if (!mouseDown && currentBrush.type !== 'trigger') {
+    if (!mouseDown && currentBrush.type !== 'entity') {
         if (rightMouseDown) {
             if (!cloneStartCoords) {
                 cloneStartCoords = getMouseCoords();
@@ -257,7 +257,7 @@ class TriggerBrush {
         this.sourceTrigger = sourceTrigger;
         // I'm just using this to prevent clone brush from activating
         // when you right click while you have a trigger brush selected.
-        this.type = 'trigger';
+        this.type = 'entity';
         this.wasMouseDown = false;
     }
 
@@ -270,7 +270,7 @@ class TriggerBrush {
         }
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedTrigger;
-            localSprites.filter(sprite => (sprite instanceof Trigger)).forEach(sprite => {
+            localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
                 if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                     newSelectedTrigger = sprite;
                     return false;
@@ -280,8 +280,7 @@ class TriggerBrush {
             if (lastSelected === newSelectedTrigger) {
                 selectedTrigger = null;
             } else if (newSelectedTrigger) {
-                selectedTrigger = newSelectedTrigger;
-                currentBrush = new TriggerBrush(selectedTrigger);
+                selectEntity(newSelectedTrigger);
                 currentBrush.wasMouseDown = true;
             }
         }
@@ -296,6 +295,9 @@ class TriggerBrush {
                 if (drawnRectangle.overlapsRectangle(new Rectangle(0, 0, currentMap.width, currentMap.height), false)) {
                     if (!selectedTrigger) {
                         selectedTrigger = cloneEntity(this.sourceTrigger);
+                        // We store the brushClass so we know what brush to use when we select this entity.
+                        // Maybe we can put this as a static field on the entity class.
+                        selectedTrigger.brushClass = 'TriggerBrush';
                         selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
                         selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
                         sendCreateEntity(selectedTrigger);
@@ -307,12 +309,9 @@ class TriggerBrush {
                 objectStartCoords = null;
             }
         }
-        if (rightMouseDown && selectedTrigger) {
-            var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
-            if (levelRectangle.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
-                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                sendUpdateEntity(selectedTrigger);
-            }
+        if (rightMouseDown && selectedTrigger && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+            sendUpdateEntity(selectedTrigger);
         }
         this.wasMouseDown = mouseDown;
     }
@@ -326,6 +325,85 @@ class TriggerBrush {
         this.sourceTrigger.renderHUD(target);
     }
 }
+
+class PointEntityBrush {
+
+    constructor(sourceEntity) {
+        this.sourceEntity = sourceEntity;
+        // I'm just using this to prevent clone brush from activating
+        // when you right click while you have a trigger brush selected.
+        this.type = 'entity';
+        this.wasMouseDown = false;
+    }
+
+    update() {
+        var mouseCoords = getMouseCoords();
+        var pixelMouseCoords = getPixelMouseCoords();
+        if (selectedTrigger && isKeyDown(KEY_BACK_SPACE)) {
+            sendDeleteEntity(selectedTrigger.id);
+            selectedTrigger = null;
+        }
+        if (!this.wasMouseDown && mouseDown) {
+            var lastSelected = selectedTrigger, newSelectedEntity;
+            localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
+                if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                    newSelectedEntity = sprite;
+                    return false;
+                }
+            });
+            draggingTrigger = newSelectedEntity;
+            if (lastSelected === newSelectedEntity) {
+                selectedTrigger = null;
+            } else if (newSelectedEntity) {
+                selectEntity(newSelectedEntity)
+                currentBrush.wasMouseDown = true;
+            }
+        }
+        if (rightMouseDown && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            if (!selectedTrigger) {
+                selectedTrigger = cloneEntity(this.sourceEntity);
+                // We store the brushClass so we know what brush to use when we select this entity.
+                // Maybe we can put this as a static field on the entity class.
+                selectedTrigger.brushClass = 'PointEntityBrush';
+                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                sendCreateEntity(selectedTrigger);
+            } else {
+                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                if (selectedTrigger.dirty) {
+                    delete selectedTrigger.dirty;
+                    sendUpdateEntity(selectedTrigger);
+                }
+            }
+        }
+        this.wasMouseDown = mouseDown;
+    }
+
+    renderPreview(target) {
+        var pixelMouseCoords = getPixelMouseCoords();
+        if (selectedTrigger) selectedTrigger.renderPreview(pixelMouseCoords[0], pixelMouseCoords[1]);
+        else this.sourceEntity.renderPreview(pixelMouseCoords[0], pixelMouseCoords[1]);
+    }
+
+    renderHUD(target) {
+        this.sourceEntity.renderHUD(target);
+    }
+}
+
+var selectEntity = entity => {
+    selectedTrigger = entity;
+    var brushClass = brushClasses[entity.brushClass] || TriggerBrush;
+    currentBrush = new brushClass(entity);
+}
+
+var brushClasses = {
+    TriggerBrush, PointEntityBrush,
+};
+
+var pointIsInLevel = (x, y) => {
+    var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
+    return levelRectangle.containsPoint(x, y);
+}
+
 
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 
@@ -374,7 +452,8 @@ var brushList = [
     new TriggerBrush(new AirDashPowerup(dummyRectangle, 10, 10)),
     new TriggerBrush(new CoinPowerup(dummyRectangle, 10)),
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
-    new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR))
+    new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
+    new PointEntityBrush(new PointSpawner(getPacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
 ];
 
 var selectPreviousObject = () => {

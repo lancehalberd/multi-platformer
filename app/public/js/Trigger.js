@@ -1,9 +1,16 @@
 var FORCE_AMP = 'playerVelocityMultiplied';
 var FORCE_FIXED = 'fixedForceAddedToPlayer';
 
-class Trigger {
+// An entity is currently anything that can be added to a map and interacted with
+// other than a player, such as Triggers, Powerups, Creatures and Spawners.
+class Entity {
+
+}
+
+class Trigger extends Entity {
 
     constructor(hitBox, cooldownInSeconds) {
+        super();
         this.hitBox = hitBox;
         this.cooldownInSeconds = cooldownInSeconds;
         this.color = 'white';

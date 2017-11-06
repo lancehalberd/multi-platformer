@@ -1,6 +1,6 @@
 var classes = {
-    Object, Rectangle, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, LifePowerup, AirDashPowerup, CoinPowerup,
-    SuperJumpPowerup, ScoreBeacon
+    Object, Rectangle, Entity, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, LifePowerup, AirDashPowerup, CoinPowerup,
+    SuperJumpPowerup, ScoreBeacon, PointSpawner, SimpleSprite,
 };
 
 var cloneEntity = (entity) => {
@@ -11,27 +11,38 @@ var cloneEntity = (entity) => {
 // Serialize an object so that it
 var serializeEntity = (entity) => {
     // Return scalars as they are.
-    if (typeof entity !== 'object') {
+    if (entity === null || typeof entity !== 'object') {
         return entity;
     }
     // Serialize each entry of an array.
     if (entity instanceof Array) {
         return entity.map(serializeEntity);
     }
+    // Images should be serialized as the original source used to load them.
+    if (entity.constructor.name === 'HTMLImageElement') {
+        if (!entity.originalSource) {
+            throw new Error('Cannot serialize an image without an originalSource set.');
+        }
+        return entity.originalSource;
+    }
     // Serialize each field on an object and assign the special __class__ field.
     var object = {};
+    object.__class__ = entity.constructor.name;
+    var entityClass = classes[object.__class__];
+    if (!entityClass) {
+        throw new Error(`Attempting to serialize instance of unspported class ${object.__class__}`);
+    }
+    if (entityClass.localFields) {
+        entity = _.omit(entity, entityClass.localFields);
+    }
     for (var i in entity) {
         object[i] = serializeEntity(entity[i]);
-    }
-    object.__class__ = entity.constructor.name;
-    if (!classes[object.__class__]) {
-        throw new Error(`Attempting to serialize instance of unspported class ${object.__class__}`);
     }
     return object;
 };
 
 var unserializeEntity = (object) => {
-    if (typeof object !== 'object') {
+    if (object === null || typeof object !== 'object') {
         return object;
     }
     // Serialize each entry of an array.
