@@ -18,6 +18,8 @@ var TILE_SLIPPERY_ALL = TILE_SLIPPERY * TILE_ALL;
 
 var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var customTiles = '/gfx/customBlocksA.png';
+var mansionTiles = '/gfx/tiles/tilesMansion.png';
+
 var stretchNine = {
     image: twilightTiles,
     size: 16,
@@ -74,6 +76,152 @@ var iceBlock = {
     maxHeight: 1,
     properties: TILE_SOLID_ALL | TILE_SLIPPERY_ALL,
 };
+
+/////////////////////
+// MANSION TILESET //
+/////////////////////
+
+var panelSquareHorizMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 1, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var panelSquareVertMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 0, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var panelStripVertMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 2, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var floorMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 3, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var floorThinMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 5, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var pillarDarkMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 4, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var hedgeMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 8, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var stonesDarkMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 12, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var stonesDirtMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 9, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var stonesMossLightMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 10, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var stonesMossDarkMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 11, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var wallpaperRedMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 7, y:0,
+};
+
+var wallpaperGreenMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 6, y:0,
+};
+
+var stickyTileMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 19, y: 0,
+    maxWidth: 1,
+    maxHeight: 1,
+    properties: TILE_SOLID_ALL | TILE_STICKY_ALL,
+};
+
+var spikesUpMansionFence = {
+    image: mansionTiles,
+    size: 32,
+    x: 13, y: 0,
+    maxHeight: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_DOWN),
+};
+
+var spikesUpMansionGate = {
+    image: mansionTiles,
+    size: 32,
+    x: 14, y: 0,
+    maxHeight: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_DOWN),
+};
+
+var spikesDownMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 15, y: 0, yScale: -1,
+    maxHeight: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP),
+};
+
+var spikesLeftMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 16, y: 0,
+    maxWidth: 1, xScale: -1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_RIGHT),
+};
+
+var spikesRightMansion = {
+    image: mansionTiles,
+    size: 32,
+    x: 16, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_LEFT),
+};
+
+/////////////////////////
+// END MANSION TILESET //
+/////////////////////////
 
 function applyObjectToMap(map, object, coordinates) {
     if (typeof(module) !== 'undefined') {
