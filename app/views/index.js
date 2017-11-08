@@ -23,8 +23,11 @@ exports.getMustacheData = (zoneId) => {
     };
     addScripts([
         'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'animations', 'tiles', 'main', 'localSprites', 'ttPerson',
-        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'SimpleAnimation', 'Trigger', 'Powerup', 'Spawner',
-        'editor', 'serialize', 'TagGame', 'Beacon',
+        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'SimpleAnimation',
+        // Entity is currently defined in Trigger.js, so all Entities need to be loaded after it.
+        'Trigger', 'Powerup', 'Spawner', 'CheckPoint',
+        // editor/serialize need to be loaded after most entities.
+        'editor', 'serialize', 'TagGame',
     ]);
     var addStyleSheets = fileNames => {
         for (var fileName of fileNames) {

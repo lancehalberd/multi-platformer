@@ -12,6 +12,10 @@ class PointSpawner extends Entity {
         this.hitBox = new Rectangle(0, 0, 32, 32);
     }
 
+    getEditingHitBox() {
+        return this.hitBox;
+    }
+
     isOnCooldown() {
         return now() < this.onCooldownUntil;
     }
@@ -43,6 +47,7 @@ class PointSpawner extends Entity {
         if (isEditing) {
             this.hitBox = this.hitBox.moveCenterTo(this.x, this.y);
             this.renderPreview(this.x, this.y);
+            if (selectedTrigger === this) this.renderSelectedBox();
         }
     }
 
@@ -58,15 +63,6 @@ class PointSpawner extends Entity {
 
     renderPreview(x, y) {
         this.renderHUD(this.hitBox.moveCenterTo(x, y));
-        if (selectedTrigger === this) {
-            mainContext.save();
-            mainContext.globalAlpha = 1;
-            mainContext.strokeStyle = 'white';
-            mainContext.beginPath();
-            draw.rectangle(mainContext, this.hitBox);
-            mainContext.stroke();
-            mainContext.restore();
-        }
     }
 
     renderHUD(target) {

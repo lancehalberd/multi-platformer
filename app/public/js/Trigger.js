@@ -4,7 +4,16 @@ var FORCE_FIXED = 'fixedForceAddedToPlayer';
 // An entity is currently anything that can be added to a map and interacted with
 // other than a player, such as Triggers, Powerups, Creatures and Spawners.
 class Entity {
+    getEditingHitBox() {
+        throw new Error(this.constructor.name + " does not override getEditingHitBox");
+    }
 
+    renderSelectedBox() {
+        mainContext.save();
+        mainContext.globalAlpha = 1;
+        draw.strokeRectangle(mainContext, this.getEditingHitBox(), 'white');
+        mainContext.restore();
+    }
 }
 
 class Trigger extends Entity {
@@ -19,6 +28,11 @@ class Trigger extends Entity {
     // This method can be defined on subclasses to give some dynamic behavior,
     // like bobbing and pulsing powerups.
     getHitBox() {
+        return this.hitBox;
+    }
+
+    // Editing hitBox is static.
+    getEditingHitBox() {
         return this.hitBox;
     }
 
@@ -78,13 +92,6 @@ class Trigger extends Entity {
         if (selectedTrigger === this) {
             this.renderSelectedBox();
         }
-    }
-
-    renderSelectedBox() {
-        mainContext.save();
-        mainContext.globalAlpha = 1;
-        draw.strokeRectangle(mainContext, this.hitBox, 'white');
-        mainContext.restore();
     }
 
     renderHUD(target) {
@@ -213,11 +220,4 @@ class TeleporterTrigger extends Trigger {
         var frame = getAnimationFrame(portalAnimation.frames, 5);
         draw.image(mainContext, frame.image, frame, target);
     }
-    /* Chris gave me this code to use as a reference for starting to sort out the teleporter's UI representation in the editor:
-        renderHUD(target) {
-       super.renderHUD(target);
-       // We should update this to draw the spawned object eventually.
-       var frame = getAnimationFrame(fireballAnimation.frames, 5);
-       draw.image(mainContext, frame.image, frame, target);
-   }*/
 }

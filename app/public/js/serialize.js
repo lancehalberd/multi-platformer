@@ -1,6 +1,6 @@
 var classes = {
     Object, Rectangle, Entity, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, LifePowerup, AirDashPowerup, CoinPowerup,
-    SuperJumpPowerup, ScoreBeacon, PointSpawner, SimpleSprite,
+    SuperJumpPowerup, ScoreBeacon, PointSpawner, SimpleSprite, CheckPoint,
 };
 
 var cloneEntity = (entity) => {

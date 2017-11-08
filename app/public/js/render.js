@@ -18,10 +18,6 @@ var render = () => {
     var yPercent = (cameraY / (Math.max(areaRectangle.height, target.height) - mainCanvas.height)) || 0;
     target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height));
 
-    if (isKeyDown(KEY_SPACE)) {
-        console.log(xPercent, yPercent);
-        console.log(target);
-    }
     var taggedPlayer = TagGame.getTaggedPlayer();
     //if (taggedPlayer) {
     //    draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)

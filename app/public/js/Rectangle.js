@@ -59,6 +59,15 @@ class Rectangle {
         return this.moveCenterTo(0, 0).scale(scale).moveCenterTo(center[0], center[1]);
     }
 
+    stretch(scaleX, scaleY) {
+        return new Rectangle(this.left * scaleX, this.top * scaleY, this.width * scaleX, this.height * scaleY);
+    }
+
+    stretchFromCenter(scaleX, scaleY) {
+        var center = this.getCenter();
+        return this.moveCenterTo(0, 0).stretch(scaleX, scaleY).moveCenterTo(center[0], center[1]);
+    }
+
     getCenter() {
         return [this.left + this.width / 2, this.top + this.height / 2];
     }

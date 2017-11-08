@@ -271,7 +271,7 @@ class TriggerBrush {
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedTrigger;
             localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
-                if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                if (sprite.getEditingHitBox().containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                     newSelectedTrigger = sprite;
                     return false;
                 }
@@ -346,7 +346,7 @@ class PointEntityBrush {
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedEntity;
             localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
-                if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                if (sprite.getEditingHitBox().containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                     newSelectedEntity = sprite;
                     return false;
                 }
@@ -454,6 +454,7 @@ var brushList = [
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
     new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
     new PointEntityBrush(new PointSpawner(getPacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
+    new PointEntityBrush(new CheckPoint()),
 ];
 
 var selectPreviousObject = () => {

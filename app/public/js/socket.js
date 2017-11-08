@@ -28,8 +28,14 @@ socket.addEventListener('message', event => {
         }
         // Create initial set of entities from the map definition.
         // Originally these just consisted of Triggers.
-        for (var entity of (currentMap.entities || [])) {
-            localSprites.push(unserializeEntity(entity));
+        for (var entityData of (currentMap.entities || [])) {
+            var entity = unserializeEntity(entityData);
+            localSprites.push(entity);
+            if (!mainCharacter.checkPoint && entity instanceof CheckPoint) {
+                mainCharacter.checkPoint = entity;
+                mainCharacter.x = entity.x;
+                mainCharacter.y = entity.y;
+            }
         }
     }
     // Don't process any messages from the server until we have the character data.
