@@ -1,3 +1,4 @@
+var fs = require('fs');
 var getZones = require('../../src/zones.js');
 
 exports.getMustacheData = () => {
