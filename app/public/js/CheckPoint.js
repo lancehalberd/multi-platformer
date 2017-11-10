@@ -41,8 +41,11 @@ class CheckPoint extends Entity {
     }
 
     setTarget(x, y) {
+        // Don't update if the coords are the same as the last update.
+        if (this.x === x && this.y === y) return;
         this.x = x;
         this.y = y;
+        this.dirty = true;
     }
 
 
