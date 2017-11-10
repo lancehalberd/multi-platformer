@@ -45,7 +45,10 @@ const toggleEditing = () => {
         for (var brush of brushList) {
             var canvas = createCanvas(32, 32, 'js-brushCanvas');
             var context = canvas.getContext('2d');
-            brush.renderHUD(context, new Rectangle(0, 0, 32, 32));
+            context.save();
+            context.translate(16, 16);
+            brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
+            context.restore();
             $brushList.append(canvas);
             $(canvas).data('brush', brush);
         }
@@ -84,8 +87,10 @@ const renderEditor = () => {
     mainContext.restore();
     // Editing HUD displays the currently selected tile/object in the top right.
     previewContext.save();
-    draw.fillRectangle(previewContext, new Rectangle(0, 0, 96, 96), 'white');
-    currentBrush.renderHUD(previewContext, new Rectangle(0, 0, 96, 96));
+    previewContext.translate(48, 48);
+    var previewTarget = new Rectangle(-48, -48, 96, 96);
+    draw.fillRectangle(previewContext, previewTarget, 'white');
+    currentBrush.renderHUD(previewContext, previewTarget);
     previewContext.restore();
 };
 
