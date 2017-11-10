@@ -94,8 +94,8 @@ class Trigger extends Entity {
         }
     }
 
-    renderHUD(target) {
-        draw.fillRectangle(mainContext, target, this.color);
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target, this.color);
     }
 }
 
@@ -165,10 +165,10 @@ class SpawnTrigger extends Trigger {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         // We should update this to draw the spawned object eventually.
         var frame = getAnimationFrame(fireballAnimation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
 }
 
@@ -215,9 +215,9 @@ class TeleporterTrigger extends Trigger {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         // We should update this to draw the spawned object eventually.
         var frame = getAnimationFrame(portalAnimation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
 }

@@ -1,8 +1,8 @@
 let isEditing = false;
 var cloneStartCoords, cloneLastCoords;
 const updateEditor = () => {
-    if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E)) {
-        isEditing = true;
+    if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E, true)) {
+        toggleEditing();
     }
     if (!isEditing) return;
     // Trigger brush uses the right click to set the target
@@ -14,15 +14,17 @@ const updateEditor = () => {
             }
             cloneLastCoords = getMouseCoords();
         } else {
-            cloneStartCoords = cloneLastCoords =null;
+            cloneStartCoords = cloneLastCoords = null;
         }
         if (cloneStartCoords) {
             var cloneRectangle = getDrawnRectangle(cloneStartCoords, cloneLastCoords);
             if (cloneRectangle.height > 1 || cloneRectangle.width > 1) {
                 var cloneTileGrid = [];
                 for (var row = cloneRectangle.top; row < cloneRectangle.bottom; row++) {
+                    if (!onMap(row, 0)) continue;
                     cloneTileGrid[row - cloneRectangle.top] = [];
                     for (var column = cloneRectangle.left; column < cloneRectangle.right; column++) {
+                        if (!pointIsInLevel(row, column)) continue;
                         cloneTileGrid[row - cloneRectangle.top][column - cloneRectangle.left]
                             = currentMap.composite[row][column];
                     }
@@ -32,7 +34,36 @@ const updateEditor = () => {
         }
     }
     currentBrush.update();
-}
+};
+
+const toggleEditing = () => {
+    isEditing = !isEditing;
+    $('.js-editPanel').toggle(isEditing);
+    // Populate the brush panel if this is the first time opening the edit panel.
+    var $brushList = $('.js-brushSelectField');
+    if (!$brushList.children().length) {
+        for (var brush of brushList) {
+            var canvas = createCanvas(32, 32, 'js-brushCanvas');
+            var context = canvas.getContext('2d');
+            brush.renderHUD(context, new Rectangle(0, 0, 32, 32));
+            $brushList.append(canvas);
+            $(canvas).data('brush', brush);
+        }
+        $brushList.on('click', '.js-brushCanvas', function () {
+            selectBrush($(this).data('brush'));
+        });
+    }
+    selectBrush(currentBrush);
+};
+
+const selectBrush = (newBrush) => {
+    currentBrush = newBrush;
+    $('.js-zoneSelectField').toggle(currentBrush && !!currentBrush.onSelectZone);
+    $('.js-checkPointSelectField').toggle(currentBrush && !!currentBrush.onSelectCheckPoint);
+};
+
+var previewCanvas = $('.js-previewField .js-canvas')[0];
+var previewContext = previewCanvas.getContext('2d');
 
 const renderEditor = () => {
     if (!isEditing) return;
@@ -52,12 +83,11 @@ const renderEditor = () => {
     }
     mainContext.restore();
     // Editing HUD displays the currently selected tile/object in the top right.
-    mainContext.save();
-    mainContext.translate(mainCanvas.width - 10 - 32, 10 + 32);
-    draw.fillRectangle(mainContext, new Rectangle(-34, -34, 68, 68), 'red');
-    currentBrush.renderHUD(new Rectangle(-32, -32, 64, 64));
-    mainContext.restore();
-}
+    previewContext.save();
+    draw.fillRectangle(previewContext, new Rectangle(0, 0, 96, 96), 'white');
+    currentBrush.renderHUD(previewContext, new Rectangle(0, 0, 96, 96));
+    previewContext.restore();
+};
 
 const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
     var drawnRectangle = new Rectangle(
@@ -97,9 +127,13 @@ var updateTileIfDifferent = (coords, tileSource) => {
     if (different) {
         sendTileUpdate(tileSource, coords);
     }
-}
+};
 
 var onMap = (row, column) => row >= 0 && row < currentMap.height && column >= 0 && column < currentMap.width;
+var pointIsInLevel = (x, y) => {
+    var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
+    return levelRectangle.containsPoint(x, y);
+};
 
 class CloneBrush {
 
@@ -147,9 +181,9 @@ class CloneBrush {
         });
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         var scale = Math.min(2 / this.tileGrid.length, 2 / this.tileGrid[0].length);
-        mainContext.scale(scale, scale);
+        context.scale(scale, scale);
         this.forEachTile([0, 0], (tileSource, tileRow, tileColumn) => {
             var subTarget = new Rectangle(
                 Math.round(target.left / scale + tileColumn * currentMap.tileSize),
@@ -158,13 +192,13 @@ class CloneBrush {
                 currentMap.tileSize
             );
             if (tileSource) {
-                mainContext.save();
-                mainContext.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
-                mainContext.scale(tileSource.xScale || 1, tileSource.yScale || 1);
-                draw.image(mainContext, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
+                context.save();
+                context.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
+                context.scale(tileSource.xScale || 1, tileSource.yScale || 1);
+                draw.image(context, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
                     new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
                 );
-                mainContext.restore();
+                context.restore();
             }
         });
     }
@@ -197,12 +231,12 @@ class TileBrush {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         if (this.tileSource) {
-            mainContext.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
-            draw.image(mainContext, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
+            context.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
+            draw.image(context, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
         } else {
-            draw.fillRectangle(mainContext, target, 'white');
+            draw.fillRectangle(context, target, 'white');
         }
     }
 }
@@ -235,14 +269,14 @@ class ObjectBrush {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         var width = (this.mapObject.maxWidth || 3);
         var height = (this.mapObject.maxHeight || 3);
-        mainContext.scale(
+        context.scale(
             (this.mapObject.xScale || 1) * width / 3,
             (this.mapObject.yScale || 1) * height / 3
         );
-        draw.image(mainContext, requireImage(this.mapObject.image),
+        draw.image(context, requireImage(this.mapObject.image),
             new Rectangle(this.mapObject.x, this.mapObject.y, width, height).scale(this.mapObject.size),
             target
         );
@@ -321,8 +355,8 @@ class TriggerBrush {
         else this.sourceTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
     }
 
-    renderHUD(target) {
-        this.sourceTrigger.renderHUD(target);
+    renderHUD(context, target) {
+        this.sourceTrigger.renderHUD(context, target);
     }
 }
 
@@ -384,8 +418,8 @@ class PointEntityBrush {
         else this.sourceEntity.renderPreview(pixelMouseCoords[0], pixelMouseCoords[1]);
     }
 
-    renderHUD(target) {
-        this.sourceEntity.renderHUD(target);
+    renderHUD(context, target) {
+        this.sourceEntity.renderHUD(context, target);
     }
 }
 
@@ -398,12 +432,6 @@ var selectEntity = entity => {
 var brushClasses = {
     TriggerBrush, PointEntityBrush,
 };
-
-var pointIsInLevel = (x, y) => {
-    var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
-    return levelRectangle.containsPoint(x, y);
-}
-
 
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 

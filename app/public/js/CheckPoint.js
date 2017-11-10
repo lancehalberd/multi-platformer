@@ -16,14 +16,14 @@ class CheckPoint extends Entity {
     render() {
         mainContext.save();
         if (mainCharacter.checkPoint !== this) mainContext.globalAlpha = .5;
-        this.renderToTarget(this.getHitBox());
+        this.renderToTarget(mainContext, this.getHitBox());
         mainContext.restore();
         if (selectedTrigger === this) this.renderSelectedBox();
     }
 
-    renderToTarget(target) {
+    renderToTarget(context, target) {
         var frame = getAnimationFrame(this.constructor.animation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
 
     getHitBox() {
@@ -50,11 +50,11 @@ class CheckPoint extends Entity {
 
 
     renderPreview(x, y) {
-        this.renderToTarget(Rectangle.defineByCenter(x, y, 32, 32));
+        this.renderToTarget(mainContext, Rectangle.defineByCenter(x, y, 32, 32));
     }
 
-    renderHUD(target) {
-        this.renderToTarget(target);
+    renderHUD(context, target) {
+        this.renderToTarget(context, target);
     }
 }
 CheckPoint.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), scoreBeaconImage, 1)};

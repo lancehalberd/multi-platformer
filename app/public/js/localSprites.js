@@ -65,8 +65,8 @@ class SimpleSprite {
         drawSprite(mainContext, this);
     }
 
-    renderHUD(target) {
-        drawSpriteToRectangle(mainContext, this, target);
+    renderHUD(context, target) {
+        drawSpriteToRectangle(context, this, target);
     }
 }
 

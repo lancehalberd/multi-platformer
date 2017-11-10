@@ -62,11 +62,11 @@ class PointSpawner extends Entity {
     }
 
     renderPreview(x, y) {
-        this.renderHUD(this.hitBox.moveCenterTo(x, y));
+        this.renderHUD(mainContext, this.hitBox.moveCenterTo(x, y));
     }
 
-    renderHUD(target) {
-        if (this.spawnSource.renderHUD) this.spawnSource.renderHUD(target);
+    renderHUD(context, target) {
+        if (this.spawnSource.renderHUD) this.spawnSource.renderHUD(context, target);
     }
 }
 PointSpawner.localFields = ['children', 'hitBox', 'onCooldownUntil']

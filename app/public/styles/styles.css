@@ -1,5 +1,15 @@
 
 .zoneSelect {
-    margin-top: 10px;
     font-size: 16px;
+}
+
+.editPanel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100px;
+    padding: 2px;
+}
+.editField {
+    margin-bottom: 10px;
 }

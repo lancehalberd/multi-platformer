@@ -38,8 +38,15 @@ function buttonIsPressed(button) {
   if (typeof(button) == "object") return button.pressed;
   return button == 1.0;
 }
-function isKeyDown(keyCode) {
-    if (keysDown[keyCode]) return true;
+// Release can be set to true to pretend the key is released after reading it.
+// This only works for keyboard keys.
+function isKeyDown(keyCode, release = false) {
+    if (keysDown[keyCode]) {
+        if (release) {
+            keysDown[keyCode] = 0;
+        }
+        return true;
+    }
     // If a mapping exists for the current key code to a gamepad button,
     // check if that gamepad button is pressed.
     var buttonIndex = GAME_PAD_MAPPINGS[keyCode];
