@@ -362,6 +362,7 @@ var brushList = [
     new ObjectBrush(spikesDown),
     new ObjectBrush(spikesLeft),
     new ObjectBrush(spikesRight),
+    // mansion tiles
     new TileBrush(panelSquareHorizMansion),
     new TileBrush(panelSquareVertMansion),
     new TileBrush(panelStripVertMansion),
@@ -380,6 +381,14 @@ var brushList = [
     new TileBrush(spikesUpMansionGate),
     new TileBrush(wallpaperGreenMansion),
     new TileBrush(wallpaperRedMansion),
+    new TileBrush(stickyTileMansion),
+    // end mansion tiles
+    // desert tiles
+    new TileBrush(spikesPearCactusDesert32),
+    new TileBrush(spikesPearCactusFlowersDesert32),
+    new TileBrush(spikesSaguaroCactusDesert32),
+    new TileBrush(stone1Desert32),
+    //end desert tiles
     new TileBrush(stickyTileMansion),
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),

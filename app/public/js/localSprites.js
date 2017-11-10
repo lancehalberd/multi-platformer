@@ -6,6 +6,7 @@ var POWERUP_TYPE_AIRDASH = 'airDash';
 var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
 var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
+var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -30,6 +31,7 @@ class SimpleSprite {
         this.maxSpeed = 32767;
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
+        this.facesDirectionOfMovement = false;
         this.currentFrame = 0;
         this.framesToLive = 200;
         this.msBetweenFrames = 200;
@@ -134,7 +136,7 @@ function updateLocalSprite(localSprite) {
     } else {
         localSprite.vy = Math.min(localSprite.maxSpeed, localSprite.vy);
     }
-    //animation stuff. msBetweenFrames sets sprite's animation speed.
+    //animation stuff. msBetweenFrames sets sprite's animation speed. Might want to doe this in FPS at some point.
     localSprite.currentFrame = Math.floor(now() / localSprite.msBetweenFrames) % localSprite.animation.frames.length;
 
     //geomtry collision checks
@@ -163,6 +165,60 @@ function updateLocalSprite(localSprite) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vy = -localSprite.ySpeed;
             }
+        }
+    }
+    if (localSprite.facesDirectionOfMovement) {
+        if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
+        if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
+    }
+    
+    if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
+        // if target is inside aggro radius
+        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
+            // aggroed
+            // smoke plumes come closer together when aggroed
+            localSprite.msBetweenSmokePlumes = 1100;
+            // chases target when aggroed
+            localSprite.homing = true;
+            // moves faster when aggroed
+            localSprite.maxSpeed = localSprite.maxSpeedAggroed;
+            // cancel out any residual dx/dy from non-aggroed state that might interfere with homing
+            localSprite.dx = 0;
+            localSprite.dy = 0;
+        }
+        else {
+            // not aggroed
+            // smoke plumes come farther apart when not aggroed
+            localSprite.msBetweenSmokePlumes = 1800;
+            localSprite.homing = false;
+            localSprite.maxSpeed = localSprite.maxSpeedPeaceful;
+            // changes direction randomly when not aggroed
+            // will add collision later and reversing direction on collision,
+            //      but the random direction changes will apply otherwise.
+            if (localSprite.noDirectionChangeUntil <= now()) {
+                var randomDx = Math.random() * 0.33,
+                    randomDy = Math.random() * 0.33;
+                if (Math.random() < 0.5) randomDx = -randomDx;
+                if (Math.random() < 0.5) randomDy = -randomDy;
+                localSprite.dx = randomDx;
+                localSprite.dy = randomDy;
+                localSprite.noDirectionChangeUntil = now() + (Math.random() * 1500);
+            }
+            localSprite.vx += localSprite.dx;
+            localSprite.vy += localSprite.dy;
+        }
+        // spawn smoke plumes
+        if (localSprite.noSmokePlumeUntil <= now()) {
+            var plumeVx,
+                plumeVy = Math.min(-1, localSprite.vy -1);
+            if (localSprite.vx < 0) plumeVx = Math.min(1, -localSprite.vx);
+            if (localSprite.vx >= 0) plumeVx = Math.max(-1, -localSprite.vx);
+            addEffectHauntedMaskSmoke(localSprite.x - getGlobalSpriteHitBox(localSprite).width * localSprite.xScale, localSprite.y, plumeVx, plumeVy, Math.abs(localSprite.xScale) * 1.2, 3);
+            localSprite.noSmokePlumeUntil = now() + localSprite.msBetweenSmokePlumes;
+        }
+        // on collision with target
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(localSprite.target))) {
+            damageSprite(localSprite.target, 1);
         }
     }
 
@@ -264,7 +320,7 @@ function addCreature(x, y, target, creatureType) {
         localSprites.push(adorabilisSprite);
     }
     if (creatureType === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
-        xScale = yScale = 2.5;
+        xScale = yScale = 1.15;
         var pacingFireballSprite = new SimpleSprite(fireballAnimation, x, y, 0, 0, xScale, yScale);
         pacingFireballSprite.type = creatureType;
         pacingFireballSprite.collides = true;
@@ -292,6 +348,28 @@ function addCreature(x, y, target, creatureType) {
         pacingFireballSprite.hasContrail = true;
         pacingFireballSprite.framesBetweenContrailParticles = 3;
         localSprites.push(pacingFireballSprite);
+    }
+    if (creatureType === CREATURE_TYPE_HAUNTED_MASK) {
+        hitBox = new Rectangle(-18, -52, 36, 44);
+        xScale = yScale = 1.2;
+        var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
+        hauntedMaskCreature.type = creatureType;
+        hauntedMaskCreature.hitBox = hitBox;
+        hauntedMaskCreature.facesDirectionOfMovement = true;
+        hauntedMaskCreature.dx = 0;
+        hauntedMaskCreature.dy = 0;
+        hauntedMaskCreature.acceleration = 0.3;
+        hauntedMaskCreature.collides = true;
+        hauntedMaskCreature.bobs = false;   //should be true, but I don't think the bobbing code will work with a bunch of other creature movement code as it is right now.
+        hauntedMaskCreature.framesToLive = 32767;
+        hauntedMaskCreature.msBetweenFrames = 230;
+        hauntedMaskCreature.aggroRadius = 270;
+        hauntedMaskCreature.target = mainCharacter;
+        hauntedMaskCreature.maxSpeedPeaceful = 0.5;
+        hauntedMaskCreature.maxSpeedAggroed = 1.75;
+        hauntedMaskCreature.noSmokePlumeUntil = now();
+        hauntedMaskCreature.noDirectionChangeUntil = now();
+        localSprites.push(hauntedMaskCreature);
     }
 }
 
@@ -354,4 +432,13 @@ function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize,
     }
 }
 
-
+function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, character) { // note: this checks the center of the character, not anywhere in its hibox
+    var distanceBetweenRadiusOriginAndCharacterCenterX = Math.abs((getGlobalSpriteHitBox(character).left + (getGlobalSpriteHitBox(character).width / 2)) - radiusOriginX),
+        distanceBetweenRadiusOriginAndCharacterCenterY = Math.abs((getGlobalSpriteHitBox(character).top + (getGlobalSpriteHitBox(character).height / 2)) - radiusOriginY),
+        distanceBetweenRadiusOriginAndCharacterCenter = Math.sqrt(
+            (distanceBetweenRadiusOriginAndCharacterCenterX * distanceBetweenRadiusOriginAndCharacterCenterX) +
+            (distanceBetweenRadiusOriginAndCharacterCenterY * distanceBetweenRadiusOriginAndCharacterCenterY)
+        );
+        if (distanceBetweenRadiusOriginAndCharacterCenter <= radiusMagnitude) return true;
+        else return false;
+}
