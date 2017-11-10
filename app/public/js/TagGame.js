@@ -2,8 +2,8 @@
 class TagGame {
 
     static handleServerData(data) {
-        // You start out tagged when you join.
-        if (data.privateId) {
+        // You start out tagged when you join an instance with other players.
+        if (data.players) {
             TagGame.setTaggedId(publicId);
         }
         // The player that just joined starts tagged.

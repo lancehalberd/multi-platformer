@@ -179,7 +179,7 @@ function broadcast(zoneId, data) {
 
 var updatePlayer = (playerId, playerData) => {
     for (var key in playerData) players[playerId][key] = playerData[key];
-}
+};
 
 // We track which player is it on the server by setting 'taggedId' for that
 // zone. The server only uses this to detect when the currently tagged player
@@ -187,7 +187,26 @@ var updatePlayer = (playerId, playerData) => {
 var tagPlayer = (id) => {
     var player = players[id];
     if (player) getZone(player.zoneId).taggedId = id;
-}
+};
+
+// Called when a player disconnects or changes zones.
+var leaveCurrentZone = (player) => {
+    if (!player) return;
+    var publicId = player.id;
+    var message = {playerLeft: publicId}
+    // Tag a random player if the player who is it leaves and there are
+    // still at least 2 players left in the zone.
+    if (publicId === getZone(player.zoneId).taggedId) {
+        var playersInZone = _.filter(players, {zoneId: player.zoneId});
+        if (playersInZone.length > 1) {
+            var taggedPlayer = _.sample(playersInZone);
+            tagPlayer(taggedPlayer.id);
+            message.tagged = taggedPlayer.id;
+            message.tagCompleted = true;
+        }
+    }
+    broadcast(player.zoneId, message);
+};
 
 wsServer.on('request', function(request) {
     var privateId, publicId;
@@ -321,35 +340,29 @@ wsServer.on('request', function(request) {
             if (data.action === 'startTagRound') {
                 broadcast(player.zoneId, {tagRound: data.tagRound});
             }
+            if (data.action === 'changeZone' && player.zoneId !== data.zoneId) {
+                leaveCurrentZone(player);
+                connection.sendUTF(JSON.stringify({
+                    players: _.pickBy(players, player => player.zoneId === data.zoneId),
+                    map: getZone(data.zoneId),
+                    zoneId: data.zoneId,
+                }));
+                broadcast(data.zoneId, {playerJoined: player});
+                player.zoneId = data.zoneId;
+            }
             return;
         }
         connection.sendUTF(JSON.stringify({errorMessage: `Player id ${data.privateId} not found.`}));
     });
     connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        // console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         // If the most recent connection for a private id closes, purge it from memory
         if (connections[privateId] === connection) {
             var player = players[publicId];
             delete connections[privateId];
             delete players[publicId];
             delete privateIdMap[privateId];
-            console.log(`Player ${publicId} left`);
-            // console.log(players);
-            if (player) {
-                var message = {playerLeft: publicId}
-                // Tag a random player if the player who is it leaves and there are
-                // still at least 2 players left in the zone.
-                if (publicId === getZone(player.zoneId).taggedId) {
-                    var playersInZone = _.filter(players, {zoneId: player.zoneId});
-                    if (playersInZone.length > 1) {
-                        var taggedPlayer = _.sample(playersInZone);
-                        tagPlayer(taggedPlayer.id);
-                        message.tagged = taggedPlayer.id;
-                        message.tagCompleted = true;
-                    }
-                }
-                broadcast(player.zoneId, message);
-            }
+            leaveCurrentZone(player);
         }
     });
 });

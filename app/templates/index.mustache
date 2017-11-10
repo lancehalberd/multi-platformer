@@ -60,6 +60,11 @@
 <div class="link-bar">
     <a href="/zones">Zones</a>
     <a href="/credits.html" target="_blank" >Credits</a>
+    <select class="js-zoneSelect zoneSelect">
+        {{#zones}}
+        <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+        {{/zones}}
+    </select>
 </div>
 <div class="js-mainGame js-mouseContainer mainGame">
     <div class="js-loading loading" style="display: none">

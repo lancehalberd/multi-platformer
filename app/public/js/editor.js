@@ -491,7 +491,8 @@ $(document).on('keydown', e => {
     if (e.which === 221) selectNextObject(); // ']'
 });
 
-$(document).on('mousewheel', e => {
+$('.js-mainGame').on('mousewheel', e => {
+    if (!isEditing) return;
     e.preventDefault();
     if (e.originalEvent.wheelDelta < 0) selectPreviousObject();
     if (e.originalEvent.wheelDelta > 0) selectNextObject();
