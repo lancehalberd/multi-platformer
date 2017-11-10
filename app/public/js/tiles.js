@@ -19,9 +19,6 @@ var TILE_SLIPPERY_ALL = TILE_SLIPPERY * TILE_ALL;
 var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var customTiles = '/gfx/customBlocksA.png';
 var mansionTiles = '/gfx/tiles/tilesMansion.png';
-requireImage(twilightTiles);
-requireImage(customTiles);
-requireImage(mansionTiles);
 
 var stretchNine = {
     image: twilightTiles,

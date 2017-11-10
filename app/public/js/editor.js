@@ -461,6 +461,12 @@ var selectTileUnderMouse = () => {
 }
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
+
+// Make sure all brush tile sets are preloaded.
+requireImage(twilightTiles);
+requireImage(customTiles);
+requireImage(mansionTiles);
+
 var brushList = [
     new ObjectBrush(stretchNine),
     new ObjectBrush(bouncyBlock),
