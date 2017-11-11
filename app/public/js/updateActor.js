@@ -30,8 +30,8 @@ function updateActor(actor) {
     } else {
         // Non "IT" characters render as...
         //changeCharacterToMystery(actor);
-        //changeCharacterToVictoria(actor);
-        changeCharacterToCowbot(actor);
+        changeCharacterToVictoria(actor);
+        //changeCharacterToCowbot(actor);
         actor.jumpScaling = [1, 0.7];
     }
     if (actor === mainCharacter && !actor.deathTime){

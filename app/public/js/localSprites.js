@@ -32,6 +32,7 @@ class SimpleSprite {
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.facesDirectionOfMovement = false;
+        this.facesDirectionOfAcceleration = false;
         this.currentFrame = 0;
         this.framesToLive = 0;
         this.msBetweenFrames = 200;
@@ -196,11 +197,15 @@ function updateLocalSprite(localSprite) {
     if (localSprite.facesDirectionOfMovement) {
         if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
+    } 
+    if (localSprite.facesDirectionOfAcceleration) {
+        if (localSprite.dx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
+        if (localSprite.dx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
     }
-
+    // haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
-        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
+        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, mainCharacter)) { // WRONG: mainCharacter should be localSprite.target. Don't know why that's not working.
             // aggroed
             // smoke plumes come closer together when aggroed
             localSprite.msBetweenSmokePlumes = 1100;
@@ -243,10 +248,11 @@ function updateLocalSprite(localSprite) {
             localSprite.noSmokePlumeUntil = now() + localSprite.msBetweenSmokePlumes;
         }
         // on collision with target
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(localSprite.target))) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   // WRONG: mainCharacter should be localSprite.target. Don't know why that's not working.
             damageSprite(localSprite.target, 1);
         }
     }
+    // end haunted mask update
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
@@ -260,6 +266,7 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
+
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
@@ -274,7 +281,7 @@ function updateLocalSprite(localSprite) {
     if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   //WRONG: "mainCharacter" should be localSprite.target
             mainCharacter.health--;
             localSprite.shouldBeRemoved = true;
         }
@@ -350,7 +357,7 @@ function addCreature(x, y, target, creatureType) {
     }
 }
 
-function getCreatureHauntedMask(x, y) {
+function getCreatureHauntedMask(x, y, target) {
     hitBox = new Rectangle(-18, -52, 36, 44);
     xScale = yScale = 1.2;
     var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
@@ -365,7 +372,7 @@ function getCreatureHauntedMask(x, y) {
     hauntedMaskCreature.framesToLive = 32767;
     hauntedMaskCreature.msBetweenFrames = 230;
     hauntedMaskCreature.aggroRadius = 270;
-    hauntedMaskCreature.target = mainCharacter;
+    hauntedMaskCreature.target = target;
     console.log(mainCharacter);
     hauntedMaskCreature.maxSpeedPeaceful = 0.5;
     hauntedMaskCreature.maxSpeedAggroed = 1.75;
@@ -375,7 +382,7 @@ function getCreatureHauntedMask(x, y) {
 }
 
 function getCreaturePacingFireball(creatureType) {
-    var xScale = yScale = 1;
+    var xScale = yScale = 1.15;
     var pacingFireballSprite = new SimpleSprite(fireballAnimation, 0, 0, 0, 0, xScale, yScale);
     pacingFireballSprite.type = creatureType;
     pacingFireballSprite.collides = true;
