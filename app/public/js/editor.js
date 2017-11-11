@@ -476,6 +476,7 @@ var dummyRectangle = new Rectangle(0, 0, 32, 32);
 requireImage(twilightTiles);
 requireImage(customTiles);
 requireImage(mansionTiles);
+requireImage(desertTiles32);
 
 var brushList = [
     new ObjectBrush(stretchNine),
