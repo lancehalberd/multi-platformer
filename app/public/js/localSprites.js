@@ -207,7 +207,7 @@ function updateLocalSprite(localSprite) {
         }
     }
 
-    if (localSprite.framesToLive && localSprite.framesToLive-- <= 0) {
+    if (localSprite.framesToLive && --localSprite.framesToLive <= 0) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
     }

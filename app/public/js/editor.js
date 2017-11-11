@@ -47,6 +47,7 @@ const toggleEditing = () => {
             var context = canvas.getContext('2d');
             context.save();
             context.translate(16, 16);
+            draw.fillRectangle(context, new Rectangle(-16, -16, 32, 32), 'white');
             brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
             context.restore();
             $brushList.append(canvas);
