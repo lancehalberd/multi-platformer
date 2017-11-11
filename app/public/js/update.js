@@ -25,8 +25,8 @@ setInterval(() => {
     ) {
         sprite.update(sprite);
     }
-    if (localSprites.length < 2 && isKeyDown('R'.charCodeAt(0))) {
-        addCreature(350, 650, mainCharacter, CREATURE_TYPE_ADORABILIS);
+    if (localSprites.length === 0 && isKeyDown('R'.charCodeAt(0))) {
+        addCreature(250, 350, mainCharacter, CREATURE_TYPE_HAUNTED_MASK);
     }
     removeFinishedLocalSprites();
 

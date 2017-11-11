@@ -19,6 +19,7 @@ var TILE_SLIPPERY_ALL = TILE_SLIPPERY * TILE_ALL;
 var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var customTiles = '/gfx/customBlocksA.png';
 var mansionTiles = '/gfx/tiles/tilesMansion.png';
+var desertTiles32 = '/gfx/tiles/tilesDesert32.png';
 
 var stretchNine = {
     image: twilightTiles,
@@ -77,9 +78,9 @@ var iceBlock = {
     properties: TILE_SOLID_ALL | TILE_SLIPPERY_ALL,
 };
 
-/////////////////////
-// MANSION TILESET //
-/////////////////////
+///////////////////////////
+// MANSION TILESET 32x32 //
+///////////////////////////
 
 var panelSquareHorizMansion = {
     image: mansionTiles,
@@ -99,7 +100,7 @@ var panelStripVertMansion = {
     image: mansionTiles,
     size: 32,
     x: 2, y:0,
-    properties: TILE_SOLID_ALL,
+    //properties: TILE_SOLID_ALL,
 };
 
 var floorMansion = {
@@ -219,9 +220,48 @@ var spikesRightMansion = {
     properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_LEFT),
 };
 
-/////////////////////////
-// END MANSION TILESET //
-/////////////////////////
+///////////////////////////////
+// END MANSION TILESET 32x32 //
+///////////////////////////////
+
+//////////////////////////
+// DESERT TILESET 32x32 //
+//////////////////////////
+
+var stone1Desert32 = {
+    image: desertTiles32,
+    size: 32,
+    x: 0, y:0,
+    properties: TILE_SOLID_ALL,
+};
+
+var spikesPearCactusDesert32 = {
+    image: desertTiles32,
+    size: 32,
+    x: 1, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | TILE_DAMAGE_ALL,
+};
+
+var spikesPearCactusFlowersDesert32 = {
+    image: desertTiles32,
+    size: 32,
+    x: 2, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | TILE_DAMAGE_ALL
+};
+
+var spikesSaguaroCactusDesert32 = {
+    image: desertTiles32,
+    size: 32,
+    x: 3, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | TILE_DAMAGE_ALL
+};
+
+//////////////////////////////
+// END DESERT TILESET 32x32 //
+//////////////////////////////
 
 function applyObjectToMap(map, object, coordinates) {
     if (typeof(module) !== 'undefined') {

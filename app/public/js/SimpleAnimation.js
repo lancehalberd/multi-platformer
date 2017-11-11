@@ -9,6 +9,7 @@ var EFFECT_TELEPORTATION_PORTAL = 'teleportationEffect';
 var EFFECT_TELEPORTATION_SPARKLES = 'teleportationEffect';
 var EFFECT_WINKOUT = 'winkoutEffect';
 var EFFECT_JUMP_WIND = 'jumpWindEffect';
+var EFFECT_HAUNTED_MASK_SMOKE = 'hauntedMaskContrailSmoke';
 
 class SimpleAnimation {
 
@@ -116,10 +117,22 @@ function addEffectSteamPlume(x, y, vx, vy, scale, animationSpeedInFPS) {
     var frames = rectangleToFrames(sourceRectangle, effectRunDustImage, 7);
     // We draw the animation 1.75 times larger than the original.
     var target = sourceRectangle.scale(scale);
-    // x, y coords are given as the middle of the characters feet, which is where we want to draw the bottom of
+    // x, y coords are given as the middle of the character's feet, which is where we want to draw the bottom of
     // the dust cloud, so we adjust the target rectangle accordingly.
     var steamPlume = new SimpleMovingAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy); // BROKEN: draws occasional, brief, glitchy clouds.
     //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
     steamPlume.type = EFFECT_STEAM_PLUME;
     localSprites.push(steamPlume);
+}
+
+function addEffectHauntedMaskSmoke(x, y, vx, vy, scale, animationSpeedInFPS) {
+    var sourceRectangle = new Rectangle(0, 0, 56, 48);
+    // scale the animation
+    var target = sourceRectangle.scale(scale);
+    // x, y coords are given as the middle of the character's 'feet'. The smoke should spawn
+    // at the back of the mask, so we adjust the target rectangle accordingly.
+    var maskSmoke = new SimpleMovingAnimation(hauntedMaskSmokePlume, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy);
+    //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    maskSmoke.type = EFFECT_HAUNTED_MASK_SMOKE;
+    localSprites.push(maskSmoke);
 }

@@ -484,6 +484,7 @@ var brushList = [
     new ObjectBrush(spikesDown),
     new ObjectBrush(spikesLeft),
     new ObjectBrush(spikesRight),
+    // mansion tiles
     new TileBrush(panelSquareHorizMansion),
     new TileBrush(panelSquareVertMansion),
     new TileBrush(panelStripVertMansion),
@@ -503,6 +504,14 @@ var brushList = [
     new TileBrush(wallpaperGreenMansion),
     new TileBrush(wallpaperRedMansion),
     new TileBrush(stickyTileMansion),
+    // end mansion tiles
+    // desert tiles
+    new TileBrush(spikesPearCactusDesert32),
+    new TileBrush(spikesPearCactusFlowersDesert32),
+    new TileBrush(spikesSaguaroCactusDesert32),
+    new TileBrush(stone1Desert32),
+    //end desert tiles
+    new TileBrush(stickyTileMansion),
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),
     new TriggerBrush(new SpawnTrigger(dummyRectangle, 2,
@@ -516,7 +525,7 @@ var brushList = [
     new TriggerBrush(new CoinPowerup(dummyRectangle, 10)),
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
     new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
-    new PointEntityBrush(new PointSpawner(getPacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
+    new PointEntityBrush(new PointSpawner(getCreaturePacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
     new PointEntityBrush(new CheckPoint()),
     new DoorTriggerBrush(new DoorTrigger(dummyRectangle)),
 ];
