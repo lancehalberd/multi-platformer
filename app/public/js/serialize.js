@@ -1,5 +1,5 @@
 var classes = {
-    Object, Rectangle, Entity, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, LifePowerup, AirDashPowerup, CoinPowerup,
+    Object, Rectangle, Entity, Trigger, TeleporterTrigger, ForceTrigger, SpawnTrigger, DoorTrigger, LifePowerup, AirDashPowerup, CoinPowerup,
     SuperJumpPowerup, ScoreBeacon, PointSpawner, SimpleSprite, CheckPoint,
 };
 

@@ -221,3 +221,34 @@ class TeleporterTrigger extends Trigger {
         draw.image(context, frame.image, frame, target);
     }
 }
+
+class DoorTrigger extends Trigger {
+
+    constructor(hitBox, zoneId) {
+        super(hitBox, 0);
+        this.color = 'gold';
+        this.zoneId = zoneId;
+    }
+
+    setZoneId(zoneId) {
+        if (zoneId === this.zoneId) return;
+        this.zoneId = zoneId;
+        this.dirty = true;
+    }
+
+    trigger() {
+        sendData({action: 'changeZone', zoneId: this.zoneId || zoneId});
+        return true;
+    }
+
+    renderPreview(target, startCoords, lastCoords) {
+        super.renderPreview(target);
+    }
+
+    renderHUD(context, target) {
+        super.renderHUD(context, target);
+        // We should update this to draw the spawned object eventually.
+        var frame = getAnimationFrame(portalAnimation.frames, 5);
+        draw.image(context, frame.image, frame, target);
+    }
+}

@@ -366,6 +366,13 @@ class TriggerBrush {
     }
 }
 
+class DoorTriggerBrush extends TriggerBrush {
+
+    onSelectZone(zoneId) {
+        console.log(`zoneId:`, zoneId);
+    }
+}
+
 class PointEntityBrush {
 
     constructor(sourceEntity) {
@@ -409,10 +416,7 @@ class PointEntityBrush {
                 sendCreateEntity(selectedTrigger);
             } else {
                 selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                if (selectedTrigger.dirty) {
-                    delete selectedTrigger.dirty;
-                    sendUpdateEntity(selectedTrigger);
-                }
+                checkToUpdateEntity(selectedTrigger);
             }
         }
         this.wasMouseDown = mouseDown;
@@ -472,6 +476,7 @@ var dummyRectangle = new Rectangle(0, 0, 32, 32);
 requireImage(twilightTiles);
 requireImage(customTiles);
 requireImage(mansionTiles);
+requireImage(desertTiles32);
 
 var brushList = [
     new ObjectBrush(stretchNine),
@@ -522,7 +527,9 @@ var brushList = [
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
     new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
     new PointEntityBrush(new PointSpawner(getCreaturePacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
+    new PointEntityBrush(new PointSpawner(getCreatureHauntedMask(0, 0), 0)),
     new PointEntityBrush(new CheckPoint()),
+    new DoorTriggerBrush(new DoorTrigger(dummyRectangle)),
 ];
 
 var selectPreviousObject = () => {
@@ -535,6 +542,12 @@ var selectNextObject = () => {
     currentBrush = brushList[brushIndex];
     selectedTrigger = null;
 }
+var checkToUpdateEntity = (entity) => {
+    if (entity.dirty) {
+        delete entity.dirty;
+        sendUpdateEntity(entity);
+    }
+};
 $(document).on('keydown', e => {
     if (e.which === 219) selectPreviousObject(); // '['
     if (e.which === 221) selectNextObject(); // ']'
@@ -545,4 +558,13 @@ $('.js-mainGame').on('mousewheel', e => {
     e.preventDefault();
     if (e.originalEvent.wheelDelta < 0) selectPreviousObject();
     if (e.originalEvent.wheelDelta > 0) selectNextObject();
+});
+
+var selectedZoneId = zoneId;
+$('.js-zoneSelectField select').on('change', function () {
+    selectedZoneId = $(this).val();
+    if (selectedTrigger) {
+        selectedTrigger.setZoneId(selectedZoneId);
+        checkToUpdateEntity(selectedTrigger);
+    }
 });
