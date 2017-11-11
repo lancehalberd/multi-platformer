@@ -26,7 +26,7 @@ class SimpleSprite {
         this.rotation = 0;
         this.rotationPerFrame = 0;
         this.homing = false;
-        this.target = {x: 0, y: 0};
+        this.target = null;
         this.acceleration = 0;
         this.maxSpeed = 32767;
         this.collides = false;  //checks for collision with level geometry.
@@ -82,6 +82,8 @@ class SimpleSprite {
         drawSpriteToRectangle(context, this, target);
     }
 }
+// Make sure we don't try to save the target to the server.
+SimpleSprite.localFields = ['target'];
 
 
 
@@ -90,6 +92,10 @@ class SimpleSprite {
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
+    // Assume the target is the mainCharacter if it isn't set yet.
+    if (!localSprite.target) {
+        localSprite.target = mainCharacter;
+    }
     // Remove a spawned sprite if it's spawner was removed.
     if (localSprite.spawner && !localSprites.includes(localSprite.spawner)) {
         localSprite.shouldBeRemoved = true;
@@ -191,7 +197,7 @@ function updateLocalSprite(localSprite) {
         if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
     }
-    
+
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
         if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
@@ -254,7 +260,7 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && mainCharacter.invulnerableUntil < now()) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
             mainCharacter.vy = -15; //player pops upward if hit
@@ -340,27 +346,32 @@ function addCreature(x, y, target, creatureType) {
         localSprites.push(adorabilisSprite);
     }
     if (creatureType === CREATURE_TYPE_HAUNTED_MASK) {
-        hitBox = new Rectangle(-18, -52, 36, 44);
-        xScale = yScale = 1.2;
-        var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
-        hauntedMaskCreature.type = creatureType;
-        hauntedMaskCreature.hitBox = hitBox;
-        hauntedMaskCreature.facesDirectionOfMovement = true;
-        hauntedMaskCreature.dx = 0;
-        hauntedMaskCreature.dy = 0;
-        hauntedMaskCreature.acceleration = 0.3;
-        hauntedMaskCreature.collides = true;
-        hauntedMaskCreature.bobs = false;   //should be true, but I don't think the bobbing code will work with a bunch of other creature movement code as it is right now.
-        hauntedMaskCreature.framesToLive = 32767;
-        hauntedMaskCreature.msBetweenFrames = 230;
-        hauntedMaskCreature.aggroRadius = 270;
-        hauntedMaskCreature.target = mainCharacter;
-        hauntedMaskCreature.maxSpeedPeaceful = 0.5;
-        hauntedMaskCreature.maxSpeedAggroed = 1.75;
-        hauntedMaskCreature.noSmokePlumeUntil = now();
-        hauntedMaskCreature.noDirectionChangeUntil = now();
-        localSprites.push(hauntedMaskCreature);
+        localSprites.push(getCreatureHauntedMask(x, y));
     }
+}
+
+function getCreatureHauntedMask(x, y) {
+    hitBox = new Rectangle(-18, -52, 36, 44);
+    xScale = yScale = 1.2;
+    var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
+    hauntedMaskCreature.type = CREATURE_TYPE_HAUNTED_MASK;
+    hauntedMaskCreature.hitBox = hitBox;
+    hauntedMaskCreature.facesDirectionOfMovement = true;
+    hauntedMaskCreature.dx = 0;
+    hauntedMaskCreature.dy = 0;
+    hauntedMaskCreature.acceleration = 0.3;
+    hauntedMaskCreature.collides = true;
+    hauntedMaskCreature.bobs = false;   //should be true, but I don't think the bobbing code will work with a bunch of other creature movement code as it is right now.
+    hauntedMaskCreature.framesToLive = 32767;
+    hauntedMaskCreature.msBetweenFrames = 230;
+    hauntedMaskCreature.aggroRadius = 270;
+    hauntedMaskCreature.target = mainCharacter;
+    console.log(mainCharacter);
+    hauntedMaskCreature.maxSpeedPeaceful = 0.5;
+    hauntedMaskCreature.maxSpeedAggroed = 1.75;
+    hauntedMaskCreature.noSmokePlumeUntil = now();
+    hauntedMaskCreature.noDirectionChangeUntil = now();
+    return hauntedMaskCreature;
 }
 
 function getCreaturePacingFireball(creatureType) {

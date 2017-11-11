@@ -526,6 +526,7 @@ var brushList = [
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
     new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
     new PointEntityBrush(new PointSpawner(getCreaturePacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
+    new PointEntityBrush(new PointSpawner(getCreatureHauntedMask(0, 0), 0)),
     new PointEntityBrush(new CheckPoint()),
     new DoorTriggerBrush(new DoorTrigger(dummyRectangle)),
 ];

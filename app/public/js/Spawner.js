@@ -69,4 +69,4 @@ class PointSpawner extends Entity {
         if (this.spawnSource.renderHUD) this.spawnSource.renderHUD(context, target);
     }
 }
-PointSpawner.localFields = ['children', 'hitBox', 'onCooldownUntil']
+PointSpawner.localFields = ['children', 'hitBox', 'onCooldownUntil'];
