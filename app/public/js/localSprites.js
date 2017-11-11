@@ -59,6 +59,17 @@ class SimpleSprite {
         this.originalY = y; //for preventing bobbing from making the sprite's y position drift over time. Should probably change bob implementation to eliminate this.
     }
 
+    getHitBox() {
+        if (this.hitBox) return this.hitBox;
+        var frame = this.animation.frames[this.currentFrame];
+        if (!frame) return null;
+        // If the hitBox is based on the hitBox of the frame, shift it
+        // so that the origin is in the bottom middle of the hitBox,
+        // which is where we draw sprites to as well.
+        var hitBox = frame.hitBox || frame;
+        return hitBox.moveTo(-hitBox.width / 2, -hitBox.height);
+    }
+
     update() {
         updateLocalSprite(this);
     }
