@@ -314,7 +314,7 @@ var directionToCoordinate = {
 }
 
 var getLocalSpriteHitBox = (sprite) => {
-    var hitBox = sprite.hitBox;
+    var hitBox = sprite.getHitBox ? sprite.getHitBox() : sprite.hitBox;
     if (!hitBox) {
         var frame = sprite.animation.frames[sprite.currentFrame];
         hitBox = frame.hitBox || frame.moveTo(0, 0);
