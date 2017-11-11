@@ -31,7 +31,7 @@ class SimpleSprite {
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.currentFrame = 0;
-        this.framesToLive = 200;
+        this.framesToLive = 0;
         this.msBetweenFrames = 200;
         this.hasContrail = false;
         this.framesBetweenContrailParticles = 0; //game frames, not animation frames.
