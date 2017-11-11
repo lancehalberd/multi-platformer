@@ -39,6 +39,7 @@
         .link-bar a {
             color: white;
             display: block;
+            margin-bottom: 10px;
         }
     </style>
     <script>
@@ -60,6 +61,11 @@
 <div class="link-bar">
     <a href="/zones">Zones</a>
     <a href="/credits.html" target="_blank" >Credits</a>
+    <select class="js-zoneSelect zoneSelect">
+        {{#zones}}
+        <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+        {{/zones}}
+    </select>
 </div>
 <div class="js-mainGame js-mouseContainer mainGame">
     <div class="js-loading loading" style="display: none">
@@ -75,6 +81,24 @@
     </script>
     <div class="js-gameContent gameContent" style="display: none">
         <canvas class="js-canvas js-mainCanvas" width="800" height="600"></canvas>
+    </div>
+</div>
+<div class="js-editPanel editPanel" style="display: none;">
+    <div class="js-previewField editField">
+        <canvas class="js-canvas" width="96" height="96"></canvas>
+    </div>
+    <div class="js-zoneSelectField editField">
+        <select>
+            {{#zones}}
+            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+            {{/zones}}
+        </select>
+    </div>
+    <div class="js-checkPointSelectField editField">
+        <select>
+        </select>
+    </div>
+    <div class="js-brushSelectField editField">
     </div>
 </div>
 </body>

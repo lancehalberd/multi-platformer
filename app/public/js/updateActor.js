@@ -25,11 +25,14 @@ function updateActor(actor) {
     if (TagGame.taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
         // Have the "IT" player render as the alien.
         changeCharacterToAlien(actor);
+        // Give IT better jumping/speed advantage.
+        actor.jumpScaling = [1.1, 0.8];
     } else {
         // Non "IT" characters render as...
         //changeCharacterToMystery(actor);
         //changeCharacterToVictoria(actor);
         changeCharacterToCowbot(actor);
+        actor.jumpScaling = [1, 0.7];
     }
     if (actor === mainCharacter && !actor.deathTime){
         // Attack if the space key is down.
@@ -171,6 +174,7 @@ function updateActor(actor) {
         var dx = 0;
         if (isKeyDown(KEY_LEFT)) dx--;
         if (isKeyDown(KEY_RIGHT)) dx++;
+        if (actor.id === TagGame.taggedId) dx *= 1.2;
         if (actor.slipping) actor.vx += 0.1 * dx;
         else if (actor.isCrouching) actor.vx += dx / 2;
         else if (actor.grounded) actor.vx += dx;

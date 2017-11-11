@@ -302,8 +302,13 @@ function initializePersonGraphics() {
     mainCharacter.noRunDustUntil = now();   // for knowing when to spawn a new run dust plume
     mainCharacter.onDeathComplete = function () {
         this.health = this.maxHealth;
-        this.x = this.originalX;
-        this.y = this.originalY;
+        if (this.checkPoint) {
+            this.x = this.checkPoint.x;
+            this.y = this.checkPoint.y;
+        } else {
+            this.x = this.originalX;
+            this.y = this.originalY;
+        }
         this.vx = this.vy = 0;
         this.coins = 0;
         this.deathComplete = false;

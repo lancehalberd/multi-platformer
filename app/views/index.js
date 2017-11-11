@@ -1,5 +1,6 @@
 var fs = require('fs');
 var crypto = require('crypto');
+var getZones = require('../../src/zones.js');
 
 exports.getMustacheData = (zoneId) => {
     var mustacheData = {
@@ -7,6 +8,7 @@ exports.getMustacheData = (zoneId) => {
         scripts: [],
         styleSheets: [],
         zoneId: zoneId,
+        zones: getZones(zoneId),
     };
     var addScripts = scriptNames => {
         for (var scriptName of scriptNames) {
@@ -23,7 +25,11 @@ exports.getMustacheData = (zoneId) => {
     };
     addScripts([
         'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'animations', 'tiles', 'main', 'localSprites', 'ttPerson',
-        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'SimpleAnimation', 'Trigger', 'Powerup', 'editor', 'serialize', 'TagGame', 'Beacon'
+        'update', 'updateActor', 'render', 'socket', 'StretchNine', 'SimpleAnimation',
+        // Entity is currently defined in Trigger.js, so all Entities need to be loaded after it.
+        'Trigger', 'Powerup', 'Spawner', 'CheckPoint',
+        // editor/serialize need to be loaded after most entities.
+        'editor', 'serialize', 'TagGame', 'zoneSelect',
     ]);
     var addStyleSheets = fileNames => {
         for (var fileName of fileNames) {

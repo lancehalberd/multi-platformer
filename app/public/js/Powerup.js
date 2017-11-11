@@ -51,9 +51,9 @@ class Powerup extends Trigger {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         var frame = getAnimationFrame(this.constructor.animation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
 }
 // Static fields need to be added to the class manually and can be read from this.constructor.staticProperty

@@ -4,6 +4,7 @@ function loadImage(source, callback) {
     images[source] = new Image();
     images[source].onload = () => callback();
     images[source].src = source + '?v=' + assetVersion;
+    images[source].originalSource = source;
     return images[source];
 }
 var numberOfImagesLeftToLoad = 0;

@@ -1,9 +1,25 @@
 var FORCE_AMP = 'playerVelocityMultiplied';
 var FORCE_FIXED = 'fixedForceAddedToPlayer';
 
-class Trigger {
+// An entity is currently anything that can be added to a map and interacted with
+// other than a player, such as Triggers, Powerups, Creatures and Spawners.
+class Entity {
+    getEditingHitBox() {
+        throw new Error(this.constructor.name + " does not override getEditingHitBox");
+    }
+
+    renderSelectedBox() {
+        mainContext.save();
+        mainContext.globalAlpha = 1;
+        draw.strokeRectangle(mainContext, this.getEditingHitBox(), 'white');
+        mainContext.restore();
+    }
+}
+
+class Trigger extends Entity {
 
     constructor(hitBox, cooldownInSeconds) {
+        super();
         this.hitBox = hitBox;
         this.cooldownInSeconds = cooldownInSeconds;
         this.color = 'white';
@@ -12,6 +28,11 @@ class Trigger {
     // This method can be defined on subclasses to give some dynamic behavior,
     // like bobbing and pulsing powerups.
     getHitBox() {
+        return this.hitBox;
+    }
+
+    // Editing hitBox is static.
+    getEditingHitBox() {
         return this.hitBox;
     }
 
@@ -73,15 +94,8 @@ class Trigger {
         }
     }
 
-    renderSelectedBox() {
-        mainContext.save();
-        mainContext.globalAlpha = 1;
-        draw.strokeRectangle(mainContext, this.hitBox, 'white');
-        mainContext.restore();
-    }
-
-    renderHUD(target) {
-        draw.fillRectangle(mainContext, target, this.color);
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target, this.color);
     }
 }
 
@@ -151,10 +165,10 @@ class SpawnTrigger extends Trigger {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         // We should update this to draw the spawned object eventually.
         var frame = getAnimationFrame(fireballAnimation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
 }
 
@@ -201,16 +215,9 @@ class TeleporterTrigger extends Trigger {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         // We should update this to draw the spawned object eventually.
         var frame = getAnimationFrame(portalAnimation.frames, 5);
-        draw.image(mainContext, frame.image, frame, target);
+        draw.image(context, frame.image, frame, target);
     }
-    /* Chris gave me this code to use as a reference for starting to sort out the teleporter's UI representation in the editor:
-        renderHUD(target) {
-       super.renderHUD(target);
-       // We should update this to draw the spawned object eventually.
-       var frame = getAnimationFrame(fireballAnimation.frames, 5);
-       draw.image(mainContext, frame.image, frame, target);
-   }*/
 }

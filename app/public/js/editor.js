@@ -1,12 +1,12 @@
 let isEditing = false;
 var cloneStartCoords, cloneLastCoords;
 const updateEditor = () => {
-    if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E)) {
-        isEditing = true;
+    if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E, true)) {
+        toggleEditing();
     }
     if (!isEditing) return;
     // Trigger brush uses the right click to set the target
-    if (!mouseDown && currentBrush.type !== 'trigger') {
+    if (!mouseDown && currentBrush.type !== 'entity') {
         if (rightMouseDown) {
             if (!cloneStartCoords) {
                 cloneStartCoords = getMouseCoords();
@@ -14,15 +14,17 @@ const updateEditor = () => {
             }
             cloneLastCoords = getMouseCoords();
         } else {
-            cloneStartCoords = cloneLastCoords =null;
+            cloneStartCoords = cloneLastCoords = null;
         }
         if (cloneStartCoords) {
             var cloneRectangle = getDrawnRectangle(cloneStartCoords, cloneLastCoords);
             if (cloneRectangle.height > 1 || cloneRectangle.width > 1) {
                 var cloneTileGrid = [];
                 for (var row = cloneRectangle.top; row < cloneRectangle.bottom; row++) {
+                    if (!onMap(row, 0)) continue;
                     cloneTileGrid[row - cloneRectangle.top] = [];
                     for (var column = cloneRectangle.left; column < cloneRectangle.right; column++) {
+                        if (!pointIsInLevel(row, column)) continue;
                         cloneTileGrid[row - cloneRectangle.top][column - cloneRectangle.left]
                             = currentMap.composite[row][column];
                     }
@@ -32,7 +34,39 @@ const updateEditor = () => {
         }
     }
     currentBrush.update();
-}
+};
+
+const toggleEditing = () => {
+    isEditing = !isEditing;
+    $('.js-editPanel').toggle(isEditing);
+    // Populate the brush panel if this is the first time opening the edit panel.
+    var $brushList = $('.js-brushSelectField');
+    if (!$brushList.children().length) {
+        for (var brush of brushList) {
+            var canvas = createCanvas(32, 32, 'js-brushCanvas');
+            var context = canvas.getContext('2d');
+            context.save();
+            context.translate(16, 16);
+            brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
+            context.restore();
+            $brushList.append(canvas);
+            $(canvas).data('brush', brush);
+        }
+        $brushList.on('click', '.js-brushCanvas', function () {
+            selectBrush($(this).data('brush'));
+        });
+    }
+    selectBrush(currentBrush);
+};
+
+const selectBrush = (newBrush) => {
+    currentBrush = newBrush;
+    $('.js-zoneSelectField').toggle(currentBrush && !!currentBrush.onSelectZone);
+    $('.js-checkPointSelectField').toggle(currentBrush && !!currentBrush.onSelectCheckPoint);
+};
+
+var previewCanvas = $('.js-previewField .js-canvas')[0];
+var previewContext = previewCanvas.getContext('2d');
 
 const renderEditor = () => {
     if (!isEditing) return;
@@ -52,12 +86,13 @@ const renderEditor = () => {
     }
     mainContext.restore();
     // Editing HUD displays the currently selected tile/object in the top right.
-    mainContext.save();
-    mainContext.translate(mainCanvas.width - 10 - 32, 10 + 32);
-    draw.fillRectangle(mainContext, new Rectangle(-34, -34, 68, 68), 'red');
-    currentBrush.renderHUD(new Rectangle(-32, -32, 64, 64));
-    mainContext.restore();
-}
+    previewContext.save();
+    previewContext.translate(48, 48);
+    var previewTarget = new Rectangle(-48, -48, 96, 96);
+    draw.fillRectangle(previewContext, previewTarget, 'white');
+    currentBrush.renderHUD(previewContext, previewTarget);
+    previewContext.restore();
+};
 
 const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
     var drawnRectangle = new Rectangle(
@@ -97,9 +132,13 @@ var updateTileIfDifferent = (coords, tileSource) => {
     if (different) {
         sendTileUpdate(tileSource, coords);
     }
-}
+};
 
 var onMap = (row, column) => row >= 0 && row < currentMap.height && column >= 0 && column < currentMap.width;
+var pointIsInLevel = (x, y) => {
+    var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
+    return levelRectangle.containsPoint(x, y);
+};
 
 class CloneBrush {
 
@@ -147,9 +186,9 @@ class CloneBrush {
         });
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         var scale = Math.min(2 / this.tileGrid.length, 2 / this.tileGrid[0].length);
-        mainContext.scale(scale, scale);
+        context.scale(scale, scale);
         this.forEachTile([0, 0], (tileSource, tileRow, tileColumn) => {
             var subTarget = new Rectangle(
                 Math.round(target.left / scale + tileColumn * currentMap.tileSize),
@@ -158,13 +197,13 @@ class CloneBrush {
                 currentMap.tileSize
             );
             if (tileSource) {
-                mainContext.save();
-                mainContext.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
-                mainContext.scale(tileSource.xScale || 1, tileSource.yScale || 1);
-                draw.image(mainContext, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
+                context.save();
+                context.translate(subTarget.left + currentMap.tileSize / 2, subTarget.top + currentMap.tileSize / 2);
+                context.scale(tileSource.xScale || 1, tileSource.yScale || 1);
+                draw.image(context, requireImage(tileSource.image), getTileSourceRectangle(tileSource),
                     new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
                 );
-                mainContext.restore();
+                context.restore();
             }
         });
     }
@@ -197,12 +236,12 @@ class TileBrush {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         if (this.tileSource) {
-            mainContext.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
-            draw.image(mainContext, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
+            context.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
+            draw.image(context, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
         } else {
-            draw.fillRectangle(mainContext, target, 'white');
+            draw.fillRectangle(context, target, 'white');
         }
     }
 }
@@ -235,14 +274,14 @@ class ObjectBrush {
         }
     }
 
-    renderHUD(target) {
+    renderHUD(context, target) {
         var width = (this.mapObject.maxWidth || 3);
         var height = (this.mapObject.maxHeight || 3);
-        mainContext.scale(
+        context.scale(
             (this.mapObject.xScale || 1) * width / 3,
             (this.mapObject.yScale || 1) * height / 3
         );
-        draw.image(mainContext, requireImage(this.mapObject.image),
+        draw.image(context, requireImage(this.mapObject.image),
             new Rectangle(this.mapObject.x, this.mapObject.y, width, height).scale(this.mapObject.size),
             target
         );
@@ -257,7 +296,7 @@ class TriggerBrush {
         this.sourceTrigger = sourceTrigger;
         // I'm just using this to prevent clone brush from activating
         // when you right click while you have a trigger brush selected.
-        this.type = 'trigger';
+        this.type = 'entity';
         this.wasMouseDown = false;
     }
 
@@ -270,8 +309,8 @@ class TriggerBrush {
         }
         if (!this.wasMouseDown && mouseDown) {
             var lastSelected = selectedTrigger, newSelectedTrigger;
-            localSprites.filter(sprite => (sprite instanceof Trigger)).forEach(sprite => {
-                if (sprite.hitBox.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
+                if (sprite.getEditingHitBox().containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
                     newSelectedTrigger = sprite;
                     return false;
                 }
@@ -280,8 +319,7 @@ class TriggerBrush {
             if (lastSelected === newSelectedTrigger) {
                 selectedTrigger = null;
             } else if (newSelectedTrigger) {
-                selectedTrigger = newSelectedTrigger;
-                currentBrush = new TriggerBrush(selectedTrigger);
+                selectEntity(newSelectedTrigger);
                 currentBrush.wasMouseDown = true;
             }
         }
@@ -296,6 +334,9 @@ class TriggerBrush {
                 if (drawnRectangle.overlapsRectangle(new Rectangle(0, 0, currentMap.width, currentMap.height), false)) {
                     if (!selectedTrigger) {
                         selectedTrigger = cloneEntity(this.sourceTrigger);
+                        // We store the brushClass so we know what brush to use when we select this entity.
+                        // Maybe we can put this as a static field on the entity class.
+                        selectedTrigger.brushClass = 'TriggerBrush';
                         selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
                         selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
                         sendCreateEntity(selectedTrigger);
@@ -307,12 +348,9 @@ class TriggerBrush {
                 objectStartCoords = null;
             }
         }
-        if (rightMouseDown && selectedTrigger) {
-            var levelRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
-            if (levelRectangle.containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
-                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                sendUpdateEntity(selectedTrigger);
-            }
+        if (rightMouseDown && selectedTrigger && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+            sendUpdateEntity(selectedTrigger);
         }
         this.wasMouseDown = mouseDown;
     }
@@ -322,10 +360,83 @@ class TriggerBrush {
         else this.sourceTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
     }
 
-    renderHUD(target) {
-        this.sourceTrigger.renderHUD(target);
+    renderHUD(context, target) {
+        this.sourceTrigger.renderHUD(context, target);
     }
 }
+
+class PointEntityBrush {
+
+    constructor(sourceEntity) {
+        this.sourceEntity = sourceEntity;
+        // I'm just using this to prevent clone brush from activating
+        // when you right click while you have a trigger brush selected.
+        this.type = 'entity';
+        this.wasMouseDown = false;
+    }
+
+    update() {
+        var mouseCoords = getMouseCoords();
+        var pixelMouseCoords = getPixelMouseCoords();
+        if (selectedTrigger && isKeyDown(KEY_BACK_SPACE)) {
+            sendDeleteEntity(selectedTrigger.id);
+            selectedTrigger = null;
+        }
+        if (!this.wasMouseDown && mouseDown) {
+            var lastSelected = selectedTrigger, newSelectedEntity;
+            localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
+                if (sprite.getEditingHitBox().containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
+                    newSelectedEntity = sprite;
+                    return false;
+                }
+            });
+            draggingTrigger = newSelectedEntity;
+            if (lastSelected === newSelectedEntity) {
+                selectedTrigger = null;
+            } else if (newSelectedEntity) {
+                selectEntity(newSelectedEntity)
+                currentBrush.wasMouseDown = true;
+            }
+        }
+        if (rightMouseDown && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            if (!selectedTrigger) {
+                selectedTrigger = cloneEntity(this.sourceEntity);
+                // We store the brushClass so we know what brush to use when we select this entity.
+                // Maybe we can put this as a static field on the entity class.
+                selectedTrigger.brushClass = 'PointEntityBrush';
+                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                sendCreateEntity(selectedTrigger);
+            } else {
+                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+                if (selectedTrigger.dirty) {
+                    delete selectedTrigger.dirty;
+                    sendUpdateEntity(selectedTrigger);
+                }
+            }
+        }
+        this.wasMouseDown = mouseDown;
+    }
+
+    renderPreview(target) {
+        var pixelMouseCoords = getPixelMouseCoords();
+        if (selectedTrigger) selectedTrigger.renderPreview(pixelMouseCoords[0], pixelMouseCoords[1]);
+        else this.sourceEntity.renderPreview(pixelMouseCoords[0], pixelMouseCoords[1]);
+    }
+
+    renderHUD(context, target) {
+        this.sourceEntity.renderHUD(context, target);
+    }
+}
+
+var selectEntity = entity => {
+    selectedTrigger = entity;
+    var brushClass = brushClasses[entity.brushClass] || TriggerBrush;
+    currentBrush = new brushClass(entity);
+}
+
+var brushClasses = {
+    TriggerBrush, PointEntityBrush,
+};
 
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 
@@ -355,6 +466,12 @@ var selectTileUnderMouse = () => {
 }
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
+
+// Make sure all brush tile sets are preloaded.
+requireImage(twilightTiles);
+requireImage(customTiles);
+requireImage(mansionTiles);
+
 var brushList = [
     new ObjectBrush(stretchNine),
     new ObjectBrush(bouncyBlock),
@@ -402,7 +519,9 @@ var brushList = [
     new TriggerBrush(new AirDashPowerup(dummyRectangle, 10, 10)),
     new TriggerBrush(new CoinPowerup(dummyRectangle, 10)),
     new TriggerBrush(new SuperJumpPowerup(dummyRectangle, 10)),
-    new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR))
+    new TriggerBrush(new ScoreBeacon(dummyRectangle, 256, 5, BEACON_FALLOFF_CURVE_LINEAR)),
+    new PointEntityBrush(new PointSpawner(getCreaturePacingFireball(CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL), 0)),
+    new PointEntityBrush(new CheckPoint()),
 ];
 
 var selectPreviousObject = () => {
@@ -420,7 +539,8 @@ $(document).on('keydown', e => {
     if (e.which === 221) selectNextObject(); // ']'
 });
 
-$(document).on('mousewheel', e => {
+$('.js-mainGame').on('mousewheel', e => {
+    if (!isEditing) return;
     e.preventDefault();
     if (e.originalEvent.wheelDelta < 0) selectPreviousObject();
     if (e.originalEvent.wheelDelta > 0) selectNextObject();

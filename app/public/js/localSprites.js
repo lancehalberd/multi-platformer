@@ -66,6 +66,10 @@ class SimpleSprite {
     render() {
         drawSprite(mainContext, this);
     }
+
+    renderHUD(context, target) {
+        drawSpriteToRectangle(context, this, target);
+    }
 }
 
 
@@ -75,6 +79,11 @@ class SimpleSprite {
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
+    // Remove a spawned sprite if it's spawner was removed.
+    if (localSprite.spawner && !localSprites.includes(localSprite.spawner)) {
+        localSprite.shouldBeRemoved = true;
+        return;
+    }
     if (localSprite.homing) { //homing behavior
         var dx = localSprite.target.x - localSprite.x;
         var dy = localSprite.target.y - localSprite.y;
@@ -254,7 +263,7 @@ function updateLocalSprite(localSprite) {
         }
     }
 
-    if (localSprite.framesToLive-- <= 0) {
+    if (localSprite.framesToLive && localSprite.framesToLive-- <= 0) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
     }
@@ -319,36 +328,6 @@ function addCreature(x, y, target, creatureType) {
         adorabilisSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
         localSprites.push(adorabilisSprite);
     }
-    if (creatureType === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
-        xScale = yScale = 1.15;
-        var pacingFireballSprite = new SimpleSprite(fireballAnimation, x, y, 0, 0, xScale, yScale);
-        pacingFireballSprite.type = creatureType;
-        pacingFireballSprite.collides = true;
-        pacingFireballSprite.pacing = true;
-        if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
-            pacingFireballSprite.xSpeed = 1.75;
-            pacingFireballSprite.ySpeed = 0;
-        }
-        if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-            pacingFireballSprite.xSpeed = 0;
-            pacingFireballSprite.ySpeed = 1.75;
-        }
-        pacingFireballSprite.vx = pacingFireballSprite.xSpeed;
-        pacingFireballSprite.vy = pacingFireballSprite.ySpeed;
-        pacingFireballSprite.framesToLive = 32767;
-        pacingFireballSprite.msBetweenFrames = 50;
-        pacingFireballSprite.rotationPerFrame = 5;
-        pacingFireballSprite.scaleOscillation = true;
-        pacingFireballSprite.xScaleMax = 1.33;
-        pacingFireballSprite.xScaleMin = 1;
-        pacingFireballSprite.yScaleMax = 1.33;
-        pacingFireballSprite.yScaleMin = 1;
-        pacingFireballSprite.xScalePerFrame = 0.01;
-        pacingFireballSprite.yScalePerFrame = 0.01;
-        pacingFireballSprite.hasContrail = true;
-        pacingFireballSprite.framesBetweenContrailParticles = 3;
-        localSprites.push(pacingFireballSprite);
-    }
     if (creatureType === CREATURE_TYPE_HAUNTED_MASK) {
         hitBox = new Rectangle(-18, -52, 36, 44);
         xScale = yScale = 1.2;
@@ -371,6 +350,36 @@ function addCreature(x, y, target, creatureType) {
         hauntedMaskCreature.noDirectionChangeUntil = now();
         localSprites.push(hauntedMaskCreature);
     }
+}
+
+function getCreaturePacingFireball(creatureType) {
+    var xScale = yScale = 1;
+    var pacingFireballSprite = new SimpleSprite(fireballAnimation, 0, 0, 0, 0, xScale, yScale);
+    pacingFireballSprite.type = creatureType;
+    pacingFireballSprite.collides = true;
+    pacingFireballSprite.pacing = true;
+    if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
+        pacingFireballSprite.xSpeed = 1.75;
+        pacingFireballSprite.ySpeed = 0;
+    }
+    if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
+        pacingFireballSprite.xSpeed = 0;
+        pacingFireballSprite.ySpeed = 1.75;
+    }
+    pacingFireballSprite.vx = pacingFireballSprite.xSpeed;
+    pacingFireballSprite.vy = pacingFireballSprite.ySpeed;
+    pacingFireballSprite.msBetweenFrames = 50;
+    pacingFireballSprite.rotationPerFrame = 5;
+    pacingFireballSprite.scaleOscillation = true;
+    pacingFireballSprite.xScaleMax = 1.33;
+    pacingFireballSprite.xScaleMin = 1;
+    pacingFireballSprite.yScaleMax = 1.33;
+    pacingFireballSprite.yScaleMin = 1;
+    pacingFireballSprite.xScalePerFrame = 0.01;
+    pacingFireballSprite.yScalePerFrame = 0.01;
+    pacingFireballSprite.hasContrail = true;
+    pacingFireballSprite.framesBetweenContrailParticles = 3;
+    return pacingFireballSprite;
 }
 
 

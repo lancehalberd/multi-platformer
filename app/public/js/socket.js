@@ -17,24 +17,50 @@ socket.addEventListener('message', event => {
         publicId = data.publicId;
         mainCharacter.id = publicId;
         mainCharacter.color = data.color;
+    }
+    if (data.zoneId) {
+        zoneId = data.zoneId;
+        mainCharacter.zoneId = data.zoneId;
+    }
+    // This will be returned when a player enters a zone, either on first connecting or changing zones.
+    if (data.map) {
+        selectedTrigger = null;
+        mainCharacter.checkPoint = null;
+        currentMap = data.map;
+        if (currentMap.respawnPoint) {
+            // This will only be used if a check point doesn't override it.
+            mainCharacter.x = mainCharacter.originalX = currentMap.respawnPoint.x;
+            mainCharacter.y = mainCharacter.originalY = currentMap.respawnPoint.y;
+        } else {
+            // This is the legacy default starting location, used if there is no respawnPoint
+            // data on the map itself and no check points.
+            mainCharacter.x = 200;
+            mainCharacter.y = 800;
+        }
+        localSprites = [];
+        // Create initial set of entities from the map definition.
+        // Originally these just consisted of Triggers.
+        for (var entityData of (currentMap.entities || [])) {
+            var entity = unserializeEntity(entityData);
+            localSprites.push(entity);
+            if (!mainCharacter.checkPoint && entity instanceof CheckPoint) {
+                mainCharacter.checkPoint = entity;
+                mainCharacter.x = entity.x;
+                mainCharacter.y = entity.y;
+            }
+        }
+    }
+    // This will be returned when a player enters a zone, either on first connecting or changing zones.
+    if (data.players) {
+        otherCharacters = {};
         for (var id in data.players) {
             if (id === publicId) continue;
             otherCharacters[id] = initializeTTCharacter(data.players[id]);
         }
-        currentMap = data.map;
-        if (currentMap.respawnPoint) {
-            mainCharacter.x = mainCharacter.originalX = currentMap.respawnPoint.x;
-            mainCharacter.y = mainCharacter.originalY = currentMap.respawnPoint.y;
-        }
-        // Create initial set of entities from the map definition.
-        // Originally these just consisted of Triggers.
-        for (var entity of (currentMap.entities || [])) {
-            localSprites.push(unserializeEntity(entity));
-        }
     }
     // Don't process any messages from the server until we have the character data.
     if (!privateId) return;
-    if (data.playerJoined) {
+    if (data.playerJoined && data.playerJoined.id !== publicId) {
         otherCharacters[data.playerJoined.id] = initializeTTCharacter(data.playerJoined);
     }
     if (data.playerLeft) {

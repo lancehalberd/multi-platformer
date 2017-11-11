@@ -19,6 +19,10 @@ function drawSprite(context, sprite) {
 }
 function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint, source) {
     context.save();
+    // Convert image source to the actual image if it is currently a string (for instance, because it was serialized).
+    if (typeof frame.image === 'string') {
+        frame.image = requireImage(frame.image);
+    }
     // If the frame does not have an explicit hitbox, just assume the hitbox
     // is the size of the box with origin at (0, 0).
     var hitBox = frame.hitBox || frame.moveTo(0, 0);
@@ -47,6 +51,16 @@ function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint, sourc
         drawImage(context, actor.image, frameSource, target);
     }*/
 }
+
+function drawSpriteToRectangle(context, sprite, target) {
+    var frame = sprite.animation.frames[sprite.currentFrame];
+    // Convert image source to the actual image if it is currently a string (for instance, because it was serialized).
+    if (typeof frame.image === 'string') {
+        frame.image = requireImage(frame.image);
+    }
+    draw.image(context, frame.image, frame, target);
+}
+
 // Get array of tint effects to apply when drawing the given actor.
 function getActorTints(actor) {
     var tints = [];
