@@ -5,8 +5,15 @@ const updateEditor = () => {
         toggleEditing();
     }
     if (!isEditing) return;
-    // Trigger brush uses the right click to set the target
+    if (isKeyDown(KEY_SHIFT) && mouseDown) {
+        var pixelCoords = getPixelMouseCoords();
+        mainCharacter.x = pixelCoords[0];
+        mainCharacter.y = pixelCoords[1];
+        mainCharacter.canTeleport = false;
+        return;
+    }
     if (!mouseDown && !(currentBrush instanceof EntityBrush)) {
+        // Trigger brush uses the right click to set the target
         if (rightMouseDown) {
             if (!cloneStartCoords) {
                 cloneStartCoords = getMouseCoords();
@@ -459,6 +466,8 @@ class DoorTriggerBrush extends TriggerBrush {
     onSelectZone(zoneId) {
         if (!selectedTrigger) return;
         selectedTrigger.setZoneId(zoneId);
+        selectedTrigger.setCheckPointId(null);
+        selectedTrigger.setTarget(64, 64);
         checkToUpdateEntity(selectedTrigger);
     }
 

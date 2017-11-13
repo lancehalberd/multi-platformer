@@ -68,7 +68,7 @@ socket.addEventListener('message', event => {
             mainCharacter.x = firstCheckPoint.x;
             mainCharacter.y = firstCheckPoint.y;
         }
-
+        centerCameraOnPlayer();
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.players) {

@@ -34,7 +34,7 @@ function updateActor(actor) {
         changeCharacterToCowbot(actor);
         actor.jumpScaling = [1, 0.7];
     }
-    if (actor === mainCharacter && !actor.deathTime){
+    if (actor === mainCharacter && !actor.deathTime && !isEditing){
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;

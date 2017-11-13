@@ -30,10 +30,18 @@ setInterval(() => {
     }
     removeFinishedLocalSprites();
 
-    if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
-    if (cameraX > mainCharacter.x - 300) cameraX = (cameraX + (mainCharacter.x - 300)) / 2;
-    if (cameraY + 600 < mainCharacter.y + 300) cameraY = (cameraY + mainCharacter.y - 300) / 2;
-    if (cameraY > mainCharacter.y - 300) cameraY = (cameraY + (mainCharacter.y - 300)) / 2;
+    if (!isEditing) {
+        if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
+        if (cameraX > mainCharacter.x - 300) cameraX = (cameraX + (mainCharacter.x - 300)) / 2;
+        if (cameraY + 600 < mainCharacter.y + 300) cameraY = (cameraY + mainCharacter.y - 300) / 2;
+        if (cameraY > mainCharacter.y - 300) cameraY = (cameraY + (mainCharacter.y - 300)) / 2;
+    } else {
+        var cameraSpeed =  16;
+        if (isKeyDown(KEY_UP)) cameraY -= cameraSpeed;
+        if (isKeyDown(KEY_DOWN)) cameraY += cameraSpeed;
+        if (isKeyDown(KEY_LEFT)) cameraX -= cameraSpeed;
+        if (isKeyDown(KEY_RIGHT)) cameraX += cameraSpeed;
+    }
 
     cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
     cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
@@ -53,3 +61,8 @@ setInterval(() => {
     updateEditor();
     TagGame.update();
 }, frameMilliseconds);
+
+var centerCameraOnPlayer = () => {
+    cameraX = mainCharacter.x - 400;
+    cameraY = mainCharacter.y - 300;
+};
