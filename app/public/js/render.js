@@ -22,12 +22,12 @@ var render = () => {
     //if (taggedPlayer) {
     //    draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)
     //} else {
-        draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
+    draw.image(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), bgSourceRectangle, target);
     //}
 
+    drawMap();
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
-    drawMap();
     // Update all the sprites that the game keeps track of
     for (var sprite of
         [
@@ -43,6 +43,7 @@ var render = () => {
         sprite.render(sprite);
     }
     mainContext.restore();
+    renderEditor();
 
     // Draw HUD elements here like the life display for the main character.
     mainContext.save();
@@ -55,8 +56,6 @@ var render = () => {
         mainContext.translate(60, 0);
     }
     mainContext.restore();
-
-    renderEditor();
 
     TagGame.render();
 
@@ -82,6 +81,7 @@ var drawMap = () => {
     var leftColumn = Math.floor(cameraX / currentMap.tileSize);
     var rightColumn = Math.ceil((cameraX + mainCanvas.width) / currentMap.tileSize);
     mainContext.save();
+    mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
     mainContext.translate(0, currentMap.tileSize * topRow + currentMap.tileSize / 2);
     for (var row = topRow; row < bottomRow; row++) {
         if (!currentMap.composite[row]) {

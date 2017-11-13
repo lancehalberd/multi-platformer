@@ -253,6 +253,154 @@ class CloneBrush {
     }
 }
 
+class InsertRowBrush {
+    constructor() {
+        this.released = true;
+        this.insertRow = this.sourceRow = null;
+    }
+
+    update() {
+        this.insertRow = null;
+        if (!isMouseOver($(mainCanvas))) return;
+        this.sourceRow = getMouseCoords()[1];
+        if (this.sourceRow < 0 || this.sourceRow >= currentMap.height) return;
+        var subY = getPixelMouseCoords()[1] % currentMap.tileSize;
+        if (subY < currentMap.tileSize / 2) this.insertRow = this.sourceRow;
+        else this.insertRow = this.sourceRow + 1;
+        if (this.released && mouseDown) {
+            sendData({action: 'insertRow', insertRow: this.insertRow, sourceRow: this.sourceRow});
+        }
+        this.released = !mouseDown;
+    }
+
+    renderPreview(target) {
+        var context = mainContext;
+        if (this.insertRow === null) return;
+        context.save();
+        context.globalAlpha = .9;
+        var height = mainCanvas.height - (this.sourceRow * currentMap.tileSize - cameraY);
+        draw.image(context, mainCanvas,
+            new Rectangle(0, this.sourceRow * currentMap.tileSize - cameraY, mainCanvas.width, height),
+            new Rectangle(cameraX, (this.sourceRow + 1) * currentMap.tileSize, mainCanvas.width, height),
+        );
+        context.globalAlpha = .5;
+        draw.fillRectangle(context,
+            new Rectangle(cameraX, this.insertRow * currentMap.tileSize, mainCanvas.width, currentMap.tileSize), 'green'
+        );
+        context.restore();
+    }
+
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target.stretchFromCenter(1, 1 / 3), 'green');
+    }
+}
+
+class InsertColumnBrush {
+
+    constructor() {
+        this.released = true;
+        this.insertColumn = this.sourceColumn = null;
+    }
+
+    update() {
+        this.insertColumn = null;
+        if (!isMouseOver($(mainCanvas))) return;
+        this.sourceColumn = getMouseCoords()[0];
+        if (this.sourceColumn < 0 || this.sourceColumn >= currentMap.width) return;
+        var subX = getPixelMouseCoords()[0] % currentMap.tileSize;
+        if (subX < currentMap.tileSize / 2) this.insertColumn = this.sourceColumn;
+        else this.insertColumn = this.sourceColumn + 1;
+        if (this.released && mouseDown) {
+            sendData({action: 'insertColumn', insertColumn: this.insertColumn, sourceColumn: this.sourceColumn});
+        }
+        this.released = !mouseDown;
+    }
+
+    renderPreview(target) {
+        if (this.insertColumn === null) return;
+        var context = mainContext;
+        context.save();
+        context.globalAlpha = .9;
+        var width = mainCanvas.width - (this.sourceColumn * currentMap.tileSize - cameraX);
+        draw.image(context, mainCanvas,
+            new Rectangle(this.sourceColumn * currentMap.tileSize - cameraX, 0, width, mainCanvas.height),
+            new Rectangle((this.sourceColumn + 1) * currentMap.tileSize, cameraY, width, mainCanvas.height),
+        );
+        context.globalAlpha = .5;
+        draw.fillRectangle(context,
+            new Rectangle(this.insertColumn * currentMap.tileSize, cameraY, currentMap.tileSize, mainCanvas.height), 'green'
+        );
+        context.restore();
+    }
+
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target.stretchFromCenter(1 / 3, 1), 'green');
+    }
+}
+
+class DeleteRowBrush {
+    constructor() {
+        this.released = true;
+    }
+
+    update() {
+        if (!isMouseOver($(mainCanvas))) return;
+        var row = getMouseCoords()[1];
+        if (row < 0 || row > currentMap.height) return;
+        if (this.released && mouseDown) {
+            sendData({action: 'deleteRow', row});
+        }
+        this.released = !mouseDown;
+    }
+
+    renderPreview(target) {
+        if (!isMouseOver($(mainCanvas))) return;
+        var context = mainContext;
+        var row = getMouseCoords()[1];
+        if (row < 0 || row >= currentMap.height) return;
+        context.save();
+        context.globalAlpha = .5;
+        draw.fillRectangle(context, new Rectangle(cameraX, row * currentMap.tileSize, mainCanvas.width, currentMap.tileSize), 'red');
+        context.restore();
+    }
+
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target.stretchFromCenter(1, 1 / 3), 'red');
+    }
+}
+
+class DeleteColumnBrush {
+
+    constructor() {
+        this.released = true;
+    }
+
+    update() {
+        if (!isMouseOver($(mainCanvas))) return;
+        var column = getMouseCoords()[0];
+        if (column < 0 || column >= currentMap.width) return;
+        if (this.released && mouseDown) {
+            sendData({action: 'deleteColumn', column});
+        }
+        this.released = !mouseDown;
+    }
+
+    renderPreview(target) {
+        if (!isMouseOver($(mainCanvas))) return;
+        var column = getMouseCoords()[0];
+        if (column < 0 || column > currentMap.width) return;
+        var context = mainContext;
+        context.save();
+        context.globalAlpha = .5;
+        draw.fillRectangle(context,  new Rectangle(column * currentMap.tileSize, cameraY, currentMap.tileSize, mainCanvas.height), 'red');
+        context.restore();
+    }
+
+    renderHUD(context, target) {
+        draw.fillRectangle(context, target.stretchFromCenter(1 / 3, 1), 'red');
+    }
+}
+
 var getTileSourceRectangle = tileSource => new Rectangle(tileSource.x, tileSource.y, 1, 1).scale(tileSource.size);
 
 class TileBrush {
@@ -518,9 +666,9 @@ var drawingObjectRectangle;
 var currentBrush;
 selectBrush(new TileBrush(null));
 var getMouseCoords = () => {
-    var targetPosition = relativeMousePosition(mainCanvas);
-    return [Math.floor((targetPosition[0] + cameraX) / currentMap.tileSize),
-            Math.floor((targetPosition[1] + cameraY) / currentMap.tileSize),
+    var targetPosition = getPixelMouseCoords();
+    return [Math.floor(targetPosition[0] / currentMap.tileSize),
+            Math.floor(targetPosition[1] / currentMap.tileSize),
     ];
 }
 var getPixelMouseCoords = () => {
@@ -597,6 +745,10 @@ var brushList = [
     new PointEntityBrush(new PointSpawner(getCreatureHauntedMask(0, 0), 0)),
     new PointEntityBrush(new CheckPoint()),
     new DoorTriggerBrush(new DoorTrigger(dummyRectangle)),
+    new InsertRowBrush(),
+    new InsertColumnBrush(),
+    new DeleteRowBrush(),
+    new DeleteColumnBrush()
 ];
 
 var selectPreviousObject = () => {
@@ -645,6 +797,16 @@ $('.js-locationSelectField select').on('change', function () {
 $('.js-locationSelectField .js-x, .js-locationSelectField .js-y').on('change', () => {
     $('.js-locationSelectField select').val('custom');
     onUpdateLocation();
+});
+var updateSaveButton = () => {
+    $('.js-saveField button').toggle(currentMap.isDirty);
+    $('.js-reloadField button').toggle(currentMap.isDirty);
+}
+$('.js-saveField button').on('click', () => {
+    sendData({action: 'saveMap'});
+});
+$('.js-reloadField button').on('click', () => {
+    sendData({action: 'reloadMap'});
 });
 var onUpdateLocation = () => {
     if (currentBrush.onSelectLocation) {

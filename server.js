@@ -80,7 +80,7 @@ var readZoneFromFile = (zoneId, width, height) => {
 }
 
 // Every ten seconds, write all updated files to disk and mark them as not updated.
-setInterval(() => {
+/* setInterval(() => {
     for (var zoneId in zonesInMemory) {
         var map = zonesInMemory[zoneId]
         if (map.isDirty) {
@@ -88,7 +88,7 @@ setInterval(() => {
             map.isDirty = false;
         }
     }
-}, 10000);
+}, 10000); */
 
 var getZone = (zoneId, width, height) => {
     if (!zonesInMemory[zoneId]) {
@@ -330,6 +330,59 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {deletedEntityId: data.entityId});
                 map.isDirty = true;
             }
+            if (data.action === 'insertRow' && (map.height + 1) * (map.width) <= 10000) {
+                map.composite.splice(data.insertRow, 0, []);
+                // If the insert row is before the source row, increase the source row since it was pushed down.
+                if (data.insertRow <= data.sourceRow) data.sourceRow++;
+                map.height++;
+                for (var column = 0; column < map.composite[data.sourceRow].length; column++) {
+                    map.composite[data.insertRow][column] = map.composite[data.sourceRow][column];
+                }
+                for (var entity of (map.entities || [])) {
+                    if (entity.y >= data.insertRow * map.tileSize) {
+                        entity.y += map.tileSize;
+                    }
+                }
+                map.isDirty = true;
+                broadcast(player.zoneId, {map});
+            }
+            if (data.action === 'insertColumn' && (map.height) * (map.width + 1) <= 10000) {
+                map.width++;
+                for (var row = 0; row < map.composite.length; row++) {
+                    map.composite[row].splice(data.insertColumn, 0, map.composite[row][data.sourceColumn]);
+                }
+                for (var entity of (map.entities || [])) {
+                    if (entity.x >= data.insertColumn * map.tileSize) {
+                        entity.x += map.tileSize;
+                    }
+                }
+                map.isDirty = true;
+                broadcast(player.zoneId, {map});
+            }
+            if (data.action === 'deleteRow' && map.height > 5) {
+                map.composite.splice(data.row, 1);
+                map.height--;
+                for (var entity of (map.entities || [])) {
+                    if (entity.y >= (data.row + 1) * map.tileSize) {
+                        entity.y -= map.tileSize;
+                    }
+                }
+                map.isDirty = true;
+                broadcast(player.zoneId, {map});
+            }
+            if (data.action === 'deleteColumn' && map.width > 5) {
+                for (var row = 0; row < map.composite.length; row++) {
+                    map.composite[row].splice(data.column, 1);
+                }
+                map.width--;
+                for (var entity of (map.entities || [])) {
+                    if (entity.x >= (data.column + 1) * map.tileSize) {
+                        entity.x -= map.tileSize;
+                    }
+                }
+                map.isDirty = true;
+                broadcast(player.zoneId, {map});
+            }
             if (data.action === 'entityOnCooldown') {
                 broadcast(player.zoneId, {entityOnCooldown: data.entityId});
             }
@@ -359,6 +412,17 @@ wsServer.on('request', function(request) {
                 connection.sendUTF(JSON.stringify({
                     zone: getZone(data.zoneId),
                 }));
+            }
+            if (data.action === 'saveMap') {
+                if (map.isDirty) {
+                    map.isDirty = false;
+                    writeZoneToFile(player.zoneId, map);
+                }
+                broadcast(player.zoneId, {savedMap: true});
+            }
+            if (data.action === 'reloadMap') {
+                delete zonesInMemory[player.zoneId];
+                broadcast(player.zoneId, {map: getZone(player.zoneId)});
             }
             return;
         }

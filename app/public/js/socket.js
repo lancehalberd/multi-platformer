@@ -68,7 +68,7 @@ socket.addEventListener('message', event => {
             mainCharacter.x = firstCheckPoint.x;
             mainCharacter.y = firstCheckPoint.y;
         }
-        centerCameraOnPlayer();
+        if (!isEditing) centerCameraOnPlayer();
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.players) {
@@ -99,9 +99,11 @@ socket.addEventListener('message', event => {
     }
     if (typeof(data.tileData) !== 'undefined') {
         applyTileToMap(currentMap, data.tileData, data.position);
+        currentMap.isDirty = true;
     }
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);
+        currentMap.isDirty = true;
     }
     if (data.createdEntity) {
         //console.log("created entity", data.createdEntity);
@@ -112,6 +114,7 @@ socket.addEventListener('message', event => {
         if (selectedTrigger && selectedTrigger.id === entity.id) {
             selectedTrigger = entity;
         }
+        currentMap.isDirty = true;
     }
     if (data.deletedEntityId) {
         //console.log("deleted entity", data.deletedEntityId);
@@ -124,6 +127,7 @@ socket.addEventListener('message', event => {
         if (selectedTrigger && selectedTrigger.id === data.deletedEntityId) {
             selectedTrigger = null;
         }
+        currentMap.isDirty = true;
     }
     if (data.updatedEntity) {
         //console.log("updated entity", data.updatedEntity);
@@ -136,6 +140,7 @@ socket.addEventListener('message', event => {
         if (selectedTrigger && selectedTrigger.id === data.updatedEntity.id) {
             selectedTrigger = localSprites[index];
         }
+        currentMap.isDirty = true;
     }
     if (data.entityOnCooldown) {
         var index = _.findIndex(localSprites, {id: data.entityOnCooldown});
@@ -149,6 +154,11 @@ socket.addEventListener('message', event => {
             updateLocationSelect();
         }
     }
+    if (data.savedMap) {
+        currentMap.isDirty = false;
+    }
+    // Show the save button if the map has been updated.
+    updateSaveButton();
 
     TagGame.handleServerData(data);
 });
