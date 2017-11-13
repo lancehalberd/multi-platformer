@@ -4,6 +4,7 @@ var globalTintContext = globalTintCanvas.getContext('2d');
 var globalCompositeCanvas = createCanvas(150, 150);
 var globalCompositeContext = globalCompositeCanvas.getContext('2d');
 globalTintContext.imageSmoothingEnabled = false;
+globalCompositeContext.imageSmoothingEnabled = false;
 
 var draw = {
     image(context, image, source, target) {
@@ -66,7 +67,7 @@ var draw = {
         globalCompositeContext.clearRect(0, 0, globalCompositeCanvas.width, globalCompositeCanvas.height);
     },
     getTintedImage(image, tint, amount, sourceRectangle) {
-        draw.tintedImage(globalCompositeContext, image, tint, amount, sourceRectangle, {'left': 0, 'top': 0, 'width': sourceRectangle.width, 'height': sourceRectangle.height});
+        draw.tintedImage(globalCompositeContext, image, tint, amount, sourceRectangle, sourceRectangle.moveTo(0, 0));
         return globalCompositeCanvas;
     },
     sourceWithOutline(context, source, color, thickness, target) {
@@ -91,7 +92,7 @@ var draw = {
         globalTintContext.save();
         globalTintContext.fillStyle = tint;
         globalTintContext.clearRect(0, 0, source.width, source.height);
-        var tintRectangle = {'left': 0, 'top': 0, 'width': source.width, 'height': source.height};
+        var tintRectangle = source.moveTo(0, 0);
         source.draw(globalTintContext, tintRectangle);
         globalTintContext.globalCompositeOperation = "source-in";
         globalTintContext.fillRect(0, 0, source.width, source.height);

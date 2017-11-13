@@ -209,8 +209,11 @@ class TTCharacter {
     }
 
     renderFrame(context, frame, target) {
-        draw.solidTintedImage(context, frame.image, this.color, frame, target);
-        draw.image(context, frame.image, frame.translate(0, frame.height), target);
+        draw.prepareTintedImage();
+        var bufferTarget = frame.moveTo(0, 0);
+        draw.solidTintedImage(globalCompositeContext, frame.image, this.color, frame, bufferTarget);
+        draw.image(globalCompositeContext, frame.image, frame.translate(0, frame.height), bufferTarget);
+        draw.image(context, globalCompositeCanvas, bufferTarget, target);
     }
 }
 

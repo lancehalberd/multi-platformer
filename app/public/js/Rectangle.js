@@ -27,6 +27,10 @@ class Rectangle {
         this.bottom = top + height;
     }
 
+    snap() {
+        return new Rectangle(Math.round(this.left), Math.round(this.top), Math.round(this.width), Math.round(this.height));
+    }
+
     translate(dx, dy) {
         return new Rectangle(this.left + dx, this.top + dy, this.width, this.height);
     }
