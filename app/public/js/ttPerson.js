@@ -178,7 +178,9 @@ class TTCharacter {
             // jumping resets vertical velocity.
             this.vy = 0;
             this.applyJumpVelocity();
+            return true;
         }
+        return false;
     }
 
 

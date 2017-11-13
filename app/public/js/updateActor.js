@@ -82,10 +82,11 @@ function updateActor(actor) {
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
-                actor.jump();
-                // Spawns a dust plume on jumping from a grounded state.
-                addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
-                if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 3, 7); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
+                if (actor.jump()) {
+                    // Spawns a dust plume on jumping from a grounded state.
+                    addEffectJumpDust(actor.x, actor.y, 2.5, 10, 0); // full-sized plume for ground jump
+                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 3, 7); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
+                }
             }
         } else {
             if (actor.vy >= actor.landingDustVyThreshold) actor.spawnDustOnGrounding = true;  //if the player's airborne vy exceeds 16, they'll spawn a dust plume on landing.
@@ -107,14 +108,11 @@ function updateActor(actor) {
                         if (isKeyDown(KEY_RIGHT)) actor.vx -= 8;
                         if (isKeyDown(KEY_LEFT))  actor.vx += 8;
                     }
-                    actor.jump();
-                     // smaller, shorter-lived plume effect for air jump
-                     // BROKEN: trying to fix bug where a plume spawns on triple-jump, even if there's no jump.
-                     //     But if currentJumps < maxJumps, nothing spawns even on double jump,
-                     //         and if currentJumps <= maxJumps, a plume spawns on triple jump.
-                    if (actor.currentNumberOfJumps <= actor.maxJumps) addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
-                    if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 1.5, 11); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
-
+                    // smaller, shorter-lived plume effect for air jump
+                    if (actor.jump()) {
+                        addEffectJumpDust(actor.x, actor.y, 1.5, 15, 0);
+                        if (actor.type === CHARACTER_COWBOT) addEffectSteamPlume(actor.x, actor.y - 66, 0, -10, 1.5, 11); // WRONG the '66' should be actor.hitBox.height, which I don't know how to call right now
+                    }
                 }
             } else if (isKeyDown(KEY_UP) && actor.currentJumpDuration < actor.maxJumpDuration) {
                 // If the actor has not released the jump key since they started jumping,
