@@ -224,10 +224,13 @@ class TeleporterTrigger extends Trigger {
 
 class DoorTrigger extends Trigger {
 
-    constructor(hitBox, zoneId) {
+    constructor(hitBox, zoneId, checkPointId, targetX, targetY) {
         super(hitBox, 0);
         this.color = 'gold';
         this.zoneId = zoneId;
+        this.checkPointId = checkPointId;
+        this.targetX = targetX;
+        this.targetY = targetY;
     }
 
     setZoneId(zoneId) {
@@ -236,8 +239,27 @@ class DoorTrigger extends Trigger {
         this.dirty = true;
     }
 
+    setCheckPointId(checkPointId) {
+        if (zoneId === this.zoneId) return;
+        this.checkPointId = checkPointId;
+        this.dirty = true;
+    }
+
+    setTarget(targetX, targetY) {
+        if (targetX === this.targetX && targetY === this.targetY) return;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.dirty = true;
+    }
+
     trigger() {
-        sendData({action: 'changeZone', zoneId: this.zoneId || zoneId});
+        if (!mainCharacter.canTeleport) return false;
+        mainCharacter.canTeleport = false;
+        mainCharacter.currentNumberOfJumps = 0; // teleporting resets double-jumping
+        mainCharacter.airDashed = false; // teleporting resets airDashing
+        mainCharacter.currentAirDashDuration = 0; //teleporting resets airDashing
+        mainCharacter.superJumped = false;
+        sendData({action: 'changeZone', zoneId: this.zoneId || zoneId, checkPointId: this.checkPointId, targetX: this.targetX, targetY: this.targetY});
         return true;
     }
 

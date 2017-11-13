@@ -21,6 +21,7 @@ socket.addEventListener('message', event => {
     if (data.zoneId) {
         zoneId = data.zoneId;
         mainCharacter.zoneId = data.zoneId;
+        $('.js-zoneSelect').val(zoneId);
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.map) {
@@ -38,17 +39,36 @@ socket.addEventListener('message', event => {
             mainCharacter.y = 800;
         }
         localSprites = [];
+        var firstCheckPoint = null, selectedCheckPoint = null;
         // Create initial set of entities from the map definition.
         // Originally these just consisted of Triggers.
         for (var entityData of (currentMap.entities || [])) {
             var entity = unserializeEntity(entityData);
             localSprites.push(entity);
-            if (!mainCharacter.checkPoint && entity instanceof CheckPoint) {
-                mainCharacter.checkPoint = entity;
-                mainCharacter.x = entity.x;
-                mainCharacter.y = entity.y;
+            if (!firstCheckPoint && entity instanceof CheckPoint) {
+                firstCheckPoint = entity;
+            }
+            if (entity.id === data.checkPointId) {
+                selectedCheckPoint = entity;
             }
         }
+        // If the player entered at a specific check point that exists, start them there,
+        // otherwise start them at the explicit target x/y coords if present,
+        // otherwise start them at the first check point found,
+        // otherwise they will default to the global spawn point for the map (set above).
+        if (selectedCheckPoint) {
+            mainCharacter.checkPoint = selectedCheckPoint;
+            mainCharacter.x = selectedCheckPoint.x;
+            mainCharacter.y = selectedCheckPoint.y;
+        } else if(typeof(data.targetX) === 'number' && typeof(data.targetY) === 'number') {
+            mainCharacter.x = mainCharacter.originalX = data.targetX;
+            mainCharacter.y = mainCharacter.originalY = data.targetY;
+        } else if (firstCheckPoint) {
+            mainCharacter.checkPoint = firstCheckPoint;
+            mainCharacter.x = firstCheckPoint.x;
+            mainCharacter.y = firstCheckPoint.y;
+        }
+
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.players) {
@@ -123,9 +143,16 @@ socket.addEventListener('message', event => {
             localSprites[index].putOnCooldown();
         }
     }
+    if (data.zone && isEditing) {
+        loadedZonesById[data.zone.id] = data.zone;
+        if (data.zone.id === $('.js-zoneSelectField select').val()) {
+            updateLocationSelect();
+        }
+    }
 
     TagGame.handleServerData(data);
 });
+var loadedZonesById = {};
 var getPlayerById = (id) => {
     if (id === publicId) return mainCharacter;
     return otherCharacters[id];
@@ -143,17 +170,18 @@ var serializePlayer = player => _.pick(player, ['x', 'y', 'vx', 'vy', 'isCrouchi
 var sendPlayerJoined = () => connected && sendData({action: 'join', player: serializePlayer(mainCharacter)}, true);
 var sendPlayerMoved = () =>  sendData({action: 'move', player: _.omit(serializePlayer(mainCharacter), ['hair','skin'])});
 var sendPlayerAttacked = () => sendData({action: 'attack'});
-var sendTileUpdate = (tileData, position) => sendData({privateId, action: 'updateTile', tileData, position});
-var sendMapObject = (mapObject, position) => sendData({privateId, action: 'createMapObject', mapObject, position});
-var sendEntityOnCooldown = (entityId) => sendData({privateId, action: 'entityOnCooldown', entityId});
+var sendTileUpdate = (tileData, position) => sendData({action: 'updateTile', tileData, position});
+var sendMapObject = (mapObject, position) => sendData({action: 'createMapObject', mapObject, position});
+var sendEntityOnCooldown = (entityId) => sendData({action: 'entityOnCooldown', entityId});
 var sendCreateEntity = (entity) => {
     if (!privateId) return;
     // Set a unique entity id before sending it to the server. This will be used when updating/deleting this entity in the future.
     entity.id = getUniqueEntityId();
     sendData({privateId, action: 'createEntity', entity: serializeEntity(entity)});
 };
-var sendUpdateEntity = (entity) => sendData({privateId, action: 'updateEntity', entity: serializeEntity(entity)});
-var sendDeleteEntity = (entityId) => sendData({privateId, action: 'deleteEntity', entityId});
+var sendUpdateEntity = (entity) => sendData({action: 'updateEntity', entity: serializeEntity(entity)});
+var sendDeleteEntity = (entityId) => sendData({action: 'deleteEntity', entityId});
+var requestZoneData = (zoneId) => sendData({action: 'getZoneData', zoneId});
 
 // Creates an entity id that is not currently in use and cannot be simultaneously created by another player.
 // This second condition is enforced by using the current player's publicId as a prefix for this id.

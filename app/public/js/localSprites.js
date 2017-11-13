@@ -365,8 +365,6 @@ function getCreatureHauntedMask(x, y) {
     hauntedMaskCreature.framesToLive = 32767;
     hauntedMaskCreature.msBetweenFrames = 230;
     hauntedMaskCreature.aggroRadius = 270;
-    hauntedMaskCreature.target = mainCharacter;
-    console.log(mainCharacter);
     hauntedMaskCreature.maxSpeedPeaceful = 0.5;
     hauntedMaskCreature.maxSpeedAggroed = 1.75;
     hauntedMaskCreature.noSmokePlumeUntil = now();

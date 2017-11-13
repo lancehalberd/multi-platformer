@@ -155,13 +155,14 @@ class TagGame {
     }
 
     static setTaggedId(id) {
-        // Everyone gets full life when a new player is tagged.
-        if (id !== TagGame.taggedId) mainCharacter.health = mainCharacter.maxHealth;
         // No one should be tagged if only one player is present
         if (_.isEmpty(otherCharacters)) {
             TagGame.taggedId = null;
             return;
         }
+        // We no longer restore life on each tag.
+        // Everyone gets full life when a new player is tagged.
+        // if (id !== TagGame.taggedId) mainCharacter.health = mainCharacter.maxHealth;
         // The player who tagged the other player cannot be tagged for 5 seconds.
         var currentlyTaggedPlayer = getPlayerById(TagGame.taggedId);
         if (currentlyTaggedPlayer) {

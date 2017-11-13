@@ -66,12 +66,14 @@ var readZoneFromFile = (zoneId, width, height) => {
     if (!map.composite) {
         return {
             entities: [],
+            id: zoneId,
             tileSize: 32,
             width: map[0].length,
             height: map.length,
             composite: map
         };
     } else {
+        map.id = zoneId;
         // New map files store all map data.
         return map;
     }
@@ -346,9 +348,17 @@ wsServer.on('request', function(request) {
                     players: _.pickBy(players, player => player.zoneId === data.zoneId),
                     map: getZone(data.zoneId),
                     zoneId: data.zoneId,
+                    checkPointId: data.checkPointId,
+                    targetX: data.targetX,
+                    targetY: data.targetY,
                 }));
                 broadcast(data.zoneId, {playerJoined: player});
                 player.zoneId = data.zoneId;
+            }
+            if (data.action === 'getZoneData') {
+                connection.sendUTF(JSON.stringify({
+                    zone: getZone(data.zoneId),
+                }));
             }
             return;
         }

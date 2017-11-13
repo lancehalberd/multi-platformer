@@ -13,3 +13,6 @@
 .editField {
     margin-bottom: 10px;
 }
+.editPanel select {
+    width: 100px;
+}

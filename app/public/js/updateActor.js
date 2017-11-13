@@ -329,11 +329,12 @@ var canCharacterAirDash = (character) => character.currentActivatablePowerup ===
 var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
 
 
-
+// Check if a player is touching a trigger that telports it (Door or Teleporter).
+// This is used to prevent a player from teleporting onto another teleporter.
 function isPlayerTouchingTeleporter(actor) {
     var globalHitBox = getGlobalSpriteHitBox(actor);
     // localSprites.filter(...) returns all the elements of localSprites that the function returns true for.
-    var allTeleporters = localSprites.filter(sprite => sprite instanceof TeleporterTrigger);
+    var allTeleporters = localSprites.filter(sprite => sprite instanceof TeleporterTrigger || sprite instanceof DoorTrigger);
     // allTeleporters.some(...) returns true if any of the elements return true for the given function.
     return allTeleporters.some(teleporter => teleporter.hitBox.overlapsRectangle(globalHitBox));
 }

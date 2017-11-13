@@ -6,7 +6,7 @@ const updateEditor = () => {
     }
     if (!isEditing) return;
     // Trigger brush uses the right click to set the target
-    if (!mouseDown && currentBrush.type !== 'entity') {
+    if (!mouseDown && !(currentBrush instanceof EntityBrush)) {
         if (rightMouseDown) {
             if (!cloneStartCoords) {
                 cloneStartCoords = getMouseCoords();
@@ -29,7 +29,7 @@ const updateEditor = () => {
                             = currentMap.composite[row][column];
                     }
                 }
-                currentBrush = new CloneBrush(cloneTileGrid);
+                selectBrush(new CloneBrush(cloneTileGrid));
             }
         }
     }
@@ -58,13 +58,49 @@ const toggleEditing = () => {
         });
     }
     selectBrush(currentBrush);
+    selectedTrigger = null;
 };
 
 const selectBrush = (newBrush) => {
     currentBrush = newBrush;
     $('.js-zoneSelectField').toggle(currentBrush && !!currentBrush.onSelectZone);
-    $('.js-checkPointSelectField').toggle(currentBrush && !!currentBrush.onSelectCheckPoint);
-};
+    $('.js-locationSelectField').toggle(currentBrush && !!currentBrush.onSelectLocation);
+
+    // Unselect the current entity if it doesn't match the new brush.
+    if (selectedTrigger && selectedTrigger.brushClass !== currentBrush.constructor.name) {
+        selectedTrigger = null;
+    }
+    if (selectedTrigger && selectedTrigger.zoneId) {
+        $('.js-zoneSelectField select').val(selectedTrigger.zoneId);
+    }
+    if (currentBrush.onSelectZone) {
+        requestZoneData($('.js-zoneSelectField select').val());
+    }
+}
+
+const updateLocationSelect = () => {
+    var zone = loadedZonesById[$('.js-zoneSelectField select').val()];
+    if (!zone) return;
+    var $locationSelect = $('.js-locationSelectField select');
+    $locationSelect.empty();
+    var index = 1;
+    for (var checkPoint of (zone.entities || []).filter(entity => entity.__class__ === 'CheckPoint')) {
+        $locationSelect.append($('<option />').attr('value', checkPoint.id).text(`${index}: ${checkPoint.x},${checkPoint.y}`));
+        index++;
+    }
+    $locationSelect.append($('<option />').attr('value', 'custom').text('Custom'));
+    if (selectedTrigger && selectedTrigger.checkPointId) {
+        $locationSelect.val(selectedTrigger.checkPointId);
+    } else if (selectedTrigger) {
+        $locationSelect.val('custom');
+        $('.js-locationSelectField .js-x').val(selectedTrigger.targetX);
+        $('.js-locationSelectField .js-y').val(selectedTrigger.targetY);
+    } else {
+        // Select first option by default.
+        $locationSelect.find('option:eq(0)').prop('selected', true);
+    }
+    updateLocationXAndYFields();
+}
 
 var previewCanvas = $('.js-previewField .js-canvas')[0];
 var previewContext = previewCanvas.getContext('2d');
@@ -289,16 +325,20 @@ class ObjectBrush {
     }
 }
 
-
+// This should be changed to selectedEntity at some point.
 var selectedTrigger = null, draggingTrigger = null;
-class TriggerBrush {
-
-    constructor(sourceTrigger) {
-        this.sourceTrigger = sourceTrigger;
-        // I'm just using this to prevent clone brush from activating
-        // when you right click while you have a trigger brush selected.
-        this.type = 'entity';
+class EntityBrush {
+    constructor(sourceEntity) {
+        this.sourceEntity = sourceEntity;
         this.wasMouseDown = false;
+    }
+
+    createEntity() {
+        var entity = cloneEntity(this.sourceEntity);
+        // We store the brushClass so we know what brush to use when we select this entity.
+        // Maybe we can put this as a static field on the entity class.
+        entity.brushClass = this.constructor.name;
+        return entity
     }
 
     update() {
@@ -316,12 +356,17 @@ class TriggerBrush {
                     return false;
                 }
             });
+            // Setting this prevents creating a new entity as a result of this mouse click
+            // if they started clicking an existing entity.
             draggingTrigger = newSelectedTrigger;
             if (lastSelected === newSelectedTrigger) {
                 selectedTrigger = null;
+                currentBrush.wasMouseDown = true;
+                return;
             } else if (newSelectedTrigger) {
                 selectEntity(newSelectedTrigger);
                 currentBrush.wasMouseDown = true;
+                return;
             }
         }
         if (mouseDown) {
@@ -333,93 +378,107 @@ class TriggerBrush {
                 var drawnRectangle = getDrawnRectangle(objectStartCoords, objectLastCoords, this.mapObject);
                 // Don't do anything if the rectangle the selected is off screen
                 if (drawnRectangle.overlapsRectangle(new Rectangle(0, 0, currentMap.width, currentMap.height), false)) {
-                    if (!selectedTrigger) {
-                        selectedTrigger = cloneEntity(this.sourceTrigger);
-                        // We store the brushClass so we know what brush to use when we select this entity.
-                        // Maybe we can put this as a static field on the entity class.
-                        selectedTrigger.brushClass = 'TriggerBrush';
-                        selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                        selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
-                        sendCreateEntity(selectedTrigger);
-                    } else {
-                        selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
-                        sendUpdateEntity(selectedTrigger);
-                    }
+                    this.onSelectRectangle(drawnRectangle);
                 }
                 objectStartCoords = null;
             }
         }
-        if (rightMouseDown && selectedTrigger && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
-            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-            sendUpdateEntity(selectedTrigger);
+        if (rightMouseDown && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
+            this.onSetTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
         }
         this.wasMouseDown = mouseDown;
     }
 
+    onSetTarget(pixelMouseCoords) {
+        // No default behavior for setting target.
+    }
+    onSelectRectangle(drawnRectangle) {
+        // No default behavior for selecting a rectangle.
+    }
+}
+
+class TriggerBrush extends EntityBrush {
+
+    onSelectRectangle(drawnRectangle) {
+        if (!selectedTrigger) {
+            selectedTrigger = this.createEntity();
+            var pixelMouseCoords = getPixelMouseCoords();
+            selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
+            selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+            sendCreateEntity(selectedTrigger);
+        } else {
+            selectedTrigger.hitBox = drawnRectangle.scale(currentMap.tileSize);
+            sendUpdateEntity(selectedTrigger);
+        }
+    }
+
+    onSetTarget(x, y) {
+        if (!selectedTrigger) return;
+        selectedTrigger.setTarget(x, y);
+        sendUpdateEntity(selectedTrigger);
+    }
+
     renderPreview(target) {
         if (selectedTrigger) selectedTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
-        else this.sourceTrigger.renderPreview(target, objectStartCoords, objectLastCoords);
+        else this.sourceEntity.renderPreview(target, objectStartCoords, objectLastCoords);
     }
 
     renderHUD(context, target) {
-        this.sourceTrigger.renderHUD(context, target);
+        this.sourceEntity.renderHUD(context, target);
     }
 }
 
 class DoorTriggerBrush extends TriggerBrush {
 
+    createEntity() {
+        var entity = super.createEntity();
+        // Use the currently selected zone Id when creating a new door.
+        entity.setZoneId(getSelectedCheckPointId());
+        var checkPointId = getSelectedCheckPointId();
+        if (checkPointId === 'custom') entity.setCheckPointId(null);
+        else entity.setCheckPointId(checkPointId);
+        // Set targetX/targetY either way. If for some reason the check point is deleted
+        // we can fall back to these.
+        entity.setTarget(
+            Number($('.js-locationSelectField .js-x').val()),
+            Number($('.js-locationSelectField .js-y').val())
+        );
+        return entity
+    }
+
+    onSelectLocation(checkPointId, targetX, targetY) {
+        if (!selectedTrigger) return;
+        if (checkPointId === 'custom') selectedTrigger.setCheckPointId(null);
+        else selectedTrigger.setCheckPointId(checkPointId);
+        // Set targetX/targetY either way. If for some reason the check point is deleted
+        // we can fall back to these.
+        selectedTrigger.setTarget(targetX, targetY);
+        checkToUpdateEntity(selectedTrigger);
+    }
+
     onSelectZone(zoneId) {
-        console.log(`zoneId:`, zoneId);
+        if (!selectedTrigger) return;
+        selectedTrigger.setZoneId(zoneId);
+        checkToUpdateEntity(selectedTrigger);
+    }
+
+    onSetTarget(x, y) {
+        // Door target cannot be set on the current map, you have to use the
+        // zone+checkPoint dropdowns on the right panel to set its target.
     }
 }
 
-class PointEntityBrush {
+class PointEntityBrush extends EntityBrush {
 
-    constructor(sourceEntity) {
-        this.sourceEntity = sourceEntity;
-        // I'm just using this to prevent clone brush from activating
-        // when you right click while you have a trigger brush selected.
-        this.type = 'entity';
-        this.wasMouseDown = false;
-    }
-
-    update() {
-        var mouseCoords = getMouseCoords();
-        var pixelMouseCoords = getPixelMouseCoords();
-        if (selectedTrigger && isKeyDown(KEY_BACK_SPACE)) {
-            sendDeleteEntity(selectedTrigger.id);
-            selectedTrigger = null;
+    onSetTarget(x, y) {
+        if (!selectedTrigger) {
+            selectedTrigger = this.createEntity();
+            selectedTrigger.setTarget(x, y);
+            sendCreateEntity(selectedTrigger);
+        } else {
+            selectedTrigger.setTarget(x, y);
+            checkToUpdateEntity(selectedTrigger);
         }
-        if (!this.wasMouseDown && mouseDown) {
-            var lastSelected = selectedTrigger, newSelectedEntity;
-            localSprites.filter(sprite => (sprite instanceof Entity)).forEach(sprite => {
-                if (sprite.getEditingHitBox().containsPoint(pixelMouseCoords[0], pixelMouseCoords[1])) {
-                    newSelectedEntity = sprite;
-                    return false;
-                }
-            });
-            draggingTrigger = newSelectedEntity;
-            if (lastSelected === newSelectedEntity) {
-                selectedTrigger = null;
-            } else if (newSelectedEntity) {
-                selectEntity(newSelectedEntity)
-                currentBrush.wasMouseDown = true;
-            }
-        }
-        if (rightMouseDown && pointIsInLevel(pixelMouseCoords[0], pixelMouseCoords[1])) {
-            if (!selectedTrigger) {
-                selectedTrigger = cloneEntity(this.sourceEntity);
-                // We store the brushClass so we know what brush to use when we select this entity.
-                // Maybe we can put this as a static field on the entity class.
-                selectedTrigger.brushClass = 'PointEntityBrush';
-                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                sendCreateEntity(selectedTrigger);
-            } else {
-                selectedTrigger.setTarget(pixelMouseCoords[0], pixelMouseCoords[1]);
-                checkToUpdateEntity(selectedTrigger);
-            }
-        }
-        this.wasMouseDown = mouseDown;
     }
 
     renderPreview(target) {
@@ -433,23 +492,22 @@ class PointEntityBrush {
     }
 }
 
+// This is used to map entity brush class names back to the actual classes in selectEntity.
+var brushClasses = {
+    EntityBrush, TriggerBrush, PointEntityBrush, DoorTriggerBrush
+};
 var selectEntity = entity => {
     selectedTrigger = entity;
     var brushClass = brushClasses[entity.brushClass] || TriggerBrush;
-    currentBrush = new brushClass(entity);
+    selectBrush(new brushClass(entity));
 }
-
-var brushClasses = {
-    TriggerBrush, PointEntityBrush,
-};
-
-var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 
 var objectStartCoords, objectLastCoords;
 var drawingObjectRectangle;
 
 // Default to drawing an empty tile.
-var currentBrush = new TileBrush(null);
+var currentBrush;
+selectBrush(new TileBrush(null));
 var getMouseCoords = () => {
     var targetPosition = relativeMousePosition(mainCanvas);
     return [Math.floor((targetPosition[0] + cameraX) / currentMap.tileSize),
@@ -458,7 +516,7 @@ var getMouseCoords = () => {
 }
 var getPixelMouseCoords = () => {
     var targetPosition = relativeMousePosition(mainCanvas);
-    return [targetPosition[0] + cameraX, targetPosition[1] + cameraY];
+    return [Math.round(targetPosition[0] + cameraX), Math.round(targetPosition[1] + cameraY)];
 }
 // Disable context menu on the main canvas
 $('.js-mainCanvas').on('contextmenu', event => {
@@ -467,7 +525,7 @@ $('.js-mainCanvas').on('contextmenu', event => {
 var selectTileUnderMouse = () => {
     var coords = getMouseCoords();
     tileSource = currentMap.composite[coords[1]][coords[0]];
-    currentBrush = new TileBrush(tileSource);
+    selectBrush(new TileBrush(tileSource));
 }
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
@@ -534,13 +592,11 @@ var brushList = [
 
 var selectPreviousObject = () => {
     brushIndex = ((brushIndex || 0) + brushList.length - 1) % brushList.length;
-    currentBrush = brushList[brushIndex];
-    selectedTrigger = null;
+    selectBrush(brushList[brushIndex]);
 }
 var selectNextObject = () => {
     brushIndex = ((brushIndex || 0) + 1) % brushList.length;
-    currentBrush = brushList[brushIndex];
-    selectedTrigger = null;
+    selectBrush(brushList[brushIndex]);
 }
 var checkToUpdateEntity = (entity) => {
     if (entity.dirty) {
@@ -560,11 +616,42 @@ $('.js-mainGame').on('mousewheel', e => {
     if (e.originalEvent.wheelDelta > 0) selectNextObject();
 });
 
-var selectedZoneId = zoneId;
+var getSelectedZoneId = () => $('.js-zoneSelectField select').val();
+var getSelectedCheckPointId = () => $('.js-locationSelectField select').val();
 $('.js-zoneSelectField select').on('change', function () {
-    selectedZoneId = $(this).val();
-    if (selectedTrigger) {
-        selectedTrigger.setZoneId(selectedZoneId);
-        checkToUpdateEntity(selectedTrigger);
-    }
+    var zoneId = $(this).val();
+    if (currentBrush.onSelectZone) currentBrush.onSelectZone(zoneId);
+    requestZoneData(zoneId);
+    // If we don't do this, the select will be focused and catch keyboard input
+    // which interferes with keyboard gameplay.
+    $(this).blur();
 });
+$('.js-locationSelectField select').on('change', function () {
+    // If we don't do this, the select will be focused and catch keyboard input
+    // which interferes with keyboard gameplay.
+    $(this).blur();
+    updateLocationXAndYFields();
+    onUpdateLocation();
+});
+$('.js-locationSelectField .js-x, .js-locationSelectField .js-y').on('change', () => {
+    $('.js-locationSelectField select').val('custom');
+    onUpdateLocation();
+});
+var onUpdateLocation = () => {
+    if (currentBrush.onSelectLocation) {
+        currentBrush.onSelectLocation(
+            getSelectedCheckPointId(),
+            Number($('.js-locationSelectField .js-x').val()),
+            Number($('.js-locationSelectField .js-y').val()),
+        );
+    }
+}
+
+var updateLocationXAndYFields = () => {
+    var currentZone = loadedZonesById[$('.js-zoneSelectField select').val()];
+    if (!currentZone) return;
+    var checkPoint = _.find(currentZone.entities, {id: $('.js-locationSelectField select').val()});
+    if (!checkPoint) return;
+    $('.js-locationSelectField .js-x').val(checkPoint.x);
+    $('.js-locationSelectField .js-y').val(checkPoint.y);
+}

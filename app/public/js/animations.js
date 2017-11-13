@@ -41,3 +41,5 @@ var allHauntedMaskFrames = rectangleToFrames(new Rectangle(0, 0, 56, 48), requir
 var hauntedMaskAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
 var hauntedMaskSmokePlume = {frames: allHauntedMaskFrames.slice(5, 11)};
 
+// Get the current frame for a given set of frames assuming that it is looping at fps based on now().
+var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
