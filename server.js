@@ -240,7 +240,7 @@ wsServer.on('request', function(request) {
             } while (players[publicId]);
             privateIdMap[privateId] = publicId;
             var playersInZone = _.pickBy(players, player => player.zoneId === data.player.zoneId);
-            var usedColors = _.values(playersInZone).map(player => player.color);
+            var usedColors = _.values(players).map(player => player.color);
 
             players[publicId] = {
                 id: publicId,
