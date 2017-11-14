@@ -7,6 +7,7 @@ var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
 var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
 var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
+var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -93,10 +94,13 @@ SimpleSprite.localFields = ['target'];
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
+    // if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) console.log(localSprite);   // WRONG: leaving this line in, commented out, until the target situation is sorted out.
     // Assume the target is the mainCharacter if it isn't set yet.
-    if (!localSprite.target) {
+    if (!localSprite.target || localSprite.target === {x: 0, y: 0}) {   // object there is default value for LocalSprite.Target. WRONG: WHY TF isn't target getting passed correctly?
         localSprite.target = mainCharacter;
     }
+    // arrgh! nothing else seems to be assigning localSprite.target to mainCharacter
+    localSprite.target = mainCharacter;
     // Remove a spawned sprite if it's spawner was removed.
     if (localSprite.spawner && !localSprites.includes(localSprite.spawner)) {
         localSprite.shouldBeRemoved = true;
@@ -205,7 +209,7 @@ function updateLocalSprite(localSprite) {
     // haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
-        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, mainCharacter)) { // WRONG: mainCharacter should be localSprite.target. Don't know why that's not working.
+        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
             // aggroed
             // smoke plumes come closer together when aggroed
             localSprite.msBetweenSmokePlumes = 1100;
@@ -248,14 +252,27 @@ function updateLocalSprite(localSprite) {
             localSprite.noSmokePlumeUntil = now() + localSprite.msBetweenSmokePlumes;
         }
         // on collision with target
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   // WRONG: mainCharacter should be localSprite.target. Don't know why that's not working.
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(localSprite.target))) {
             damageSprite(localSprite.target, 1);
         }
     }
     // end haunted mask update
+    
+    // wraith hound update
+    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
+        if (localSprite.noTrailUntil <= now()) {
+            var houndFps = 1000 / localSprite.msBetweenFrames;
+            addEffectWraithHoundGhostTrail(localSprite.x, localSprite.y, localSprite.vx * 0.75, localSprite.vy * 0.75, localSprite.yScale, houndFps); // WRONG: this needs to invert its xScale when it's spawned while the hound is moving left.
+            msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
+            noTrailUntil = now() + msBetweenTrails;
+        }
+        localSprite.vy++;
+        console.log(localSprite);
+    }
+    // end wraith hound update
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
         }
@@ -286,7 +303,11 @@ function updateLocalSprite(localSprite) {
             localSprite.shouldBeRemoved = true;
         }
     }
-
+    // fades out
+    // WRONG: This code needs to fade an animation out over its life span.
+    /*if (localSprite.fadesOut) {
+        localSprite.alpha = 
+    }*/
     if (localSprite.framesToLive && --localSprite.framesToLive <= 0) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
@@ -373,12 +394,37 @@ function getCreatureHauntedMask(x, y, target) {
     hauntedMaskCreature.msBetweenFrames = 230;
     hauntedMaskCreature.aggroRadius = 270;
     hauntedMaskCreature.target = target;
-    console.log(mainCharacter);
     hauntedMaskCreature.maxSpeedPeaceful = 0.5;
     hauntedMaskCreature.maxSpeedAggroed = 1.75;
     hauntedMaskCreature.noSmokePlumeUntil = now();
     hauntedMaskCreature.noDirectionChangeUntil = now();
     return hauntedMaskCreature;
+}
+
+function getCreatureWraithHound(x, y, target) {
+    hitBox = new Rectangle(-35, -30, 70, 30);
+    xScale = yScale = 1.8;
+    var wraithHoundCreature = new SimpleSprite(wraithHoundRunningAnimation, x, y, 0, 0, xScale, yScale);
+    wraithHoundCreature.type = CREATURE_TYPE_WRAITH_HOUND;
+    wraithHoundCreature.hitBox = hitBox;
+    wraithHoundCreature.facesDirectionOfAcceleration = true;
+    wraithHoundCreature.dx = 0; // this creature definitely needs to use dx to move, and have inertia
+    wraithHoundCreature.dy = 0;
+    wraithHoundCreature.pacing = true;  // temporary until movement code is worked out.
+    wraithHoundCreature.acceleration = 0.15;
+    wraithHoundCreature.collides = true;
+    wraithHoundCreature.framesToLive = 32767;
+    wraithHoundCreature.msBetweenFrames = 130;
+    wraithHoundCreature.aggroRadius = 270;
+    wraithHoundCreature.target = target;
+    wraithHoundCreature.xSpeed = 2;   // just using this so that pacing will work.
+    wraithHoundCreature.vx = wraithHoundCreature.xSpeed;
+    wraithHoundCreature.maxSpeedPeaceful = 0.5;
+    wraithHoundCreature.maxSpeedAggroed = 1.75;
+    wraithHoundCreature.noTrailUntil = now();
+    wraithHoundCreature.msBetweenTrailsScale = 800;
+    wraithHoundCreature.noDirectionChangeUntil = now();
+    return wraithHoundCreature;
 }
 
 function getCreaturePacingFireball(creatureType) {
