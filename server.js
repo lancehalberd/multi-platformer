@@ -57,8 +57,9 @@ var writeZoneToFile = (zoneId, map) => {
     });
 };
 
-var readZoneFromFile = (zoneId, width, height) => {
+var readZoneFromFile = (zoneId, width, height, sourceId) => {
     if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
+        if (sourceId) return readZoneFromFile(sourceId);
         return makeEmptyMap(width, height);
     }
     var map = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
@@ -90,9 +91,9 @@ var readZoneFromFile = (zoneId, width, height) => {
     }
 }, 10000); */
 
-var getZone = (zoneId, width, height) => {
+var getZone = (zoneId, width, height, sourceId) => {
     if (!zonesInMemory[zoneId]) {
-        zonesInMemory[zoneId] = readZoneFromFile(zoneId, width, height);
+        zonesInMemory[zoneId] = readZoneFromFile(zoneId, width, height, sourceId);
         zonesInMemory[zoneId].id = zoneId;
         // Remove zones once we hit 20. This may remove an active zone,
         // but active zones will be reloaded so only the inactive ones
@@ -120,8 +121,9 @@ app.get('/zones/:zoneId', (request, response, next) => {
     // If w/h are specified the first time a map is requested, it will spawn with the given width+height.
     var width = parseInt(request.query.w);
     var height = parseInt(request.query.h);
-    if (!isNaN(width) && !isNaN(height)) {
-        var map = getZone(zoneId, width, height);
+    var sourceId = request.query.s;
+    if (!(isNaN(width) || isNaN(height)) || sourceId) {
+        var map = getZone(zoneId, width || 0, height || 0, sourceId);
     }
     var indexView = require('./app/views/index.js');
     lastActiveZoneId = zoneId;
