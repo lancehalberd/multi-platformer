@@ -74,7 +74,7 @@ const selectBrush = (newBrush) => {
     $('.js-locationSelectField').toggle(currentBrush && !!currentBrush.onSelectLocation);
 
     // Unselect the current entity if it doesn't match the new brush.
-    if (selectedTrigger && selectedTrigger.brushClass !== currentBrush.constructor.name) {
+    if (selectedTrigger && selectedTrigger.brushClass && selectedTrigger.brushClass !== currentBrush.constructor.name) {
         selectedTrigger = null;
     }
     if (selectedTrigger && selectedTrigger.zoneId) {

@@ -43,8 +43,18 @@ setInterval(() => {
         if (isKeyDown(KEY_RIGHT)) cameraX += cameraSpeed;
     }
 
-    cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
-    cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
+    // Normally we don't let the camera go past the edges of the map, but when the map is too
+    // short or narrow to do this, we center the map vertically/horizontally.
+    if (areaRectangle.width >= mainCanvas.width) {
+        cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
+    } else {
+        cameraX = -(mainCanvas.width - areaRectangle.width) / 2;
+    }
+    if (areaRectangle.height >= mainCanvas.height) {
+        cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
+    } else {
+        cameraY = -(mainCanvas.height - areaRectangle.height) / 2;
+    }
 
     // If the character is moving or was moving at last update, send an update to inform the server.
     if (mainCharacter.x !== mainCharacter.lastX || mainCharacter.y !== mainCharacter.lastY || mainCharacterWasMoving ||

@@ -15,10 +15,13 @@ var render = () => {
     var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
     var target = bgSourceRectangle.scale(0.6);
     var xPercent = (cameraX / (Math.max(areaRectangle.width, target.width) - mainCanvas.width)) || 0;
+    if (areaRectangle.width < mainCanvas.width) xPercent = 0;
     var yPercent = (cameraY / (Math.max(areaRectangle.height, target.height) - mainCanvas.height)) || 0;
+    if (areaRectangle.height < mainCanvas.height) yPercent = 0;
     target = target.moveTo(- xPercent * (target.width - mainCanvas.width), - yPercent * (target.height - mainCanvas.height));
 
     var taggedPlayer = TagGame.getTaggedPlayer();
+    draw.fillRectangle(mainContext, new Rectangle(0, 0, mainCanvas.width, mainCanvas.height), 0);
     //if (taggedPlayer) {
     //    draw.tintedImage(mainContext, requireImage('/gfx/backgrounds/yellowMountains.png'), taggedPlayer.color, .5, bgSourceRectangle, target)
     //} else {
