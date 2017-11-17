@@ -61,7 +61,7 @@ class SimpleSprite {
         this.originalY = y; //for preventing bobbing from making the sprite's y position drift over time. Should probably change bob implementation to eliminate this.
     }
 
-    getHitBox() {
+    getOriginalHitBox() {
         if (this.hitBox) return this.hitBox;
         var frame = this.animation.frames[this.currentFrame];
         if (!frame) return null;
@@ -70,6 +70,17 @@ class SimpleSprite {
         // which is where we draw sprites to as well.
         var hitBox = frame.hitBox || frame;
         return hitBox.moveTo(-hitBox.width / 2, -hitBox.height);
+    }
+
+    getHitBox() {
+        var hitBox = this.getOriginalHitBox();
+        if ((this.scale || 1) !== 1 || (this.xScale || 1) !== 1 || (this.yScale || 1) !== 1) {
+            hitBox = hitBox.stretch(
+                Math.abs((this.scale || 1) * (this.xScale || 1)),
+                Math.abs((this.scale || 1) * (this.yScale || 1))
+            );
+        }
+        return hitBox;
     }
 
     update() {
@@ -154,8 +165,10 @@ function updateLocalSprite(localSprite) {
             localSprite.contrailTimer++;
         }
     }
-    localSprite.x += localSprite.vx;
-    localSprite.y += localSprite.vy;
+    if (!localSprite.collides) {
+        localSprite.x += localSprite.vx;
+        localSprite.y += localSprite.vy;
+    }
     //max speed
     if (localSprite.vx < 0) {
         localSprite.vx = Math.max(-localSprite.maxSpeed, localSprite.vx);
@@ -267,7 +280,6 @@ function updateLocalSprite(localSprite) {
             noTrailUntil = now() + msBetweenTrails;
         }
         localSprite.vy++;
-        console.log(localSprite);
     }
     // end wraith hound update
 
@@ -378,19 +390,21 @@ function addCreature(x, y, target, creatureType) {
     }
 }
 
-function getCreatureHauntedMask(x, y, target) {
-    hitBox = new Rectangle(-18, -52, 36, 44);
+function getCreatureHauntedMask(x, y) {
     xScale = yScale = 1.2;
-    var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
+    var animation = {frames: hauntedMaskAnimation.frames.map( frame => {
+        // This defines the hitBox inside the frame from the top left corner of that frame.
+        frame.hitBox = new Rectangle(15, 4, 28, 38);
+        return frame;
+    })}
+    var hauntedMaskCreature = new SimpleSprite(animation, x, y, 0, 0, xScale, yScale);
     hauntedMaskCreature.type = CREATURE_TYPE_HAUNTED_MASK;
-    hauntedMaskCreature.hitBox = hitBox;
     hauntedMaskCreature.facesDirectionOfMovement = true;
     hauntedMaskCreature.dx = 0;
     hauntedMaskCreature.dy = 0;
     hauntedMaskCreature.acceleration = 0.3;
     hauntedMaskCreature.collides = true;
     hauntedMaskCreature.bobs = false;   //should be true, but I don't think the bobbing code will work with a bunch of other creature movement code as it is right now.
-    hauntedMaskCreature.framesToLive = 32767;
     hauntedMaskCreature.msBetweenFrames = 230;
     hauntedMaskCreature.aggroRadius = 270;
     hauntedMaskCreature.maxSpeedPeaceful = 0.5;
@@ -415,6 +429,7 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.framesToLive = 32767;
     wraithHoundCreature.msBetweenFrames = 130;
     wraithHoundCreature.aggroRadius = 270;
+    wraithHoundCreature.ySpeed = 0;
     wraithHoundCreature.xSpeed = 2;   // just using this so that pacing will work.
     wraithHoundCreature.vx = wraithHoundCreature.xSpeed;
     wraithHoundCreature.maxSpeedPeaceful = 0.5;
