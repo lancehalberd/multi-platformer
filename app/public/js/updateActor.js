@@ -440,7 +440,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
                         sprite.grounded = true;
                         sprite.currentNumberOfJumps = 0;
                     }
-                    sprite.y = bottomRow * currentMap.tileSize;
+                    sprite.y = bottomRow * currentMap.tileSize - hitBox.height - getLocalSpriteHitBox(sprite).top;
                     break;
                 case TILE_LEFT:
                     if (stop) sprite.vx = 0;
