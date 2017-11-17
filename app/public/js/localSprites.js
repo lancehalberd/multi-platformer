@@ -78,7 +78,7 @@ class SimpleSprite {
             hitBox = hitBox.stretch(
                 Math.abs((this.scale || 1) * (this.xScale || 1)),
                 Math.abs((this.scale || 1) * (this.yScale || 1))
-            );
+            ).snap();
         }
         return hitBox;
     }
