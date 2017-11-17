@@ -7,6 +7,7 @@ var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
 var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
 var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
+var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -32,6 +33,7 @@ class SimpleSprite {
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.facesDirectionOfMovement = false;
+        this.facesDirectionOfAcceleration = false;
         this.currentFrame = 0;
         this.framesToLive = 0;
         this.msBetweenFrames = 200;
@@ -92,10 +94,13 @@ SimpleSprite.localFields = ['target'];
 // updating the current frame
 // removing the object
 function updateLocalSprite(localSprite) {
+    // if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) console.log(localSprite);   // WRONG: leaving this line in, commented out, until the target situation is sorted out.
     // Assume the target is the mainCharacter if it isn't set yet.
-    if (!localSprite.target) {
+    if (!localSprite.target || localSprite.target === {x: 0, y: 0}) {   // object there is default value for LocalSprite.Target. WRONG: WHY TF isn't target getting passed correctly?
         localSprite.target = mainCharacter;
     }
+    // arrgh! nothing else seems to be assigning localSprite.target to mainCharacter
+    localSprite.target = mainCharacter;
     // Remove a spawned sprite if it's spawner was removed.
     if (localSprite.spawner && !localSprites.includes(localSprite.spawner)) {
         localSprite.shouldBeRemoved = true;
@@ -197,7 +202,11 @@ function updateLocalSprite(localSprite) {
         if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
     }
-
+    if (localSprite.facesDirectionOfAcceleration) {
+        if (localSprite.dx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
+        if (localSprite.dx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
+    }
+    // haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
         if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
@@ -247,9 +256,23 @@ function updateLocalSprite(localSprite) {
             damageSprite(localSprite.target, 1);
         }
     }
+    // end haunted mask update
+
+    // wraith hound update
+    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
+        if (localSprite.noTrailUntil <= now()) {
+            var houndFps = 1000 / localSprite.msBetweenFrames;
+            addEffectWraithHoundGhostTrail(localSprite.x, localSprite.y, localSprite.vx * 0.75, localSprite.vy * 0.75, localSprite.yScale, houndFps); // WRONG: this needs to invert its xScale when it's spawned while the hound is moving left.
+            msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
+            noTrailUntil = now() + msBetweenTrails;
+        }
+        localSprite.vy++;
+        console.log(localSprite);
+    }
+    // end wraith hound update
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {     //when I changed "localSprite.hitBox" to "getGlobalSpriteHitBox(localSprite), this stopped working.
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
         }
@@ -260,6 +283,7 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
+
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
@@ -274,12 +298,16 @@ function updateLocalSprite(localSprite) {
     if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   //WRONG: "mainCharacter" should be localSprite.target
             mainCharacter.health--;
             localSprite.shouldBeRemoved = true;
         }
     }
-
+    // fades out
+    // WRONG: This code needs to fade an animation out over its life span.
+    /*if (localSprite.fadesOut) {
+        localSprite.alpha =
+    }*/
     if (localSprite.framesToLive && --localSprite.framesToLive <= 0) {
         // This flag will be used in the update loop to remove this sprite from the list of localSprites.
         localSprite.shouldBeRemoved = true;
@@ -350,7 +378,7 @@ function addCreature(x, y, target, creatureType) {
     }
 }
 
-function getCreatureHauntedMask(x, y) {
+function getCreatureHauntedMask(x, y, target) {
     hitBox = new Rectangle(-18, -52, 36, 44);
     xScale = yScale = 1.2;
     var hauntedMaskCreature = new SimpleSprite(hauntedMaskAnimation, x, y, 0, 0, xScale, yScale);
@@ -372,8 +400,33 @@ function getCreatureHauntedMask(x, y) {
     return hauntedMaskCreature;
 }
 
+function getCreatureWraithHound(x, y) {
+    hitBox = new Rectangle(-35, -30, 70, 30);
+    xScale = yScale = 1.8;
+    var wraithHoundCreature = new SimpleSprite(wraithHoundRunningAnimation, x, y, 0, 0, xScale, yScale);
+    wraithHoundCreature.type = CREATURE_TYPE_WRAITH_HOUND;
+    wraithHoundCreature.hitBox = hitBox;
+    wraithHoundCreature.facesDirectionOfAcceleration = true;
+    wraithHoundCreature.dx = 0; // this creature definitely needs to use dx to move, and have inertia
+    wraithHoundCreature.dy = 0;
+    wraithHoundCreature.pacing = true;  // temporary until movement code is worked out.
+    wraithHoundCreature.acceleration = 0.15;
+    wraithHoundCreature.collides = true;
+    wraithHoundCreature.framesToLive = 32767;
+    wraithHoundCreature.msBetweenFrames = 130;
+    wraithHoundCreature.aggroRadius = 270;
+    wraithHoundCreature.xSpeed = 2;   // just using this so that pacing will work.
+    wraithHoundCreature.vx = wraithHoundCreature.xSpeed;
+    wraithHoundCreature.maxSpeedPeaceful = 0.5;
+    wraithHoundCreature.maxSpeedAggroed = 1.75;
+    wraithHoundCreature.noTrailUntil = now();
+    wraithHoundCreature.msBetweenTrailsScale = 800;
+    wraithHoundCreature.noDirectionChangeUntil = now();
+    return wraithHoundCreature;
+}
+
 function getCreaturePacingFireball(creatureType) {
-    var xScale = yScale = 1;
+    var xScale = yScale = 1.15;
     var pacingFireballSprite = new SimpleSprite(fireballAnimation, 0, 0, 0, 0, xScale, yScale);
     pacingFireballSprite.type = creatureType;
     pacingFireballSprite.collides = true;

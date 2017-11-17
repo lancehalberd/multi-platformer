@@ -10,6 +10,7 @@ var EFFECT_TELEPORTATION_SPARKLES = 'teleportationEffect';
 var EFFECT_WINKOUT = 'winkoutEffect';
 var EFFECT_JUMP_WIND = 'jumpWindEffect';
 var EFFECT_HAUNTED_MASK_SMOKE = 'hauntedMaskContrailSmoke';
+var EFFECT_WRAITH_HOUND_GHOST_TRAIL = 'wraithHoundGhostTrail';
 
 class SimpleAnimation {
 
@@ -135,4 +136,18 @@ function addEffectHauntedMaskSmoke(x, y, vx, vy, scale, animationSpeedInFPS) {
     //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
     maskSmoke.type = EFFECT_HAUNTED_MASK_SMOKE;
     localSprites.push(maskSmoke);
+}
+function addEffectWraithHoundGhostTrail(x, y, vx, vy, scale, animationSpeedInFPS) {
+    var sourceRectangle = new Rectangle(0, 0, 80, 40);
+    // scale the animation
+    var target = sourceRectangle.scale(scale);
+    // x, y coords are given as the middle of the character's 'feet'. The smoke should spawn
+    // at the back of the mask, so we adjust the target rectangle accordingly.
+    var houndTrail = new SimpleMovingAnimation(wraithHoundRunningGhostTrailAnimation, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy);
+    //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    houndTrail.type = EFFECT_WRAITH_HOUND_GHOST_TRAIL;
+    houndTrail.fadesOut = true;
+    // createdAt set to 0 hopefully synchronizing the ghost trail animations with the main running animation.
+    houndTrail.createdAt = 0;
+    localSprites.push(houndTrail);
 }

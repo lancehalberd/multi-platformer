@@ -5,7 +5,8 @@ var fireballContrailAImage = requireImage('/gfx/fireball/fireballContrailA.png')
     creatureAdorabilisImage = requireImage('/gfx/creatures/creatureAdorabilis.png'),
     effectJumpDustImage = requireImage('/gfx/effects/effectJumpDust.png'),
     effectRunDustImage = requireImage('/gfx/effects/effectRunDust.png'),
-	creatureHauntedMaskImage = requireImage('/gfx/creatures/creatureHauntedMask.png');
+	creatureHauntedMaskImage = requireImage('/gfx/creatures/creatureHauntedMask.png'),
+	creatureWraithHoundImage = requireImage('/gfx/creatures/creatureWraithHound.png');
 
 // This needs to be defined near the top of this file since several other animations reference it.
 var fireballAnimation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), requireImage('/gfx/fireball/fireballB.png'), 5)};
@@ -43,3 +44,8 @@ var hauntedMaskSmokePlume = {frames: allHauntedMaskFrames.slice(5, 11)};
 
 // Get the current frame for a given set of frames assuming that it is looping at fps based on now().
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
+
+// wraith hound animations
+var allWraithHoundFrames = rectangleToFrames(new Rectangle(0, 0, 80, 40), requireImage('/gfx/creatures/creatureWraithHound.png'), 16);
+var wraithHoundRunningAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundRunningGhostTrailAnimation = {frames: allWraithHoundFrames.slice(8, 16)};
