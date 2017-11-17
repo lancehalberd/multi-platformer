@@ -18,6 +18,11 @@ class Rectangle {
         );
     }
 
+    // Image needs to be loaded already.
+    static defineFromImage(image) {
+        return new Rectangle(0, 0, image.width, image.height);
+    }
+
     constructor(left = 0, top = 0, width = 0, height = 0) {
         this.left = left;
         this.top = top;

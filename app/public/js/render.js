@@ -46,7 +46,11 @@ var render = () => {
         sprite.render(sprite);
     }
     mainContext.restore();
-    renderEditor();
+    if (isEditing) {
+        renderEditor();
+        window.requestAnimationFrame(render);
+        return;
+    }
 
     // Draw HUD elements here like the life display for the main character.
     mainContext.save();

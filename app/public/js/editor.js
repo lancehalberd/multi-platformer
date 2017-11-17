@@ -5,6 +5,9 @@ const updateEditor = () => {
         toggleEditing();
     }
     if (!isEditing) return;
+    if (selectingTileGraphic) {
+        return;
+    }
     if (isKeyDown(KEY_SHIFT) && mouseDown) {
         var pixelCoords = getPixelMouseCoords();
         mainCharacter.x = pixelCoords[0];
@@ -72,6 +75,13 @@ const selectBrush = (newBrush) => {
     currentBrush = newBrush;
     $('.js-zoneSelectField').toggle(currentBrush && !!currentBrush.onSelectZone);
     $('.js-locationSelectField').toggle(currentBrush && !!currentBrush.onSelectLocation);
+    if (!(currentBrush instanceof TileBrush) || !currentBrush.tileSource) {
+        selectingTileGraphic = false;
+        $('.js-tileSourceField select').toggle(false);
+    } else {
+        $('.js-tileSourceField select').toggle(true);
+        $('.js-tileSourceField select').val(currentBrush.tileSource && currentBrush.tileSource.image);
+    }
 
     // Unselect the current entity if it doesn't match the new brush.
     if (selectedTrigger && selectedTrigger.brushClass && selectedTrigger.brushClass !== currentBrush.constructor.name) {
@@ -136,6 +146,26 @@ const renderEditor = () => {
     draw.fillRectangle(previewContext, previewTarget, 'white');
     currentBrush.renderHUD(previewContext, previewTarget);
     previewContext.restore();
+    if (selectingTileGraphic) {
+        var tileSourceImage = requireImage(getSelectedTileSource());
+        mainContext.save();
+        mainContext.globalAlpha = .8;
+        draw.fillRectangle(mainContext, new Rectangle(0, 0, mainCanvas.width, mainCanvas.height), 'white');
+        mainContext.globalAlpha = 1;
+        var scale = Math.min(3, mainCanvas.width / tileSourceImage.width, mainCanvas.height / tileSourceImage.height);
+        mainContext.scale(scale, scale);
+        var imageRectangle = Rectangle.defineFromImage(tileSourceImage);
+        //draw.fillRectangle(mainContext, imageRectangle, 'white');
+        draw.image(mainContext, tileSourceImage, imageRectangle, imageRectangle);
+        if (currentBrush.tileSource) {
+            var x = currentBrush.tileSource.x;
+            var y = currentBrush.tileSource.y;
+            var size = currentBrush.tileSource.size;
+            mainContext.lineWidth = 2;
+            draw.strokeRectangle(mainContext, new Rectangle(x, y, 1, 1).scale(size), 'red');
+        }
+        mainContext.restore();
+    }
 };
 
 const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
@@ -687,11 +717,12 @@ var selectTileUnderMouse = () => {
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
 
+var tileSources = [twilightTiles, customTiles, mansionTiles, desertTiles32];
 // Make sure all brush tile sets are preloaded.
-requireImage(twilightTiles);
-requireImage(customTiles);
-requireImage(mansionTiles);
-requireImage(desertTiles32);
+tileSources.forEach(tileSource => {
+    requireImage(tileSource);
+    $('.js-tileSourceField select').append($('<option>').val(tileSource).text(tileSource));
+});
 
 var brushList = [
     new ObjectBrush(stretchNine),
@@ -779,6 +810,7 @@ $('.js-mainGame').on('mousewheel', e => {
 
 var getSelectedZoneId = () => $('.js-zoneSelectField select').val();
 var getSelectedCheckPointId = () => $('.js-locationSelectField select').val();
+var getSelectedTileSource = () => $('.js-tileSourceField select').val();
 $('.js-zoneSelectField select').on('change', function () {
     var zoneId = $(this).val();
     if (currentBrush.onSelectZone) currentBrush.onSelectZone(zoneId);
@@ -797,6 +829,12 @@ $('.js-locationSelectField select').on('change', function () {
 $('.js-locationSelectField .js-x, .js-locationSelectField .js-y').on('change', () => {
     $('.js-locationSelectField select').val('custom');
     onUpdateLocation();
+});
+var selectingTileGraphic = false;
+$('.js-previewField .js-canvas').on('click', () => {
+    if (currentBrush instanceof TileBrush) {
+        selectingTileGraphic = !selectingTileGraphic;
+    }
 });
 var updateSaveButton = () => {
     $('.js-saveField button').toggle(currentMap.isDirty);
