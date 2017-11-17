@@ -415,7 +415,7 @@ function getCreatureHauntedMask(x, y) {
 }
 
 function getCreatureWraithHound(x, y) {
-    hitBox = new Rectangle(-35, -30, 70, 30);
+    hitBox = new Rectangle(-35, -33, 70, 33);
     xScale = yScale = 1.8;
     var wraithHoundCreature = new SimpleSprite(wraithHoundRunningAnimation, x, y, 0, 0, xScale, yScale);
     wraithHoundCreature.type = CREATURE_TYPE_WRAITH_HOUND;

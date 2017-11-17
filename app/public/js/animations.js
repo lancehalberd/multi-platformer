@@ -46,6 +46,6 @@ var hauntedMaskSmokePlume = {frames: allHauntedMaskFrames.slice(5, 11)};
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];
 
 // wraith hound animations
-var allWraithHoundFrames = rectangleToFrames(new Rectangle(0, 0, 80, 40), requireImage('/gfx/creatures/creatureWraithHound.png'), 16);
+var allWraithHoundFrames = rectangleToFrames(new Rectangle(0, 0, 80, 48), requireImage('/gfx/creatures/creatureWraithHound.png'), 16);
 var wraithHoundRunningAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundRunningGhostTrailAnimation = {frames: allWraithHoundFrames.slice(8, 16)};
