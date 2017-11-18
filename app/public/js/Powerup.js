@@ -79,7 +79,7 @@ class AirDashPowerup extends Powerup {
     }
 
     trigger() {
-        mainCharacter.currentActivatablePowerup = POWERUP_TYPE_AIRDASH;
+        mainCharacter.currentActivatableMobilityPowerup = POWERUP_TYPE_AIRDASH;
         return true;
     }
 }
@@ -107,7 +107,7 @@ class SuperJumpPowerup extends Powerup {
     }
 
     trigger() {
-        mainCharacter.currentActivatablePowerup = POWERUP_TYPE_SUPERJUMP;
+        mainCharacter.currentActivatableMobilityPowerup = POWERUP_TYPE_SUPERJUMP;
         return true;
     }
 }

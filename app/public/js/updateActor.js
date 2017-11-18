@@ -322,9 +322,9 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.currentActivatablePowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
+var canCharacterAirDash = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
 
-var canCharacterSuperJump = (character) => character.currentActivatablePowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
+var canCharacterSuperJump = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
 
 
 // Check if a player is touching a trigger that telports it (Door or Teleporter).
@@ -523,6 +523,7 @@ function changeCharacterToAlien(actor) {
 }
 
 function changeCharacterToVictoria(actor) {
+    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIRDASH;
     actor.walkAnimation = characterVictoriaWalkAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
@@ -539,6 +540,28 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
     actor.scale = 1.75;
     actor.type = CHARACTER_VICTORIA;
+}
+
+function changeCharacterToCowbot(actor) {
+    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_SUPERJUMP;
+    actor.walkAnimation = characterCowbotWalkAnimation;
+    actor.attackAnimation = characterCowbotAttackAnimation;
+    actor.hasMovementStartAnimation = false;
+    actor.hasMovementStopAnimation = false;
+    actor.idleAnimation = characterCowbotIdleAnimation;
+    actor.idleAnimationIntermittent = {};
+    actor.idleAnimationLong = {};
+    actor.jumpAnimation = characterCowbotJumpAnimation;
+    actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
+    actor.uncontrolledLandingAnimation = {};
+    actor.msBetweenWalkFrames = 150;
+    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
+    actor.msBetweenIdleFrames = 150;
+    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.scale = 1.5;
+    actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
+    //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+    actor.type = CHARACTER_COWBOT;
 }
 
 function changeCharacterToMystery(actor) {
@@ -558,25 +581,4 @@ function changeCharacterToMystery(actor) {
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
     actor.scale = 2;
     actor.type = CHARACTER_MYSTERY;
-}
-
-function changeCharacterToCowbot(actor) {
-    actor.walkAnimation = characterCowbotWalkAnimation;
-    actor.attackAnimation = characterCowbotAttackAnimation;
-    actor.hasMovementStartAnimation = false;
-    actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterCowbotIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterCowbotJumpAnimation;
-    actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
-    actor.uncontrolledLandingAnimation = {};
-    actor.msBetweenWalkFrames = 150;
-    actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
-    actor.msBetweenIdleFrames = 150;
-    actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-    actor.scale = 1.5;
-    actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
-    //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
-    actor.type = CHARACTER_COWBOT;
 }

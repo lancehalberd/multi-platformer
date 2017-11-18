@@ -20,6 +20,7 @@ var twilightTiles = '/gfx/jetrel/twilight-tiles.png';
 var customTiles = '/gfx/customBlocksA.png';
 var mansionTiles = '/gfx/tiles/tilesMansion.png';
 var desertTiles32 = '/gfx/tiles/tilesDesert32.png';
+var desertTiles16 = '/gfx/tiles/tilesDesert16.png';
 
 var stretchNine = {
     image: twilightTiles,
@@ -100,7 +101,6 @@ var panelStripVertMansion = {
     image: mansionTiles,
     size: 32,
     x: 2, y:0,
-    //properties: TILE_SOLID_ALL,
 };
 
 var floorMansion = {
@@ -240,7 +240,7 @@ var spikesPearCactusDesert32 = {
     size: 32,
     x: 1, y: 0,
     maxWidth: 1,
-    properties: TILE_SOLID_ALL | TILE_DAMAGE_ALL,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP) | (TILE_DAMAGE * TILE_LEFT) | (TILE_DAMAGE * TILE_DOWN)
 };
 
 var spikesPearCactusFlowersDesert32 = {
@@ -256,7 +256,63 @@ var spikesSaguaroCactusDesert32 = {
     size: 32,
     x: 3, y: 0,
     maxWidth: 1,
-    properties: TILE_SOLID_ALL | TILE_DAMAGE_ALL
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP) | (TILE_DAMAGE * TILE_LEFT) | (TILE_DAMAGE * TILE_DOWN)
+};
+
+//////////////////////////////
+// END DESERT TILESET 32x32 //
+//////////////////////////////
+
+//////////////////////////
+// DESERT TILESET 16x16 //
+//////////////////////////
+
+var spikesCactusDesert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 0, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP) | (TILE_DAMAGE * TILE_LEFT) | (TILE_DAMAGE * TILE_DOWN)
+};
+
+var spikesPearCactusDesert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 1, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL | (TILE_DAMAGE * TILE_UP) | (TILE_DAMAGE * TILE_LEFT) | (TILE_DAMAGE * TILE_DOWN)
+};
+
+var stone1Desert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 2, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var stone2Desert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 3, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var stone3Desert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 4, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var stone4Desert16 = {
+    image: desertTiles16,
+    size: 16,
+    x: 5, y: 0,
+    maxWidth: 1,
+    properties: TILE_SOLID_ALL
 };
 
 //////////////////////////////
