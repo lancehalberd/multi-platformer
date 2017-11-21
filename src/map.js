@@ -9,6 +9,8 @@ module.exports = (width = 50, height = 30) => {
     if (width * height > 10000) throw new Error("Maximum tile limit (10,000) exceeded");
     var emptyMap = {
         tileSize: 32,
+        hash: {'0': 0},
+        uniqueTiles: [0],
         width: width,
         height: height,
         composite: [],

@@ -6,8 +6,25 @@ const updateEditor = () => {
     }
     if (!isEditing) return;
     if (selectingTileGraphic) {
+        var selectedCoords;
+        if (mouseDown && (selectedCoords = getTileSelectionCoords())) {
+            var currentTile = currentBrush.getTile();
+            var oldKey = hashObject(currentTile);
+            currentTile.x = selectedCoords[0];
+            currentTile.y = selectedCoords[1];
+            currentTile.image = getSelectedTileSource();
+            currentTile.size = getSelectedTileSourceSize();
+            updateTilePallete(currentMap, oldKey, currentTile);
+            var newKey = hashObject(currentTile);
+            var index = currentMap.hash[newKey];
+            if (index && index < $('.js-localTiles').children().length) {
+                var canvas = $('.js-localTiles').children()[index];
+                updateBrushPreviewElement(canvas, currentBrush);
+            }
+        }
         return;
     }
+    checkToUpdateLocalTiles();
     if (isKeyDown(KEY_SHIFT) && mouseDown) {
         var pixelCoords = getPixelMouseCoords();
         mainCharacter.x = pixelCoords[0];
@@ -39,7 +56,7 @@ const updateEditor = () => {
                             = currentMap.composite[row][column];
                     }
                 }
-                selectBrush(new CloneBrush(cloneTileGrid));
+                selectBrush(new CloneBrush(cloneTileGrid, currentMap));
             }
         }
     }
@@ -52,16 +69,10 @@ const toggleEditing = () => {
     // Populate the brush panel if this is the first time opening the edit panel.
     var $brushList = $('.js-brushSelectField');
     if (!$brushList.children().length) {
+        $brushList.append($tag('div', 'js-localTiles'));
+        $brushList.append($tag('div', 'js-foreignTiles'));
         for (var brush of brushList) {
-            var canvas = createCanvas(32, 32, 'js-brushCanvas');
-            var context = canvas.getContext('2d');
-            context.save();
-            context.translate(16, 16);
-            draw.fillRectangle(context, new Rectangle(-16, -16, 32, 32), 'white');
-            brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
-            context.restore();
-            $brushList.append(canvas);
-            $(canvas).data('brush', brush);
+            $brushList.append(createBrushPreviewElement(brush));
         }
         $brushList.on('click', '.js-brushCanvas', function () {
             selectBrush($(this).data('brush'));
@@ -70,6 +81,33 @@ const toggleEditing = () => {
     selectBrush(currentBrush);
     selectedTrigger = null;
 };
+
+const checkToUpdateLocalTiles = () => {
+    var $localTiles = $('.js-localTiles');
+    if ($localTiles.data('zoneId') !== currentMap.id) {
+        $localTiles.empty();
+    }
+    $localTiles.data('zoneId', currentMap.id);
+    for (var n = $localTiles.children().length; n < currentMap.uniqueTiles.length; n++) {
+        var brush = new TileBrush(n, currentMap);
+        $localTiles.append(createBrushPreviewElement(brush));
+    }
+};
+
+const createBrushPreviewElement = (brush) => {
+    var canvas = createCanvas(32, 32, 'js-brushCanvas');
+    updateBrushPreviewElement(canvas, brush);
+    return canvas;
+};
+const updateBrushPreviewElement = (canvas, brush) => {
+    var context = canvas.getContext('2d');
+    context.save();
+    context.translate(16, 16);
+    draw.fillRectangle(context, new Rectangle(-16, -16, 32, 32), 'white');
+    brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
+    context.restore();
+    $(canvas).data('brush', brush);
+}
 
 const selectBrush = (newBrush) => {
     currentBrush = newBrush;
@@ -152,7 +190,7 @@ const renderEditor = () => {
         mainContext.globalAlpha = .8;
         draw.fillRectangle(mainContext, new Rectangle(0, 0, mainCanvas.width, mainCanvas.height), 'white');
         mainContext.globalAlpha = 1;
-        var scale = Math.min(3, mainCanvas.width / tileSourceImage.width, mainCanvas.height / tileSourceImage.height);
+        var scale = getTileSelectionScale();
         mainContext.scale(scale, scale);
         var imageRectangle = Rectangle.defineFromImage(tileSourceImage);
         //draw.fillRectangle(mainContext, imageRectangle, 'white');
@@ -166,6 +204,21 @@ const renderEditor = () => {
         }
         mainContext.restore();
     }
+};
+
+const getTileSelectionScale = () => {
+    var tileSourceImage = requireImage(getSelectedTileSource());
+    return Math.min(3, mainCanvas.width / tileSourceImage.width, mainCanvas.height / tileSourceImage.height);
+};
+const getTileSelectionCoords = () => {
+    var tileSourceImage = requireImage(getSelectedTileSource());
+    var tileSourceSize = getSelectedTileSourceSize();
+    var scale = getTileSelectionScale();
+    var pixelCoords = getPixelMouseCoords(0, 0);
+    pixelCoords[0] /= scale;
+    pixelCoords[1] /= scale;
+    if (!Rectangle.defineFromImage(tileSourceImage).containsPoint(pixelCoords[0], pixelCoords[1])) return null;
+    return [Math.floor(pixelCoords[0] / tileSourceSize), Math.floor(pixelCoords[1] / tileSourceSize)];
 };
 
 const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
@@ -193,17 +246,14 @@ const getDrawnRectangle = (startCoords, endCoords, mapObject) => {
 // Send tile update only if the brush is different than what is currently on the map.
 var updateTileIfDifferent = (coords, tileSource) => {
     var currentTile = currentMap.composite[coords[1]][coords[0]];
-    var different = currentTile !== tileSource;
-    if (currentTile !== null && tileSource !== null) {
-        different = false;
-        for (var key in tileSource) {
-            if (tileSource[key] !== currentTile[key]) {
-                different = true;
-                break;
-            }
-        }
+    var index = tileSource;
+    if (typeof(tileSource) !== 'number') {
+        var key = hashObject(tileSource);
+        // This will be undefined if the is not found. That's good,
+        // since it won't match the current tile, which is always a number 0-N.
+        index = currentMap.hash[key];
     }
-    if (different) {
+    if (index !== currentTile) {
         sendTileUpdate(tileSource, coords);
     }
 };
@@ -216,15 +266,17 @@ var pointIsInLevel = (x, y) => {
 
 class CloneBrush {
 
-    constructor(tileGrid) {
+    constructor(tileGrid, mapSource) {
         this.tileGrid = tileGrid;
         this.released = true;
+        this.mapSource = mapSource;
     }
 
     forEachTile(coords, callback) {
         for (var row = 0; row < this.tileGrid.length; row++) {
             for (var column = 0; column < this.tileGrid[0].length; column++) {
-                callback(this.tileGrid[row][column], coords[1] + row, coords[0] + column);
+                var tileIndex = this.tileGrid[row][column];
+                callback(this.mapSource.uniqueTiles[tileIndex], coords[1] + row, coords[0] + column);
             }
         }
     }
@@ -435,22 +487,34 @@ var getTileSourceRectangle = tileSource => new Rectangle(tileSource.x, tileSourc
 
 class TileBrush {
 
-    constructor(tileSource) {
+    constructor(tileSource, mapSource) {
         this.tileSource = tileSource;
+        this.mapSource = mapSource;
     }
 
     update() {
         if (mouseDown) {
-            updateTileIfDifferent(getMouseCoords(), this.tileSource);
+            updateTileIfDifferent(getMouseCoords(), this.getTile());
         }
     }
 
+    getTile() {
+        if (typeof this.tileSource === 'number') {
+            // 0 is the only valid numeric tile without a source map, since the source map
+            // contains the mapping of numbers to actual tiles.
+            if (!this.mapSource) return 0;
+            return this.mapSource.uniqueTiles[this.tileSource];
+        }
+        return this.tileSource;
+    }
+
     renderPreview(target) {
-        if (this.tileSource) {
+        var tile = this.getTile();
+        if (tile) {
             mainContext.translate(target.left + currentMap.tileSize / 2, target.top + currentMap.tileSize / 2);
-            mainContext.scale(this.tileSource.xScale, this.tileSource.yScale);
-            draw.image(mainContext, requireImage(this.tileSource.image),
-                getTileSourceRectangle(this.tileSource),
+            mainContext.scale(tile.xScale, tile.yScale);
+            draw.image(mainContext, requireImage(tile.image),
+                getTileSourceRectangle(tile),
                 new Rectangle(-1 / 2, -1 / 2, 1, 1).scale(currentMap.tileSize)
             );
         } else {
@@ -459,9 +523,10 @@ class TileBrush {
     }
 
     renderHUD(context, target) {
-        if (this.tileSource) {
-            context.scale(this.tileSource.xScale || 1, this.tileSource.yScale || 1);
-            draw.image(context, requireImage(this.tileSource.image), getTileSourceRectangle(this.tileSource), target);
+        var tile = this.getTile();
+        if (tile) {
+            context.scale(tile.xScale || 1, tile.yScale || 1);
+            draw.image(context, requireImage(tile.image), getTileSourceRectangle(tile), target);
         } else {
             draw.fillRectangle(context, target, 'white');
         }
@@ -694,16 +759,16 @@ var drawingObjectRectangle;
 
 // Default to drawing an empty tile.
 var currentBrush;
-selectBrush(new TileBrush(null));
-var getMouseCoords = () => {
-    var targetPosition = getPixelMouseCoords();
+selectBrush(new TileBrush(0));
+var getMouseCoords = (dx = cameraX, dy = cameraY) => {
+    var targetPosition = getPixelMouseCoords(dx, dy);
     return [Math.floor(targetPosition[0] / currentMap.tileSize),
             Math.floor(targetPosition[1] / currentMap.tileSize),
     ];
 }
-var getPixelMouseCoords = () => {
+var getPixelMouseCoords = (dx = cameraX, dy = cameraY) => {
     var targetPosition = relativeMousePosition(mainCanvas);
-    return [Math.round(targetPosition[0] + cameraX), Math.round(targetPosition[1] + cameraY)];
+    return [Math.round(targetPosition[0] + dx), Math.round(targetPosition[1] + dy)];
 }
 // Disable context menu on the main canvas
 $('.js-mainCanvas').on('contextmenu', event => {
@@ -712,7 +777,7 @@ $('.js-mainCanvas').on('contextmenu', event => {
 var selectTileUnderMouse = () => {
     var coords = getMouseCoords();
     tileSource = currentMap.composite[coords[1]][coords[0]];
-    selectBrush(new TileBrush(tileSource));
+    selectBrush(new TileBrush(tileSource, currentMap));
 }
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
@@ -721,7 +786,10 @@ var tileSources = [twilightTiles, customTiles, mansionTiles, desertTiles32];
 // Make sure all brush tile sets are preloaded.
 tileSources.forEach(tileSource => {
     requireImage(tileSource);
-    $('.js-tileSourceField select').append($('<option>').val(tileSource).text(tileSource));
+    var $option = $('<option>').val(tileSource).text(tileSource);
+    // We could make this configurable at some point.
+    $option.data('size', 16);
+    $('.js-tileSourceField select').append($option);
 });
 
 var brushList = [
@@ -812,6 +880,7 @@ $('.js-mainGame').on('mousewheel', e => {
 var getSelectedZoneId = () => $('.js-zoneSelectField select').val();
 var getSelectedCheckPointId = () => $('.js-locationSelectField select').val();
 var getSelectedTileSource = () => $('.js-tileSourceField select').val();
+var getSelectedTileSourceSize = () => $('.js-tileSourceField select option:selected').data('size');
 $('.js-zoneSelectField select').on('change', function () {
     var zoneId = $(this).val();
     if (currentBrush.onSelectZone) currentBrush.onSelectZone(zoneId);

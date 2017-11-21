@@ -263,17 +263,16 @@ var spikesSaguaroCactusDesert32 = {
 // END DESERT TILESET 32x32 //
 //////////////////////////////
 
+if (typeof(require) !== 'undefined') {
+    StretchNine = require('./StretchNine.js');
+    var {setMapTile} = require('./convertMapToTileSet.js');
+}
+
 function applyObjectToMap(map, object, coordinates) {
-    if (typeof(module) !== 'undefined') {
-        StretchNine = require('./StretchNine.js');
-    }
     new StretchNine(object, coordinates).applyToMap(map);
 }
 function applyTileToMap(map, tile, position) {
-    if (position[1] < 0 || position[1] >= map.height) return;
-    if (!map.composite[position[1]]) map.composite[position[1]] = [];
-    if (position[0] < 0 || position[0] >= map.width) return;
-    map.composite[position[1]][position[0]] = tile;
+    setMapTile(map, position[1], position[0], tile);
 }
 
 if (typeof(module) !== 'undefined') {
@@ -284,4 +283,3 @@ if (typeof(module) !== 'undefined') {
         applyTileToMap
     };
 }
-

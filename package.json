@@ -25,5 +25,8 @@
     "mustache": "^2.3.0",
     "path": "0.12.7",
     "websocket": "1.0.24"
+  },
+  "devDependencies": {
+    "mocha": "^4.0.1"
   }
 }

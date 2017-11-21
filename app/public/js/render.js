@@ -98,7 +98,7 @@ var drawMap = () => {
         mainContext.save();
         mainContext.translate(currentMap.tileSize * leftColumn + currentMap.tileSize / 2, 0);
         for (var col = leftColumn; col < rightColumn; col++) {
-            var tile = currentMap.composite[row][col];
+            var tile = currentMap.uniqueTiles[currentMap.composite[row][col]];
             if (tile) {
                 var image = requireImage(tile.image);
                 mainContext.save();

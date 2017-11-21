@@ -57,6 +57,7 @@ var writeZoneToFile = (zoneId, map) => {
     });
 };
 
+var {convertMapToTileSet} = require('./app/public/js/convertMapToTileSet.js');
 var readZoneFromFile = (zoneId, width, height, sourceId) => {
     if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
         if (sourceId) return readZoneFromFile(sourceId);
@@ -65,7 +66,7 @@ var readZoneFromFile = (zoneId, width, height, sourceId) => {
     var map = JSON.parse(fs.readFileSync(`data/zones/${zoneId}.json`).toString());
     // Old map files just stored the grid
     if (!map.composite) {
-        return {
+        map = {
             entities: [],
             id: zoneId,
             tileSize: 32,
@@ -75,9 +76,8 @@ var readZoneFromFile = (zoneId, width, height, sourceId) => {
         };
     } else {
         map.id = zoneId;
-        // New map files store all map data.
-        return map;
     }
+    return convertMapToTileSet(map);
 }
 
 // Every ten seconds, write all updated files to disk and mark them as not updated.

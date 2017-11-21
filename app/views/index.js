@@ -24,7 +24,9 @@ exports.getMustacheData = (zoneId) => {
         }
     };
     addScripts([
-        'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'animations', 'tiles', 'main', 'localSprites', 'ttPerson',
+        'utils', 'Rectangle', 'mouse', 'keyboard', 'draw', 'drawSprite', 'images', 'animations',
+        'hashObject', 'convertMapToTileSet',
+        'tiles', 'main', 'localSprites', 'ttPerson',
         'update', 'updateActor', 'render', 'socket', 'StretchNine', 'SimpleAnimation',
         // Entity is currently defined in Trigger.js, so all Entities need to be loaded after it.
         'Trigger', 'Powerup', 'Spawner', 'CheckPoint',

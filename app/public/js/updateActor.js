@@ -301,7 +301,8 @@ function updateActor(actor) {
 }
 
 function isTileX(row, column, property) {
-    return _.get(currentMap.composite, [row, column, 'properties']) & property;
+    var tile = currentMap.uniqueTiles[_.get(currentMap.composite, [row, column])];
+    return tile && (tile.properties & property);
 }
 
 var directionToBoundary = {

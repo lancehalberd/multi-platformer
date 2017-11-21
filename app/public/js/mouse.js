@@ -30,3 +30,9 @@ function isMouseOverElement(element) {
     return relativePosition[0] >= 0 && relativePosition[0] <= $(element).outerWidth()
         && relativePosition[1] >= 0 && relativePosition[1] <= $(element).outerHeight();
 }
+
+function isMouseDown(release = false) {
+    var wasDown = mouseDown;
+    if (release) mouseDown = false;
+    return wasDown;
+}
