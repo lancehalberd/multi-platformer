@@ -29,11 +29,13 @@ class SimpleSprite {
         this.rotation = 0;
         this.rotationPerFrame = 0;
         this.homing = false;
+        this.fleeing = false;
         this.flying = false; //this does two things: non-flying things are affected by gravity; flying things that are homing have homing dy.
         this.noDirectionChangeUntil = now();    // for wandering behavior
         this.wandering = false;
         this.target = null;
         this.homingAcceleration = 0;
+        this.fleeingAcceleration = 0;
         this.maxSpeed = 32767;
         this.maxAcceleration = 3;
         this.collides = false;  //checks for collision with level geometry.
@@ -136,6 +138,18 @@ function updateLocalSprite(localSprite) {
                 // homing only affects vy if sprite is flying
                 //if (!localSprite.dy) localSprite.vy += dy * localSprite.homingAcceleration / magnitude;
                 /*else*/ localSprite.dy += dy * localSprite.homingAcceleration / magnitude;
+            }
+        }
+    }
+    if (localSprite.fleeing) { //fleeing behavior
+        // WRONG I had duplicated this from the homing function, and it said the vars here were already defined. But then, when I deleted their declarations here, it said I was using them out of scope. I just changed their names, but I thought they were in their own scope, or whatever, and I could use the same names for different, local variables. :/
+        var fleeingDx = localSprite.target.x - localSprite.x;
+        var fleeingDy = localSprite.target.y - localSprite.y;
+        var fleeingMagnitude = Math.sqrt(fleeingDx * fleeingDx + fleeingDy * fleeingDy);
+        if (fleeingMagnitude > 0) {
+            localSprite.dx -= fleeingDx * localSprite.fleeingAcceleration / fleeingMagnitude;
+            if (localSprite.flying) {
+                localSprite.dy -= fleeingDy * localSprite.fleeingAcceleration / fleeingMagnitude;
             }
         }
     }
@@ -257,7 +271,7 @@ function updateLocalSprite(localSprite) {
     // acceleration
     localSprite.vx += localSprite.dx;
     localSprite.vy += localSprite.dy;
-    // aggroed or not based on proximity to target
+    // is target inside aggro radius. If so, sets localSprite.targetInAggroRadius to true.
     if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) localSprite.targetInAggroRadius = true;
     else localSprite.targetInAggroRadius = false;
     // wandering behavior
@@ -318,10 +332,10 @@ function updateLocalSprite(localSprite) {
     // end haunted mask update
 
     // wraith hound update
-    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) { 
+    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
         // if target is in aggro radius, hound will stay aggroed for a bit even if target leaves radius
-        if (localSprite.targetInAggroRadius) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
-        if (localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) {
+        if (localSprite.targetInAggroRadius && localSprite.notReadyToAggroUntil <= now()) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
+        if ((localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) && localSprite.notReadyToAggroUntil <= now()) {
             localSprite.animation = localSprite.runningAnimation;
             //aggroed if target is in aggro radius or *has* been in aggro radius recently
             localSprite.facesDirectionOfMovement = false;
@@ -330,7 +344,6 @@ function updateLocalSprite(localSprite) {
             localSprite.homing = true;
             localSprite.maxSpeed = localSprite.maxSpeedAggroed;
             localSprite.chasing = true;
-            //localSprite.animation = localSprite.runningAnimation;
             //localSprite.msBetweenFrames = 90;
             //BROKEN: working on making animation speed scale with vx.
         }
@@ -340,6 +353,7 @@ function updateLocalSprite(localSprite) {
             else localSprite.animation = localSprite.walkingAnimation;
             //peaceful if target is out of aggro radius and has had time to calm down since target last *was* in aggro radius
             localSprite.homing = false;
+            localSprite.fleeing = false;
             if (!localSprite.chasing) { // if is done chasing (i.e. de-aggroed and has slowed down, then wanders.
                 //localSprite.facesDirectionOfAcceleration = true;
                 localSprite.wandering = true;
@@ -379,7 +393,23 @@ function updateLocalSprite(localSprite) {
             msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
             if (localSprite.chasing) localSprite.noTrailUntil = now() + msBetweenTrails;
             else localSprite.noTrailUntil = now() + (msBetweenTrails / 1.5);
-            console.log('hey');
+            console.log('wraith hound trail spawned'); // BROKEN this is happening once, but should happen much.
+        }
+        // on collision with player
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target) && localSprite.notReadyToAttackUntil <= now()) {
+            var target = localSprite.target,
+                minKnockBackMagnitude = 23;
+            damageSprite(target, 1);
+            if (localSprite.vx > 0) target.vx += Math.max(localSprite.vx * 0.75, minKnockBackMagnitude);
+            else target.vx += Math.min(localSprite.vx * 0.75, -minKnockBackMagnitude);
+            target.vy -= 6;
+            target.knockedDown = true;
+            // cooldown before creature can attack or aggro again
+            localSprite.notReadyToAttackUntil = now() + localSprite.attackCooldown;
+            localSprite.notReadyToAggroUntil = now() + localSprite.aggroCooldown;
+            // hit-and-run behavior
+            localSprite.homing = false;
+            localSprite.fleeing = true;
         }
     }
     // end wraith hound update
@@ -396,7 +426,7 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
+        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) { //on collision with non-invulnerable player
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
             mainCharacter.vy = -15; //player pops upward if hit
@@ -506,6 +536,7 @@ function getCreatureHauntedMask(x, y) {
     hauntedMaskCreature.dx = 0;
     hauntedMaskCreature.dy = 0;
     hauntedMaskCreature.homingAcceleration = 0.3;
+    hauntedMaskCreature.fleeingAcceleration = 0.3;
     hauntedMaskCreature.msBetweenWanderingDirectionChangeMin = 750;
     hauntedMaskCreature.msBetweenWanderingDirectionChangeMax = 3000;
     hauntedMaskCreature.wanderingAccelerationXScale = 0.33;
@@ -532,8 +563,8 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.walkingAnimation = wraithHoundWalkingAnimation;
     wraithHoundCreature.jumpingAnimation = wraithHoundJumpingAnimation;
     wraithHoundCreature.airborneAnimation = wraithHoundAirborneAnimation;
-    wraithHoundCreature.knockDownAnimation = wraithHoundKnockDownAnimation;
-    wraithHoundCreature.groundedAnimation = wraithHoundGroundedAnimation;
+    wraithHoundCreature.knockedDownAnimation = wraithHoundKnockedDownAnimation;
+    wraithHoundCreature.launchedAnimation = wraithHoundLaunchedAnimation;
     wraithHoundCreature.standingUpAnimation = wraithHoundStandingUpAnimation;
     wraithHoundCreature.attackAnimation = wraithHoundAttackAnimation;
     wraithHoundCreature.aggroedButTargetInaccessibleAnimation = wraithHoundBarkingAnimation;
@@ -546,6 +577,7 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.msBetweenWanderingDirectionChangeMax = 4500;
     wraithHoundCreature.wanderingAccelerationXScale = 0.33;
     wraithHoundCreature.homingAcceleration = 0.15;
+    wraithHoundCreature.fleeingAcceleration = 0.15;
     wraithHoundCreature.collides = true;
     wraithHoundCreature.framesToLive = 32767;
     wraithHoundCreature.msBetweenFrames = 90;
@@ -563,6 +595,10 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.msBetweenRunDustPlumes = 250;
     wraithHoundCreature.runDustSpeed = 3.5;
     wraithHoundCreature.msBetweenSlippingRunDustPlumes = 125;
+    wraithHoundCreature.notReadyToAggroUntil = now();
+    wraithHoundCreature.notReadyToAttackUntil = now();
+    wraithHoundCreature.attackCooldown = 5000; // time in ms after having damaged player before hound can attack again
+    wraithHoundCreature.aggroCooldown = wraithHoundCreature.attackCoolDown; // time in ms after having damaged player before hound will aggro again
     return wraithHoundCreature;
 }
 
@@ -632,7 +668,7 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
         particle.vy = -3;
         localSprites.push(particle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
     }
-    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //I think collision particles should be redder, like dull ember sparks.
+    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //WRONG: I think collision particles should be redder, like dull ember sparks.
         var randomVX,
         randomVY;
         if (Math.random() < 0.5) {
@@ -666,4 +702,14 @@ function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, 
         );
         if (distanceBetweenRadiusOriginAndCharacterCenter <= radiusMagnitude) return true;
         else return false;
+}
+
+function isObjectCollidingWithNonInvulnerableTarget(object, target) {
+    var invulnerableTime,
+        invulnerableState;
+        if (target.invulnerableUntil) invulnerableTime = target.invulnerableUntil > now();
+        else invulnerableTime = false;
+        if (target.invulnerable) invulnerableState = target.invulnerable;
+        else invulnerableState = false;
+    return getGlobalSpriteHitBox(object).overlapsRectangle(getGlobalSpriteHitBox(target)) && !invulnerableTime && !invulnerableState;
 }

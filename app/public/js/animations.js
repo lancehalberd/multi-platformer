@@ -35,6 +35,25 @@ var characterAlienJumpAnimation = {frames: allAlienFrames.slice(1, 2)};
 var characterAlienUncontrolledFallAnimation = fireballAnimation;
 var characterAlienAttackAnimation = fireballAnimation;
 
+// Victoria character animations
+var allCharacterVictoriaFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), requireImage('/gfx/person/characterVictoria.png'), 12);
+var characterVictoriaWalkAnimation = {frames: allCharacterVictoriaFrames.slice(0, 8)};
+var characterVictoriaStandingUpAnimation = {frames: allMysteryFrames.slice(4, 8)};
+var characterVictoriaKnockDownAirborneAnimation = fireballAnimation;
+var characterVictoriaKnockDownGroundedAnimation = fireballAnimation;
+var characterVictoriaIdleAnimation = {frames: allCharacterVictoriaFrames.slice(8, 11)};
+var characterVictoriaJumpAnimation = {frames: allCharacterVictoriaFrames.slice(1, 2)};
+var characterVictoriaUncontrolledFallAnimation = fireballAnimation;
+var characterVictoriaAttackAnimation = fireballAnimation;
+
+// Cowbot character animations
+var allCharacterCowbotFrames = rectangleToFrames(new Rectangle(0, 0, 32, 44), requireImage('/gfx/person/characterCowbot.png'), 6);
+var characterCowbotWalkAnimation = {frames: allCharacterCowbotFrames.slice(0, 6)};
+var characterCowbotIdleAnimation = {frames: allCharacterCowbotFrames.slice(0, 6)};
+var characterCowbotJumpAnimation = {frames: allCharacterCowbotFrames.slice(0, 1)};
+var characterCowbotUncontrolledFallAnimation = fireballAnimation;
+var characterCowbotAttackAnimation = fireballAnimation;
+
 
 // CREATURE ANIMATIONS
 // haunted mask animations
@@ -51,8 +70,8 @@ var wraithHoundRunningAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundWalkingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundJumpingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundAirborneAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
-var wraithHoundKnockDownAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
-var wraithHoundGroundedAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundKnockedDownAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundLaunchedAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundStandingUpAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundBarkingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundSittingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};

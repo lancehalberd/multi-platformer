@@ -19,7 +19,7 @@ function updateActor(actor) {
     // User normal scaling when checking if player is under ceiling.
     // scale is set in character defintion area now
     //actor.scale = actor.scale;
-    actor.hitBox = new Rectangle(-20, -60, 40, 60); //Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
+    actor.hitBox = actor.walkingHitBox;//Would be nice to slip into 2-tile-wide openings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
     // change character
     if (TagGame.taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
@@ -34,7 +34,55 @@ function updateActor(actor) {
         //changeCharacterToCowbot(actor);
         actor.jumpScaling = [1, 0.7];
     }
-    if (actor === mainCharacter && !actor.deathTime && !isEditing){
+    // disabled behavior
+    // checks to see if character is disabled and updates consequences of the disabling effect, including animations
+    // WRONG: eventually will have to find a way to prioritize one disabliing effect over any other, though if they all make you invulnerable,
+    //      and all places that can subject you to a disabling effect require that you be vulnerable, then maybe prioritizing them will never come up.
+    if (isCharacterSubjectToDisablingEffect(actor)) actor.disabled = true;
+    else actor.disabled = false;
+    if (actor.disabled) {
+        if (actor.knockedDown) {
+            actor.invulnerable = true;
+            if (!actor.grounded) {
+               // actor.animation = fireballAnimation;//actor.knockDownAirborneAnimation;
+                //actor.hitBox = actor.knockDownAnimationHitBox;
+                actor.wasGrounded = true;
+            }
+            if (actor.grounded) {
+                actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
+                //actor.animation = fireballAnimation;
+                if (actor.wasGrounded) {
+                    actor.readyToStandUp = now() + 2000;
+                    actor.wasGrounded = false;
+                }
+                /*
+                // WRONG: TOTALLY UNTESTED. Need to look at where the animation will be changed back to actor.walkAnimation
+                var groundedAnimationUntil = now() + 2000;//(actor.msBetweenFrames * actor.knockDownGroundedAnimation.frames.length),
+                    standingUpAnimationUntil = 0;// WRONG won't need to be defined here when things are fixed. but won't hurt if it's defined like this, I think.
+                    readyToStandUp = false;
+                // grounded animation fps should be set so that its single frame to last as long as the character should lie on the ground
+                if (groundedAnimationUntil > now()) {
+                    actor.animation = fireballAnimation;//actor.knockDownGroundedAnimation;
+                    //actor.hitBox = actor.knockDownAnimationHitBox;
+                } else {   // if the on-the-ground animation is over
+                    actor.animation = fireballAnimation;//actor.standingUpAnimation;
+                    //actor.hitBox = actor.walkingAnimationHitBox;
+                    standingUpAnimationUntil = now() + 2000;//(actor.msBetweenFrames * actor.standingUpAnimation.frames.length);
+                    readyToStandUp = true;
+                }
+                if (standingUpAnimationUntil <= now() && readyToStandUp) {
+                    actor.invulnerable = false;
+                    actor.disabled = false;
+                    //actor.animation = actor.walkAnimation;
+                }*/
+                if (actor.readyToStandUp <= now()) {
+                    actor.invulnerable = false;
+                    actor.knockedDown = false;
+                }
+            }
+        }
+    }
+    if (actor === mainCharacter && !actor.deathTime && !isEditing && !actor.disabled) {
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
@@ -190,7 +238,7 @@ function updateActor(actor) {
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
         actor.scale = actor.scale / 2; // This affects visual representation only.
-        actor.hitBox = new Rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
+        actor.hitBox = actor.crouchingAnimationHitBox;
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -234,15 +282,6 @@ function updateActor(actor) {
     // gravity
     actor.vy++;
 
-    if (!actor.attacking) {
-        if (actor.vx) {
-            actor.animation = actor.walkAnimation;
-            actor.currentFrame = actor.walkFrame;
-        }
-    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
-        actor.animation = actor.attackAnimation;
-        actor.currentFrame = actor.attackFrame;
-    }
     if (actor.x !== targetPosition[0]) {
         actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
@@ -251,6 +290,15 @@ function updateActor(actor) {
         actor.animation = actor.jumpAnimation;
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
+    }
+    if (!actor.attacking) {
+        if (actor.vx) {
+            actor.animation = actor.walkAnimation;
+            actor.currentFrame = actor.walkFrame;
+        }
+    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
+        actor.animation = actor.attackAnimation;
+        actor.currentFrame = actor.attackFrame;
     }
     // uncontrolled fall animation
     if (actor.vy >= actor.uncontrolledFallVyThreshold) {
@@ -339,6 +387,15 @@ function isPlayerTouchingTeleporter(actor) {
 
 function isPlayerCompelledByOctopusTouch(character) {
     return character.compelledByOctopusTouch > now();
+}
+
+function isCharacterSubjectToDisablingEffect(character) {
+    if (character.knockedDown) return true;
+    if (character.stunnedUntil > now()) return true;
+    if (character.grabbed) return true;
+    if (character.launched) return true;
+    if (character.bounced) return true;
+    return false;
 }
 
 function isPlayerUnderCeiling(player) {
@@ -490,7 +547,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
 }
 
 function damageSprite(sprite, amount) {
-    if (sprite.invulnerableUntil && now() < sprite.invulnerableUntil) return;
+    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || !sprite.invulnerable) return;
     sprite.health -= amount;
     sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
 }
@@ -534,6 +591,13 @@ function changeCharacterToVictoria(actor) {
     actor.jumpAnimation = characterVictoriaJumpAnimation;
     actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
+    actor.standingUpAnimation = characterVictoriaStandingUpAnimation;
+    actor.knockDownAirborneAnimation = characterVictoriaKnockDownAirborneAnimation;
+    actor.knockDownAnimationHitBox = new Rectangle(0, 0, 48, 20);
+    actor.walkingAnimationHitBox = new Rectangle(-20, -60, 40, 60);
+    actor.crouchingAnimationHitBox = new Rectangle(-20, -32, 40, 32);
+    actor.hitBox = actor.walkingAnimationHitBox;
+    actor.knockDownGroundedAnimation = characterVictoriaKnockDownGroundedAnimation;
     actor.msBetweenWalkFrames = 125;
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
