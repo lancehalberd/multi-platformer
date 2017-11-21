@@ -48,4 +48,13 @@ var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) %
 // wraith hound animations
 var allWraithHoundFrames = rectangleToFrames(new Rectangle(0, 0, 80, 48), requireImage('/gfx/creatures/creatureWraithHound.png'), 16);
 var wraithHoundRunningAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundWalkingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundJumpingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundAirborneAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundKnockDownAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundGroundedAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundStandingUpAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundBarkingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundSittingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundAttackAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundRunningGhostTrailAnimation = {frames: allWraithHoundFrames.slice(8, 16)};

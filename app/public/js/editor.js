@@ -799,7 +799,7 @@ var brushList = [
     new ObjectBrush(spikesDown),
     new ObjectBrush(spikesLeft),
     new ObjectBrush(spikesRight),
-    // mansion tiles
+    // mansion tiles 32 x 32
     new TileBrush(panelSquareHorizMansion),
     new TileBrush(panelSquareVertMansion),
     new TileBrush(panelStripVertMansion),
@@ -820,13 +820,20 @@ var brushList = [
     new TileBrush(wallpaperRedMansion),
     new TileBrush(stickyTileMansion),
     // end mansion tiles
-    // desert tiles
+    // desert tiles 32 x 32
     new TileBrush(spikesPearCactusDesert32),
     new TileBrush(spikesPearCactusFlowersDesert32),
     new TileBrush(spikesSaguaroCactusDesert32),
     new TileBrush(stone1Desert32),
-    //end desert tiles
-    new TileBrush(stickyTileMansion),
+    // end desert tiles 32 x 32
+    // desert tiles 16 x 16
+    new TileBrush(spikesCactusDesert16),
+    new TileBrush(spikesPearCactusDesert16),
+    new TileBrush(stone1Desert16),
+    new TileBrush(stone2Desert16),
+    new TileBrush(stone3Desert16),
+    new TileBrush(stone4Desert16),
+    // end desert tiles 16 x 16
     new TileBrush(stickyTile),
     new TileBrush(iceBlock),
     new TriggerBrush(new SpawnTrigger(dummyRectangle, 2,

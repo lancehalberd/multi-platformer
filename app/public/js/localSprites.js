@@ -24,12 +24,18 @@ class SimpleSprite {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
+        this.dx = 0;
+        this.dy = 0;
         this.rotation = 0;
         this.rotationPerFrame = 0;
         this.homing = false;
+        this.flying = false; //this does two things: non-flying things are affected by gravity; flying things that are homing have homing dy.
+        this.noDirectionChangeUntil = now();    // for wandering behavior
+        this.wandering = false;
         this.target = null;
-        this.acceleration = 0;
+        this.homingAcceleration = 0;
         this.maxSpeed = 32767;
+        this.maxAcceleration = 3;
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.facesDirectionOfMovement = false;
@@ -37,6 +43,8 @@ class SimpleSprite {
         this.currentFrame = 0;
         this.framesToLive = 0;
         this.msBetweenFrames = 200;
+        this.slipping = false; // same as .slipping for player character: doubles framerate while slipping on ice or while accelerating direction opposite of movment for non-flying creatures for which .facesDirectionOfAcceleration is true
+        this.msBetweenFramesWhileSlipping = 100;
         this.hasContrail = false;
         this.framesBetweenContrailParticles = 0; //game frames, not animation frames.
         this.contrailTimer = 0;
@@ -122,8 +130,13 @@ function updateLocalSprite(localSprite) {
         var dy = localSprite.target.y - localSprite.y;
         var magnitude = Math.sqrt(dx * dx + dy * dy);
         if (magnitude > 0) {
-            localSprite.vx += dx * localSprite.acceleration / magnitude;
-            localSprite.vy += dy * localSprite.acceleration / magnitude;
+            //if (!localSprite.dx) localSprite.vx += dx * localSprite.homingAcceleration / magnitude; // if localSprite doesn't have its own dx, its vx is directly affected
+            /*else*/ localSprite.dx += dx * localSprite.homingAcceleration / magnitude; // if localSprite has its own dx, the homing dx is added to it
+            if (localSprite.flying) {
+                // homing only affects vy if sprite is flying
+                //if (!localSprite.dy) localSprite.vy += dy * localSprite.homingAcceleration / magnitude;
+                /*else*/ localSprite.dy += dy * localSprite.homingAcceleration / magnitude;
+            }
         }
     }
     if (localSprite.rotationPerFrame) localSprite.rotation += localSprite.rotationPerFrame;
@@ -169,20 +182,35 @@ function updateLocalSprite(localSprite) {
         localSprite.x += localSprite.vx;
         localSprite.y += localSprite.vy;
     }
-    //max speed
+    // max speed
     if (localSprite.vx < 0) {
         localSprite.vx = Math.max(-localSprite.maxSpeed, localSprite.vx);
     } else {
         localSprite.vx = Math.min(localSprite.maxSpeed, localSprite.vx);
     }
-    if (localSprite.vy < 0) {
-        localSprite.vy = Math.max(-localSprite.maxSpeed, localSprite.vy);
+    if (localSprite.flying) {
+        if (localSprite.vy < 0) {
+            localSprite.vy = Math.max(-localSprite.maxSpeed, localSprite.vy);
+        } else {
+            localSprite.vy = Math.min(localSprite.maxSpeed, localSprite.vy);
+        }
+    }
+    // max acceleration
+    if (localSprite.dx < 0) {
+        localSprite.dx = Math.max(-(localSprite.maxAcceleration), localSprite.dx);
     } else {
-        localSprite.vy = Math.min(localSprite.maxSpeed, localSprite.vy);
+        localSprite.dx = Math.min(localSprite.maxAcceleration, localSprite.dx);
+    }
+    if (localSprite.flying) {
+        // max dy only affects flying things
+        if (localSprite.dy < 0) {
+            localSprite.dy = Math.max(-localSprite.maxAcceleration, localSprite.dy);
+        } else {
+            localSprite.dy = Math.min(localSprite.maxAcceleration, localSprite.dy);
+        }
     }
     //animation stuff. msBetweenFrames sets sprite's animation speed. Might want to doe this in FPS at some point.
-    localSprite.currentFrame = Math.floor(now() / localSprite.msBetweenFrames) % localSprite.animation.frames.length;
-
+    localSprite.currentFrame = Math.floor(now() / (localSprite.slipping ? localSprite.msBetweenFramesWhileSlipping : localSprite.msBetweenFrames) % localSprite.animation.frames.length);
     //geomtry collision checks
     //if something.collides, but !it.removedOnCollision && it.pacing, it reverses at it.speed
     if (localSprite.vx && localSprite.collides) {
@@ -218,42 +246,60 @@ function updateLocalSprite(localSprite) {
     if (localSprite.facesDirectionOfAcceleration) {
         if (localSprite.dx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.dx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
+        if (!localSprite.flying) {  // WRONG: should also be && localSprite.grounded, but I think local sprites don't have a .grounded property for now.
+            // if acceleration and movement are in opposite directions, sprite is slipping
+            if ((localSprite.dx > 0 && localSprite.vx < 0) || (localSprite.dx < 0 && localSprite.vx > 0)) localSprite.slipping = true;
+            else localSprite.slipping = false;
+        }
+    }
+    // gravity
+    if (!localSprite.flying) localSprite.vy++;
+    // acceleration
+    localSprite.vx += localSprite.dx;
+    localSprite.vy += localSprite.dy;
+    // aggroed or not based on proximity to target
+    if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) localSprite.targetInAggroRadius = true;
+    else localSprite.targetInAggroRadius = false;
+    // wandering behavior
+    if (localSprite.wandering) {
+        if (localSprite.noDirectionChangeUntil <= now()) {
+            var randomDx = Math.random() * localSprite.wanderingAccelerationXScale,
+                randomDy = Math.random() * localSprite.wanderingAccelerationYScale;
+            if (Math.random() < 0.5) randomDx = -randomDx;
+            if (Math.random() < 0.5) randomDy = -randomDy;
+            localSprite.dx = randomDx;
+            if (localSprite.flying) localSprite.dy = randomDy;
+            var timeBetweenDirectionChangesRange = localSprite.msBetweenWanderingDirectionChangeMax - localSprite.msBetweenWanderingDirectionChangeMin,
+                randomTimeDisplacement = Math.random() * timeBetweenDirectionChangesRange;
+            localSprite.noDirectionChangeUntil = now() + localSprite.msBetweenWanderingDirectionChangeMin + randomTimeDisplacement;
+        }
+        localSprite.vx += localSprite.dx;
+        localSprite.vy += localSprite.dy;
     }
     // haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
-        if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) {
+        if (localSprite.targetInAggroRadius) {
             // aggroed
             // smoke plumes come closer together when aggroed
             localSprite.msBetweenSmokePlumes = 1100;
             // chases target when aggroed
+            localSprite.wandering = false;
             localSprite.homing = true;
             // moves faster when aggroed
             localSprite.maxSpeed = localSprite.maxSpeedAggroed;
             // cancel out any residual dx/dy from non-aggroed state that might interfere with homing
-            localSprite.dx = 0;
-            localSprite.dy = 0;
+            // is this necessary as things are? Even if it is, should they be reworked so that it isn't?
+            //localSprite.dx = 0;
+            //localSprite.dy = 0;
         }
         else {
-            // not aggroed
+            // target is outside aggro radius, de-aggros
             // smoke plumes come farther apart when not aggroed
             localSprite.msBetweenSmokePlumes = 1800;
             localSprite.homing = false;
+            localSprite.wandering = true;
             localSprite.maxSpeed = localSprite.maxSpeedPeaceful;
-            // changes direction randomly when not aggroed
-            // will add collision later and reversing direction on collision,
-            //      but the random direction changes will apply otherwise.
-            if (localSprite.noDirectionChangeUntil <= now()) {
-                var randomDx = Math.random() * 0.33,
-                    randomDy = Math.random() * 0.33;
-                if (Math.random() < 0.5) randomDx = -randomDx;
-                if (Math.random() < 0.5) randomDy = -randomDy;
-                localSprite.dx = randomDx;
-                localSprite.dy = randomDy;
-                localSprite.noDirectionChangeUntil = now() + (Math.random() * 1500);
-            }
-            localSprite.vx += localSprite.dx;
-            localSprite.vy += localSprite.dy;
         }
         // spawn smoke plumes
         if (localSprite.noSmokePlumeUntil <= now()) {
@@ -272,14 +318,69 @@ function updateLocalSprite(localSprite) {
     // end haunted mask update
 
     // wraith hound update
-    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
+    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) { 
+        // if target is in aggro radius, hound will stay aggroed for a bit even if target leaves radius
+        if (localSprite.targetInAggroRadius) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
+        if (localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) {
+            localSprite.animation = localSprite.runningAnimation;
+            //aggroed if target is in aggro radius or *has* been in aggro radius recently
+            localSprite.facesDirectionOfMovement = false;
+            localSprite.facesDirectionOfAcceleration = true;
+            localSprite.wandering = false;
+            localSprite.homing = true;
+            localSprite.maxSpeed = localSprite.maxSpeedAggroed;
+            localSprite.chasing = true;
+            //localSprite.animation = localSprite.runningAnimation;
+            //localSprite.msBetweenFrames = 90;
+            //BROKEN: working on making animation speed scale with vx.
+        }
+        if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now()) {
+            // running animation if moving fast enough, else walking animation.
+            if (Math.abs(localSprite.vx) > localSprite.runSpeedThreshold) localSprite.animation = localSprite.runningAnimation;
+            else localSprite.animation = localSprite.walkingAnimation;
+            //peaceful if target is out of aggro radius and has had time to calm down since target last *was* in aggro radius
+            localSprite.homing = false;
+            if (!localSprite.chasing) { // if is done chasing (i.e. de-aggroed and has slowed down, then wanders.
+                //localSprite.facesDirectionOfAcceleration = true;
+                localSprite.wandering = true;
+                localSprite.maxSpeed = localSprite.maxSpeedPeaceful;
+            }
+            // slows down gradually after chasing before begins wandering
+            if (localSprite.chasing && Math.abs(localSprite.vx) > localSprite.maxSpeedPeaceful / 4) { // slow down almost to a stop before wandering, to make sure it doesn't abruptly reverse direction
+                localSprite.facesDirectionOfAcceleration = false; // when declerating after a chase, doesn't turn backward to gently slow down. Also doesn't face direction of acceleration when walking.
+                localSprite.facesDirectionOfMovement = true;
+                var decelerationRate = 0.02;// 0.01 * Math.min((localSprite.maxSpeed / localSprite.vx), 2.67);   // commented out stuff: deceleration rate increases with decreasing speed.
+                if (localSprite.vx > 0) localSprite.dx -= decelerationRate;
+                else localSprite.dx =+ decelerationRate;
+            }
+            if (localSprite.chasing && Math.abs(localSprite.vx) <= localSprite.maxSpeedPeaceful / 4) localSprite.chasing = false; // de-aggroed and slowed to 1/4 peaceful speed, so is no longer chasing, and will start wandering next frame
+        }
+        // animation speed scales with vx
+        var minMsBetweenFrames,
+            maxMsBetweenFrames;
+        minMsBetweenFrames = localSprite.msBetweenFramesWhileSlipping;
+        maxMsBetweenFrames = localSprite.msBetweenFramesBase * 1.5;
+        localSprite.msBetweenFrames = Math.max(minMsBetweenFrames, (2 / Math.max(2, Math.abs(localSprite.vx))) * maxMsBetweenFrames);
+        // run dust
+        if (localSprite.slipping && localSprite.noRunDustUntil <= now()) {
+            // WRONG: Slipping run dust animation should  have an "acroos the ground sweeping up and back" type trajectory/look
+            addEffectRunDust(localSprite.x, localSprite.y);
+            localSprite.noRunDustUntil = now() + localSprite.msBetweenSlippingRunDustPlumes;
+        }
+        if (Math.abs(localSprite.vx) > localSprite.runDustSpeed && localSprite.noRunDustUntil <= now()) {
+            addEffectRunDust(localSprite.x, localSprite.y);
+            localSprite.noRunDustUntil = now() + localSprite.msBetweenRunDustPlumes;
+        }
+        // ghost/shadow trail
+        // BROKEN: NOT WORKING and I don't know why
         if (localSprite.noTrailUntil <= now()) {
             var houndFps = 1000 / localSprite.msBetweenFrames;
             addEffectWraithHoundGhostTrail(localSprite.x, localSprite.y, localSprite.vx * 0.75, localSprite.vy * 0.75, localSprite.yScale, houndFps); // WRONG: this needs to invert its xScale when it's spawned while the hound is moving left.
             msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
-            noTrailUntil = now() + msBetweenTrails;
+            if (localSprite.chasing) localSprite.noTrailUntil = now() + msBetweenTrails;
+            else localSprite.noTrailUntil = now() + (msBetweenTrails / 1.5);
+            console.log('hey');
         }
-        localSprite.vy++;
     }
     // end wraith hound update
 
@@ -295,7 +396,6 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
             var randomVXBoost;
             //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
@@ -338,11 +438,12 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     var homingFireballSprite = new SimpleSprite(fireballAnimation, xPosition, yPosition, 0, 0, 1.5, 1.5);
     homingFireballSprite.type = PROJECTILE_TYPE_HOMING_FIREBALL;
     homingFireballSprite.homing = true;
+    homingFireballSprite.flying = true;
     homingFireballSprite.collides = true;
     homingFireballSprite.removedOnCollision = true;
     homingFireballSprite.target = target;
     homingFireballSprite.maxSpeed = 1.4;
-    homingFireballSprite.acceleration = 0.5;
+    homingFireballSprite.homingAcceleration = 0.5;
     homingFireballSprite.framesToLive = 1000;
     homingFireballSprite.msBetweenFrames = 50;
     homingFireballSprite.rotationPerFrame = 5;
@@ -374,10 +475,11 @@ function addCreature(x, y, target, creatureType) {
         var adorabilisSprite = new SimpleSprite({frames}, x, y, 0, 0, xScale, yScale);
         adorabilisSprite.type = creatureType;
         adorabilisSprite.homing = true;
+        adorabilisSprite.flying = true;
         adorabilisSprite.collides = false; //should be true when there's better collision behavior in place. Probably.
         adorabilisSprite.target = target;
         adorabilisSprite.maxSpeed = 0.8;
-        adorabilisSprite.acceleration = 0.1;
+        adorabilisSprite.homingAcceleration = 0.1;
         adorabilisSprite.notReadyToTriggerUntil = now();
         adorabilisSprite.durationOfTouchEffectInMS = 10000;
         adorabilisSprite.framesToLive = 32767;
@@ -400,43 +502,67 @@ function getCreatureHauntedMask(x, y) {
     var hauntedMaskCreature = new SimpleSprite(animation, x, y, 0, 0, xScale, yScale);
     hauntedMaskCreature.type = CREATURE_TYPE_HAUNTED_MASK;
     hauntedMaskCreature.facesDirectionOfMovement = true;
+    hauntedMaskCreature.flying = true;
     hauntedMaskCreature.dx = 0;
     hauntedMaskCreature.dy = 0;
-    hauntedMaskCreature.acceleration = 0.3;
+    hauntedMaskCreature.homingAcceleration = 0.3;
+    hauntedMaskCreature.msBetweenWanderingDirectionChangeMin = 750;
+    hauntedMaskCreature.msBetweenWanderingDirectionChangeMax = 3000;
+    hauntedMaskCreature.wanderingAccelerationXScale = 0.33;
+    hauntedMaskCreature.wanderingAccelerationYScale = 0.33;
     hauntedMaskCreature.collides = true;
     hauntedMaskCreature.bobs = false;   //should be true, but I don't think the bobbing code will work with a bunch of other creature movement code as it is right now.
     hauntedMaskCreature.msBetweenFrames = 230;
     hauntedMaskCreature.aggroRadius = 270;
     hauntedMaskCreature.maxSpeedPeaceful = 0.5;
     hauntedMaskCreature.maxSpeedAggroed = 1.75;
+    hauntedMaskCreature.maxAcceleration = 3;
     hauntedMaskCreature.noSmokePlumeUntil = now();
-    hauntedMaskCreature.noDirectionChangeUntil = now();
     return hauntedMaskCreature;
 }
 
 function getCreatureWraithHound(x, y) {
     hitBox = new Rectangle(-35, -33, 70, 33);
-    xScale = yScale = 1.8;
+    xScale = yScale = 1.5;
     var wraithHoundCreature = new SimpleSprite(wraithHoundRunningAnimation, x, y, 0, 0, xScale, yScale);
     wraithHoundCreature.type = CREATURE_TYPE_WRAITH_HOUND;
     wraithHoundCreature.hitBox = hitBox;
     wraithHoundCreature.facesDirectionOfAcceleration = true;
-    wraithHoundCreature.dx = 0; // this creature definitely needs to use dx to move, and have inertia
+    wraithHoundCreature.runningAnimation = wraithHoundRunningAnimation;
+    wraithHoundCreature.walkingAnimation = wraithHoundWalkingAnimation;
+    wraithHoundCreature.jumpingAnimation = wraithHoundJumpingAnimation;
+    wraithHoundCreature.airborneAnimation = wraithHoundAirborneAnimation;
+    wraithHoundCreature.knockDownAnimation = wraithHoundKnockDownAnimation;
+    wraithHoundCreature.groundedAnimation = wraithHoundGroundedAnimation;
+    wraithHoundCreature.standingUpAnimation = wraithHoundStandingUpAnimation;
+    wraithHoundCreature.attackAnimation = wraithHoundAttackAnimation;
+    wraithHoundCreature.aggroedButTargetInaccessibleAnimation = wraithHoundBarkingAnimation;
+    wraithHoundCreature.idleAnimation = wraithHoundSittingAnimation;
+    wraithHoundCreature.animation = wraithHoundCreature.runningAnimation;
+    wraithHoundCreature.runSpeedThreshold = 2.5; // vx at which hound will switch from walking to running animation if not aggroed.
+    wraithHoundCreature.dx = 0;
     wraithHoundCreature.dy = 0;
-    wraithHoundCreature.pacing = true;  // temporary until movement code is worked out.
-    wraithHoundCreature.acceleration = 0.15;
+    wraithHoundCreature.msBetweenWanderingDirectionChangeMin = 1500;
+    wraithHoundCreature.msBetweenWanderingDirectionChangeMax = 4500;
+    wraithHoundCreature.wanderingAccelerationXScale = 0.33;
+    wraithHoundCreature.homingAcceleration = 0.15;
     wraithHoundCreature.collides = true;
     wraithHoundCreature.framesToLive = 32767;
-    wraithHoundCreature.msBetweenFrames = 130;
-    wraithHoundCreature.aggroRadius = 270;
-    wraithHoundCreature.ySpeed = 0;
-    wraithHoundCreature.xSpeed = 2;   // just using this so that pacing will work.
-    wraithHoundCreature.vx = wraithHoundCreature.xSpeed;
+    wraithHoundCreature.msBetweenFrames = 90;
+    wraithHoundCreature.msBetweenFramesBase = 90;
+    wraithHoundCreature.msBetweenFramesWhileSlipping = 33;
+    wraithHoundCreature.aggroRadius = 200;
+    wraithHoundCreature.persistentAggroTime = 2000; //time after target has left aggro radius during which hound will remain aggroed
     wraithHoundCreature.maxSpeedPeaceful = 0.5;
-    wraithHoundCreature.maxSpeedAggroed = 1.75;
+    wraithHoundCreature.maxSpeedAggroed = 6.5;
+    wraithHoundCreature.maxAcceleration = 0.189;
+    wraithHoundCreature.aggroedUntil = now();
     wraithHoundCreature.noTrailUntil = now();
     wraithHoundCreature.msBetweenTrailsScale = 800;
-    wraithHoundCreature.noDirectionChangeUntil = now();
+    wraithHoundCreature.noRunDustUntil = now();
+    wraithHoundCreature.msBetweenRunDustPlumes = 250;
+    wraithHoundCreature.runDustSpeed = 3.5;
+    wraithHoundCreature.msBetweenSlippingRunDustPlumes = 125;
     return wraithHoundCreature;
 }
 
@@ -446,6 +572,7 @@ function getCreaturePacingFireball(creatureType) {
     pacingFireballSprite.type = creatureType;
     pacingFireballSprite.collides = true;
     pacingFireballSprite.pacing = true;
+    pacingFireballSprite.flying = true;
     if (pacingFireballSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL) {
         pacingFireballSprite.xSpeed = 1.75;
         pacingFireballSprite.ySpeed = 0;
@@ -492,6 +619,7 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
     var particle = new SimpleSprite({frames}, randomX, randomY, 0, 0, 1.25, 2.5);
     particle.type = type;
     particle.framesToLive = decayFrames;
+    particle.flying = true;
     particle.scaleOscillation = true;
     particle.xScalePerFrame = particle.xScale / particle.framesToLive;
     particle.yScalePerFrame = particle.yScale / particle.framesToLive;
