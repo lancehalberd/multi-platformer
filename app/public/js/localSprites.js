@@ -598,7 +598,7 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.notReadyToAggroUntil = now();
     wraithHoundCreature.notReadyToAttackUntil = now();
     wraithHoundCreature.attackCooldown = 5000; // time in ms after having damaged player before hound can attack again
-    wraithHoundCreature.aggroCooldown = wraithHoundCreature.attackCoolDown; // time in ms after having damaged player before hound will aggro again
+    wraithHoundCreature.aggroCooldown = wraithHoundCreature.attackCooldown; // time in ms after having damaged player before hound will aggro again
     return wraithHoundCreature;
 }
 

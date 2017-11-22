@@ -26,7 +26,6 @@ var characterMysteryIdleAnimation = {frames: allMysteryFrames.slice(4, 8)};
 var characterMysteryUncontrolledFallAnimation = fireballAnimation;
 var characterMysteryAttackAnimation = fireballAnimation;
 
-
 // Alien Character animations
 var allAlienFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), requireImage('/gfx/person/characterAlien.png'), 9);
 var characterAlienWalkAnimation = {frames: allAlienFrames};
