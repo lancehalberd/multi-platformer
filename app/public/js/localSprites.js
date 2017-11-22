@@ -348,6 +348,7 @@ function updateLocalSprite(localSprite) {
             //BROKEN: working on making animation speed scale with vx.
         }
         if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now()) {
+            //de-aggroed
             // running animation if moving fast enough, else walking animation.
             if (Math.abs(localSprite.vx) > localSprite.runSpeedThreshold) localSprite.animation = localSprite.runningAnimation;
             else localSprite.animation = localSprite.walkingAnimation;
@@ -409,7 +410,15 @@ function updateLocalSprite(localSprite) {
             localSprite.notReadyToAggroUntil = now() + localSprite.aggroCooldown;
             // hit-and-run behavior
             localSprite.homing = false;
-            localSprite.fleeing = true;
+            localSprite.followThroughTime = 750;
+            localSprite.followThroughUntil = now() + localSprite.followThroughTime;
+        }
+        // at moment of impact, hound accelerates toward target to max speed and goes straight for a short period as an attack follow-through
+        if (localSprite.followThroughUntil <= now()) localSprite.fleeing = true;
+        else if (!localSprite.wandering && !localSprite.homing) {
+            // if target is to the right of hound
+            if (localSprite.x < localSprite.target.x) localSprite.vx = localSprite.maxSpeedAggroed;
+            else (localSprite.vx = -localSprite.maxSpeedAggroed); // if target is to the left of hound
         }
     }
     // end wraith hound update
