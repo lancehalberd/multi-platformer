@@ -334,12 +334,14 @@ function updateLocalSprite(localSprite) {
     // wraith hound update
     if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
         // if target is in aggro radius, hound will stay aggroed for a bit even if target leaves radius
-        if (localSprite.targetInAggroRadius && localSprite.notReadyToAggroUntil <= now()) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
-        if ((localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) && localSprite.notReadyToAggroUntil <= now()) {
+        if (localSprite.vx === 0 && localSprite.vy === 1) localSprite.animation = localSprite.idleAnimation;
+        if (localSprite.targetInAggroRadius && localSprite.notReadyToAggroUntil <= now() && !localSprite.target.disabled) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
+        if ((localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) && localSprite.notReadyToAggroUntil <= now() && !localSprite.target.disabled) {
             localSprite.animation = localSprite.runningAnimation;
             //aggroed if target is in aggro radius or *has* been in aggro radius recently
             localSprite.facesDirectionOfMovement = false;
             localSprite.facesDirectionOfAcceleration = true;
+            localSprite.fleeing = false;
             localSprite.wandering = false;
             localSprite.homing = true;
             localSprite.maxSpeed = localSprite.maxSpeedAggroed;
@@ -347,8 +349,8 @@ function updateLocalSprite(localSprite) {
             //localSprite.msBetweenFrames = 90;
             //BROKEN: working on making animation speed scale with vx.
         }
-        if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now()) {
-            //de-aggroed
+        if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now() && !localSprite.target.disabled) {
+            //un-aggroed
             // running animation if moving fast enough, else walking animation.
             if (Math.abs(localSprite.vx) > localSprite.runSpeedThreshold) localSprite.animation = localSprite.runningAnimation;
             else localSprite.animation = localSprite.walkingAnimation;
@@ -388,14 +390,14 @@ function updateLocalSprite(localSprite) {
         }
         // ghost/shadow trail
         // BROKEN: NOT WORKING and I don't know why
-        if (localSprite.noTrailUntil <= now()) {
+        /*if (localSprite.noTrailUntil <= now()) {
             var houndFps = 1000 / localSprite.msBetweenFrames;
             addEffectWraithHoundGhostTrail(localSprite.x, localSprite.y, localSprite.vx * 0.75, localSprite.vy * 0.75, localSprite.yScale, houndFps); // WRONG: this needs to invert its xScale when it's spawned while the hound is moving left.
             msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
             if (localSprite.chasing) localSprite.noTrailUntil = now() + msBetweenTrails;
             else localSprite.noTrailUntil = now() + (msBetweenTrails / 1.5);
             console.log('wraith hound trail spawned'); // BROKEN this is happening once, but should happen much.
-        }
+        }*/
         // on collision with player
         if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target) && localSprite.notReadyToAttackUntil <= now()) {
             var target = localSprite.target,
@@ -410,16 +412,40 @@ function updateLocalSprite(localSprite) {
             localSprite.notReadyToAggroUntil = now() + localSprite.aggroCooldown;
             // hit-and-run behavior
             localSprite.homing = false;
-            localSprite.followThroughTime = 750;
-            localSprite.followThroughUntil = now() + localSprite.followThroughTime;
+            localSprite.followThroughDuration = 750;
+            localSprite.followThroughUntil = now() + localSprite.followThroughDuration;
+            localSprite.postAttackFleeDuration = 1500;
+            localSprite.fleeUntil = now() + localSprite.postAttackFleeDuration;
+            localSprite.target.wasJustKnockedDown = true;
+            // if target is to the right of hound
+            if (localSprite.x < target.x) {
+                localSprite.followThroughVx = localSprite.maxSpeedAggroed;
+                localSprite.followThroughDx = localSprite.maxAcceleration; 
+            } else {
+                localSprite.followThroughVx = -localSprite.maxSpeedAggroed; // if target is to the left of hound
+                localSprite.followThroughDx = -localSprite.maxAcceleration;
+            }   
         }
         // at moment of impact, hound accelerates toward target to max speed and goes straight for a short period as an attack follow-through
-        if (localSprite.followThroughUntil <= now()) localSprite.fleeing = true;
-        else if (!localSprite.wandering && !localSprite.homing) {
-            // if target is to the right of hound
-            if (localSprite.x < localSprite.target.x) localSprite.vx = localSprite.maxSpeedAggroed;
-            else (localSprite.vx = -localSprite.maxSpeedAggroed); // if target is to the left of hound
+        // after that it flees from the target for a while, then resume normal wander/aggro behavior
+        if (localSprite.followThroughUntil <= now() && localSprite.fleeUntil > now()) {
+            localSprite.fleeing = true;
         }
+        if (localSprite.followThroughUntil > now() && localSprite.notReadyToAggroUntil > now() && !localSprite.wandering && !localSprite.homing) {
+            // if target is to the right of hound
+                localSprite.vx = localSprite.followThroughVx;
+                localSprite.dx = localSprite.followThroughVx; 
+        }
+        ////////////////
+        // WRONG: This 'waits a certain distance from disabled targets' thing and several other hound behaviors are going to need to be adjusted to make sensible behaviors when they encounter walls and drops.
+        // If the target is disabled, the hound moves to a certain distance (outside their aggro radius) and idles.
+        // WRONG: This behavior should probably replace some of what's above. I.e. right now, the hound flee the target for a while after knocking it down and following through
+        //      with the attack. But instead of a timed flee, the hound should flee to a certain distance if the target is disabled, as long as it's not following through.
+        /*if (localSprite.target.disabled && Math.abs(localSprite.x - localSprite.target.x) < localSprite.aggroRadius + 250) localSprite.fleeing = true;
+        if (localSprite.target.disabled && Math.abs(localSprite.x - localSprite.target.x) > localSprite.aggroRadius + 250) {
+            localSprite.vx = 0;
+            localSprite.animation = localSprite.idleAnimation;
+        }*/
     }
     // end wraith hound update
 

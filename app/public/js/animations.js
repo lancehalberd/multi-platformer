@@ -73,6 +73,6 @@ var wraithHoundKnockedDownAnimation = {frames: allWraithHoundFrames.slice(0, 8)}
 var wraithHoundLaunchedAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundStandingUpAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundBarkingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
-var wraithHoundSittingAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
+var wraithHoundSittingAnimation = {frames: allWraithHoundFrames.slice(4, 5)};
 var wraithHoundAttackAnimation = {frames: allWraithHoundFrames.slice(0, 8)};
 var wraithHoundRunningGhostTrailAnimation = {frames: allWraithHoundFrames.slice(8, 16)};

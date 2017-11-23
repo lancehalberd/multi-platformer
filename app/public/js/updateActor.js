@@ -46,14 +46,15 @@ function updateActor(actor) {
             if (!actor.grounded) {
                // actor.animation = fireballAnimation;//actor.knockDownAirborneAnimation;
                 //actor.hitBox = actor.knockDownAnimationHitBox;
-                actor.wasGrounded = true;
+                actor.wasAirborne = true;
             }
             if (actor.grounded) {
                 actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
                 //actor.animation = fireballAnimation;
-                if (actor.wasGrounded) {
-                    actor.readyToStandUp = now() + 2000;
-                    actor.wasGrounded = false;
+                if (actor.wasAirborne || actor.wasJustKnockedDown) {
+                    actor.notReadyToStandUpUntil = now() + 2000;
+                    actor.wasAirborne = false;
+                    actor.wasJustKnockedDown = false;
                 }
                 /*
                 // WRONG: TOTALLY UNTESTED. Need to look at where the animation will be changed back to actor.walkAnimation
@@ -75,10 +76,12 @@ function updateActor(actor) {
                     actor.disabled = false;
                     //actor.animation = actor.walkAnimation;
                 }*/
-                if (actor.readyToStandUp <= now()) {
-                    actor.invulnerable = false;
-                    actor.knockedDown = false;
-                }
+            }
+            if (actor.notReadyToStandUpUntil <= now()) {
+                actor.invulnerable = false;
+                actor.knockedDown = false;
+                // WRONG: if you're not invulerable for a while *after* you regain control, you could get knocked down again immeeidately if a dog is hovering right on top of you, either because they're homing or just accidentally.
+                // I'll probably make it so that creatures that can disable you move away from you if you're disabled, but maybe I shouldn't rely on that?
             }
         }
     }
@@ -97,6 +100,8 @@ function updateActor(actor) {
             if (actor.fallingUncontrolled) {
                 damageSprite(actor, 1);
                 actor.fallingUncontrolled = false;
+                // WRONG need to add a knockdown effect on landing from an uncontrolled fall, including an animation speed decrease on the downed state and the standing up
+                //      animation based on the player's speed at impact.
             }
             //dust plume on landing
             if (actor.spawnDustOnGrounding) {
