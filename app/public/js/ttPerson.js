@@ -168,6 +168,7 @@ class TTCharacter {
         this.isCrouching = false; //is crouched or not
         this.beaconsInfluencing = [];
         this.weapon = weapon;
+        this.airDashCooldownDuration = 2000;
         this.cannotAirDashUntil = now();
         this.color = 'white';
     }

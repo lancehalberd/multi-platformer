@@ -629,7 +629,6 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
-    actor.airDashCooldownDuration = 2000;
     actor.scale = 1.75;
     actor.type = CHARACTER_VICTORIA;
 }
