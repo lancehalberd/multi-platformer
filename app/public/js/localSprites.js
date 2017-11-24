@@ -1,7 +1,7 @@
 var PROJECTILE_TYPE_HOMING_FIREBALL = 'homingFireball';
 
 var POWERUP_TYPE_HEART = 'heart';
-var POWERUP_TYPE_AIRDASH = 'airDash';
+var POWERUP_TYPE_AIR_DASH = 'airDash';
 
 var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
@@ -547,7 +547,6 @@ function addCreature(x, y, target, creatureType) {
         adorabilisSprite.homingAcceleration = 0.1;
         adorabilisSprite.notReadyToTriggerUntil = now();
         adorabilisSprite.durationOfTouchEffectInMS = 10000;
-        adorabilisSprite.framesToLive = 32767;
         adorabilisSprite.msBetweenFrames = 85;
         adorabilisSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
         localSprites.push(adorabilisSprite);
@@ -614,7 +613,6 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.homingAcceleration = 0.15;
     wraithHoundCreature.fleeingAcceleration = 0.15;
     wraithHoundCreature.collides = true;
-    wraithHoundCreature.framesToLive = 32767;
     wraithHoundCreature.msBetweenFrames = 90;
     wraithHoundCreature.msBetweenFramesBase = 90;
     wraithHoundCreature.msBetweenFramesWhileSlipping = 33;

@@ -125,9 +125,15 @@ function updateActor(actor) {
                     actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
                 }
             }
-            // airDash resets on grounding
-            actor.airDashed = false;
-            actor.currentAirDashDuration = 0;
+            // air dash resets on grounding
+            if (actor.airDashed) {
+                actor.cannotAirDashUntil = now() + actor.airDashCooldownDuration;
+                actor.airDashed = false;
+            }
+            // after grounding and cooldown, air dash key must be released before character can air dash again
+            if (isKeyDown(KEY_SHIFT)) actor.currentAirDashDuration = actor.maxAirDashDuration + 1;
+            else if (!isKeyDown(KEY_SHIFT) && actor.cannotAirDashUntil <= now()) actor.currentAirDashDuration = 0;
+            // super jump resets on grounding
             actor.superJumped = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
@@ -174,17 +180,33 @@ function updateActor(actor) {
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
             }
-            //air dash
-            if (isKeyDown(KEY_RIGHT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
-                actor.vx += actor.airDashMagnitude;
-                actor.vy = 0;
-                actor.currentAirDashDuration++;
-                //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
+            // air dash
+            if (isKeyDown(KEY_SHIFT) && canCharacterAirDash(actor)) {
+                if (isKeyDown(KEY_LEFT) || isKeyDown(KEY_RIGHT)) {
+                    // WRONG: this isn't quite going to handle all situations correctly when you start an air dash and then press the other direction while dashing
+                    //      with regard to resetting the air dash on key release and cooling down and grounding
+                    if (isKeyDown(KEY_LEFT)) {
+                        actor.vx -= actor.airDashMagnitude;
+                        actor.airDashDirectionKey = KEY_LEFT;
+                    }
+                    if (isKeyDown(KEY_RIGHT)) {
+                        actor.vx += actor.airDashMagnitude;
+                        actor.airDashDirectionKey = KEY_RIGHT;
+                    }
+                    actor.vy = 0;
+                    actor.currentAirDashDuration++;
+                    actor.airDashed = true;
+                    // if an air dash interrupts a jump, the jump won't continue after the air dash stops
+                    actor.currentJumpDuration = actor.maxJumpDuration;
+                    //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
+                }
             }
-            if (isKeyDown(KEY_LEFT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
-                actor.vx -= actor.airDashMagnitude;
-                actor.vy = 0;
-                actor.currentAirDashDuration++;
+            // if the actor ended an air dash while still in the air by releasing one of the air dash keys or by maxing out their air dash duration,
+            if (actor.airDashed && (!isKeyDown(KEY_SHIFT) || !isKeyDown(actor.airDashDirectionKey) || actor.currentAirDashDuration > actor.maxAirDashDuration)) {
+                // then the air dash cooldown starts
+                // if neither the key is release nor the duration is maxed out while in the air, these things are reset on grounding.
+                actor.cannotAirDashUntil = now() + actor.airDashCooldownDuration;
+                actor.airDashed = false;
             }
         }
         // super jump
@@ -375,7 +397,7 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
+var canCharacterAirDash = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_AIR_DASH && character.cannotAirDashUntil <= now() && character.currentAirDashDuration <= character.maxAirDashDuration;
 
 var canCharacterSuperJump = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
 
@@ -585,7 +607,7 @@ function changeCharacterToAlien(actor) {
 }
 
 function changeCharacterToVictoria(actor) {
-    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIRDASH;
+    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIR_DASH;
     actor.walkAnimation = characterVictoriaWalkAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
@@ -607,6 +629,7 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.airDashCooldownDuration = 2000;
     actor.scale = 1.75;
     actor.type = CHARACTER_VICTORIA;
 }
