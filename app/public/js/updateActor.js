@@ -56,26 +56,6 @@ function updateActor(actor) {
                     actor.wasAirborne = false;
                     actor.wasJustKnockedDown = false;
                 }
-                /*
-                // WRONG: TOTALLY UNTESTED. Need to look at where the animation will be changed back to actor.walkAnimation
-                var groundedAnimationUntil = now() + 2000;//(actor.msBetweenFrames * actor.knockDownGroundedAnimation.frames.length),
-                    standingUpAnimationUntil = 0;// WRONG won't need to be defined here when things are fixed. but won't hurt if it's defined like this, I think.
-                    readyToStandUp = false;
-                // grounded animation fps should be set so that its single frame to last as long as the character should lie on the ground
-                if (groundedAnimationUntil > now()) {
-                    actor.animation = fireballAnimation;//actor.knockDownGroundedAnimation;
-                    //actor.hitBox = actor.knockDownAnimationHitBox;
-                } else {   // if the on-the-ground animation is over
-                    actor.animation = fireballAnimation;//actor.standingUpAnimation;
-                    //actor.hitBox = actor.walkingAnimationHitBox;
-                    standingUpAnimationUntil = now() + 2000;//(actor.msBetweenFrames * actor.standingUpAnimation.frames.length);
-                    readyToStandUp = true;
-                }
-                if (standingUpAnimationUntil <= now() && readyToStandUp) {
-                    actor.invulnerable = false;
-                    actor.disabled = false;
-                    //actor.animation = actor.walkingAnimation;
-                }*/
             }
             if (actor.notReadyToStandUpUntil <= now()) {
                 actor.invulnerable = false;

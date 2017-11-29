@@ -479,41 +479,33 @@ function updateLocalSprite(localSprite) {
     // end wraith hound update
 
     // sentinel eye update
+	// NOTE: There are some things are are eye.______ instead of just vars. This is because vars whose values I was assigning in a given 'if' structure
+	//		were yielding the value 'undefined' when called from different 'if' structures, even if the vars were originally declared at a scope that I though
+	//		should include both of those 'if' structures.
     if (localSprite.type === CREATURE_TYPE_SENTINEL_EYE) {
         var eye = localSprite,
-            beamOriginX,
-            beamOriginY = eye.y - eye.hitBox.height * 0.2,  // WRONG will need to change with eye rotation
             maxChargeTime = eye.maxBeamChargeTimeInMs,
             minChargeTime = eye.minBeamChargeTimeInMs,
             chargeTimeRange = maxChargeTime - minChargeTime,
             beamDamageRange = eye.maxBeamDamage - eye.minBeamDamage,
-            beamDamage,
-            beamWidth,
             beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9,  // beam won't live long enough to damage target twice
-            distanceToObstacle,
-            angleToTarget,
             xDistanceToBeamTargetPoint,
             yDistanceToBeamTargetPoint,
             normalizedTargetingVector = [],
             targetingDummyVx,
             targetingDummyVy,
             eyeTargetY = eye.target.y - eye.target.hitBox.height * 0.5; // adjusted targeting point away from the origin toward the center of the target's hit box
-            if (eye.xScale < 0) beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
-            else beamOriginX = eye.x + eye.hitBox.width * 0.75;
-            /* from sciencing.com for finding the angle to the target:
-            Tangent (T) is used when the Opposite (O) side and the Adjacent (A) side are known.
-                If the length of the side opposite the unknown angle is 2 and the length of the side adjacent
-                to the unknown angle is 3, the Tangent ratio of the angle is 2 / 3. Or Tan(X) = (2/3).
-            The previous example can be solved by typing them into the calculator in the following format:
-                TAN^-1(2/3)
-                This results in about 34 degrees.*/
+        // setting beam origin
+		if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
+        else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
         if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
             eye.wandering = true;
             if (eye.doNotFireTargetingDummyProjectileUntil <= now() && eye.notReadyToAttackUntil <= now()) {
-                normalizedTargetingVector = getNormalizedVector(beamOriginX, eye.target.x, beamOriginY, eyeTargetY);
+                normalizedTargetingVector = getNormalizedVector(eye.beamOriginX, eye.target.x, eye.beamOriginY, eyeTargetY);
                 targetingDummyVx = normalizedTargetingVector[0] * eye.targetingDummyMaxSpeed;
                 targetingDummyVy = normalizedTargetingVector[1] * eye.targetingDummyMaxSpeed;
-                getProjectileSentinelTargetingDummy(beamOriginX, beamOriginY, targetingDummyVx, targetingDummyVy, eye.target, eye);
+                getProjectileSentinelTargetingDummy(eye.beamOriginX, eye.beamOriginY, targetingDummyVx, targetingDummyVy, eye.target, eye);
                 eye.doNotFireTargetingDummyProjectileUntil = now() + eye.delayBetweenFiringTargetingDummiesInMs;
             }
         }
@@ -540,35 +532,27 @@ function updateLocalSprite(localSprite) {
             xDistanceToBeamTargetPoint = Math.abs(eye.beamTargetX - eye.x);
             yDistanceToBeamTargetPoint = Math.abs(eye.beamTargetY - eye.y);    
             // beam damage will be either 1 or 2, depending on how long it charged for
-            beamDamage = Math.ceil(eye.minBeamDamage + Math.round(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
+            eye.beamDamage = Math.ceil(eye.minBeamDamage + Math.round(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
             // wider beam if more damage
-            beamWidth = beamDamage * eye.beamWidthScale;
-            distanceToObstacle = Math.sqrt(
+            eye.beamWidth = eye.beamDamage * eye.beamWidthScale;
+            eye.distanceToObstacle = Math.sqrt(
                 xDistanceToBeamTargetPoint * xDistanceToBeamTargetPoint +
                 yDistanceToBeamTargetPoint * yDistanceToBeamTargetPoint
             );
-            //beamOriginX += 0.5 * distanceToObstacle;
-            angleToTarget = 90;//Math.atan2(yDistanceToBeamTargetPoint, -xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
-            getProjectileSentinelBeamCharging(beamOriginX, beamOriginY, distanceToObstacle, beamWidth, angleToTarget, eye);
+			// offsetting beam center so that rotating it leaves it in the right place
+			if (eye.target.x > eye.beamOriginX) eye.beamOriginX += 0.5 * xDistanceToBeamTargetPoint;
+			else eye.beamOriginX -= 0.5 * xDistanceToBeamTargetPoint;
+			if (eye.target.y > eye.beamOriginY) eye.beamOriginY += 0.5 * yDistanceToBeamTargetPoint;
+			else eye.beamOriginY -= 0.5 * yDistanceToBeamTargetPoint;
+            eye.angleToTarget = Math.atan2(-yDistanceToBeamTargetPoint, xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
+            getProjectileSentinelBeamCharging(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye);
             eye.chargeBeginning = false;
             eye.attackBeginning = true;
         }
         // firing phase of attack
         if (eye.attackBeginning && eye.beamChargingUntil <= now()) {
             eye.animation = eye.attackAnimation;
-            xDistanceToBeamTargetPoint = Math.abs(eye.beamTargetX - eye.x);
-            yDistanceToBeamTargetPoint = Math.abs(eye.beamTargetY - eye.y);    
-            // beam damage will be either 1 or 2, depending on how long it charged for
-            beamDamage = Math.ceil(eye.minBeamDamage + Math.round(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
-            // wider beam if more damage
-            beamWidth = beamDamage * eye.beamWidthScale;
-            distanceToObstacle = Math.sqrt(
-                xDistanceToBeamTargetPoint * xDistanceToBeamTargetPoint +
-                yDistanceToBeamTargetPoint * yDistanceToBeamTargetPoint
-            );
-            //beamOriginX += 0.5 * distanceToObstacle;
-            angleToTarget = 90;//Math.atan2(yDistanceToBeamTargetPoint, -xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
-            getProjectileSentinelBeam(beamOriginX, beamOriginY, distanceToObstacle, beamWidth, angleToTarget, beamDamage, beamDuration, eye.target, eye);
+            getProjectileSentinelBeam(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye.beamDamage, beamDuration, eye.target, eye);
             eye.attackBeginning = false;
             eye.attackingUntil = now() + beamDuration;
             eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
@@ -632,6 +616,10 @@ function updateLocalSprite(localSprite) {
     }
     
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY) {
+		// WRONG: there need to be some reiterative collision detection that locates an accurate point of termination, flush to the collision surface.
+		//		For now, the dummy is sending the parent a location for beam termination that is just the place the dummy died on the frame when it
+		//		would have collided next frame. When it would die next frame, it needs to repeat its check at smaller and smaller intervals, instead
+		//		of just doing the one per-16 (tile size) check.
         if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
             localSprite.parent.shouldAttack = true;
         }
@@ -878,6 +866,9 @@ function getCreatureSentinelEye(x, y) {
 }
 
 function getProjectileSentinelBeam(originX, originY, length, width, rotation, damage, duration, target, parent) {
+	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
+	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning  a hit
+	//		based on the sprite (sans rotation).
     var spriteXSize = 32,
         spriteYSize = 32,
         xScale = length / spriteXSize,
@@ -899,12 +890,18 @@ function getProjectileSentinelBeam(originX, originY, length, width, rotation, da
 }
 
 function getProjectileSentinelBeamCharging(originX, originY, length, width, rotation, parent) {
+	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
+	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning  a hit
+	//		based on the sprite (sans rotation).
     var spriteXSize = 32,
+		spriteYSize = 32,
         xScale = length / spriteXSize,
-        yScale = width * 0.125;
+        yScale = width * 0.125,
+        hitBox = new Rectangle(originX, originY, length, width * 2 * spriteYSize);
     var beam = new SimpleSprite(sentinelBeamAnimationBlue, originX, originY, 0, 0, xScale, yScale);
     beam.rotation = rotation;
     beam.justCreated = true;
+	beam.hitBox = hitBox;
     beam.parent = parent;
     beam.flying = true; // otherwise gravity will affect it
     beam.type = PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING;
