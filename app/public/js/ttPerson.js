@@ -133,22 +133,22 @@ class TTCharacter {
         this.vx = this.vy = 0;
         this.grounded = false;
         this.hitBox = new Rectangle(-18, -63, 36, 63);
-        //this.walkAnimation = characterMysteryWalkAnimation;
-        this.walkAnimation = characterAlienWalkAnimation;
+        //this.walkingAnimation = characterMysteryWalkingAnimation;
+        this.walkingAnimation = characterAlienWalkingAnimation;
         this.hasMovementStartAnimation = true;  //Alien character teleports in after idling.
         this.hasMovementStopAnimation = true; // Alien character vanishes upon beginning to idle, spawning a winkOut effect.
         //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
         this.attackAnimation = characterMysteryAttackAnimation;
-        //this.idleAnimation = characterMysteryIdleAnimation;
-        this.idleAnimation = characterAlienIdleAnimation;
-        this.idleAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
-        this.idleAnimationLong = {}; //to be filled in with what the character does when they've been idling for a long time
-        this.jumpAnimation = characterAlienJumpAnimation;
-        //this.jumpAnimation = characterMysteryJumpAnimation;
+        //this.idlingAnimation = characterMysteryIdlingAnimation;
+        this.idlingAnimation = characterAlienIdlingAnimation;
+        this.idlingAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
+        this.idlingAnimationLong = {}; //to be filled in with what the character does when they've been idling for a long time
+        this.jumpingAnimation = characterAlienJumpingAnimation;
+        //this.jumpingAnimation = characterMysteryJumpingAnimation;
 //        this.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
         this.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation; //fireball animation is fun, like you're a meteor. Something like that might actually work. Or might turn face-down with flailing limbs, setting up for a face plant.
         this.uncontrolledLandingAnimation = {}; //i.e. faceplant, followed by standing-up frames wherein the player can't move.
-        this.animation = this.walkAnimation;
+        this.animation = this.walkingAnimation;
         this.skin = skin;
         this.hair = hair;
         this.currentJumpDuration = 0; //to track how long the jump button has been held down, and so how high to jump
@@ -171,6 +171,7 @@ class TTCharacter {
         this.airDashCooldownDuration = 2000;
         this.cannotAirDashUntil = now();
         this.color = 'white';
+        this.invulnerableOnDamageDurationInMs = 1000;
     }
 
     jump() {
@@ -235,7 +236,7 @@ function characterAlienUncontrolledFallAnimation() {
     return {frames};
 }*/
 
-function walkAnimation(actorCanvas) {
+function walkingAnimation(actorCanvas) {
     var hitBox = new Rectangle(36, 18, 24, 42);
     var neutralFrame = $.extend(new Rectangle(0, 0, 96, 64), {image: actorCanvas, hitBox});
     var stepRight = $.extend(new Rectangle(96, 0, 96, 64), {image: actorCanvas, hitBox});

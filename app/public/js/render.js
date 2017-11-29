@@ -67,7 +67,7 @@ var render = () => {
     TagGame.render();
 
     // Considering calculating hit box from the animation. But do I want to worry about rotation with this?
-    /*var frame = mainCharacter.walkAnimation.frames[0];
+    /*var frame = mainCharacter.walkingAnimation.frames[0];
     var hitBox = frame.hitBox;
     hitBox = rectangle(mainCharacter.x - frame.width / 2 + hitBox.left)*/
 

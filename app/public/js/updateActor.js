@@ -74,7 +74,7 @@ function updateActor(actor) {
                 if (standingUpAnimationUntil <= now() && readyToStandUp) {
                     actor.invulnerable = false;
                     actor.disabled = false;
-                    //actor.animation = actor.walkAnimation;
+                    //actor.animation = actor.walkingAnimation;
                 }*/
             }
             if (actor.notReadyToStandUpUntil <= now()) {
@@ -284,7 +284,7 @@ function updateActor(actor) {
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkAnimation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkingAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
@@ -298,7 +298,7 @@ function updateActor(actor) {
     }
 
     if (actor.grounded && !actor.vx && !actor.attacking) {
-        actor.animation = actor.idleAnimation;
+        actor.animation = actor.idlingAnimation;
         actor.idleFrame =  Math.floor(now() / (actor.slipping ? actor.msBetweenIdleFramesWhileSlipping : actor.msBetweenIdleFrames)) % actor.animation.frames.length;
         actor.currentFrame = actor.idleFrame;
     }
@@ -314,13 +314,13 @@ function updateActor(actor) {
     }
     //jumping
     if (!actor.grounded && actor.vy < actor.uncontrolledFallVyThreshold) {
-        actor.animation = actor.jumpAnimation;
+        actor.animation = actor.jumpingAnimation;
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
     }
     if (!actor.attacking) {
         if (actor.vx) {
-            actor.animation = actor.walkAnimation;
+            actor.animation = actor.walkingAnimation;
             actor.currentFrame = actor.walkFrame;
         }
     } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
@@ -574,9 +574,9 @@ function moveSpriteInDirection(sprite, amount, direction) {
 }
 
 function damageSprite(sprite, amount) {
-    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || !sprite.invulnerable) return;
+    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || (sprite.invulnerable && sprite.unvulnerable === false)) return;
     sprite.health -= amount;
-    sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
+    sprite.blinkUntil = sprite.invulnerableUntil = now() + (sprite.invulnerableOnDamageDurationInMs || 1000);
 }
 
 //this function should be a super-simple arrow function using .filter or indexOf or something
@@ -588,14 +588,14 @@ function doesArrayContainSuperJumpChargeWind(array) {
 }
 
 function changeCharacterToAlien(actor) {
-    actor.walkAnimation = characterAlienWalkAnimation;
+    actor.walkingAnimation = characterAlienWalkingAnimation;
     actor.attackAnimation = characterAlienAttackAnimation;
     actor.hasMovementStartAnimation = true;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterAlienIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterAlienJumpAnimation;
+    actor.idlingAnimation = characterAlienIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterAlienJumpingAnimation;
     actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 200;
@@ -608,14 +608,14 @@ function changeCharacterToAlien(actor) {
 
 function changeCharacterToVictoria(actor) {
     actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIR_DASH;
-    actor.walkAnimation = characterVictoriaWalkAnimation;
+    actor.walkingAnimation = characterVictoriaWalkingAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterVictoriaIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.idlingAnimation = characterVictoriaIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterVictoriaJumpingAnimation;
     actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.standingUpAnimation = characterVictoriaStandingUpAnimation;
@@ -635,14 +635,14 @@ function changeCharacterToVictoria(actor) {
 
 function changeCharacterToCowbot(actor) {
     actor.currentActivatableMobilityPowerup = POWERUP_TYPE_SUPERJUMP;
-    actor.walkAnimation = characterCowbotWalkAnimation;
+    actor.walkingAnimation = characterCowbotWalkingAnimation;
     actor.attackAnimation = characterCowbotAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterCowbotIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterCowbotJumpAnimation;
+    actor.idlingAnimation = characterCowbotIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterCowbotJumpingAnimation;
     actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 150;
@@ -656,14 +656,14 @@ function changeCharacterToCowbot(actor) {
 }
 
 function changeCharacterToMystery(actor) {
-    actor.walkAnimation = characterMysteryWalkAnimation;
+    actor.walkingAnimation = characterMysteryWalkingAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterVictoriaIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.idlingAnimation = characterVictoriaIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterVictoriaJumpingAnimation;
     actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 200;
