@@ -640,8 +640,15 @@ function updateLocalSprite(localSprite) {
     }
     
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING) {
-        var beamCharging = localSprite;
-        beamCharging.yScale += 0.0075;   // WRONG this should use min scale and max scale and divide difference by chargin duration
+        var beamCharging = localSprite,
+			minScale = beamCharging.yScaleBase,
+			maxScale = beamCharging.parent.beamWidth,
+			scaleChangeOverLifespan = maxScale - minScale;
+		// the charging beam scales up to the size of the damage beam over its lifespan
+		if (beamCharging.noScaleChangeUntil <= now()) {
+			beamCharging.yScale += scaleChangeOverLifespan / (beamCharging.parent.beamDuration / beamCharging.msBetweenScaleChanges);
+			beamCharging.noScaleChangeUntil = now() + beamCharging.msBetweenScaleChanges;
+		}
         if (beamCharging.parent.beamChargingUntil <= now()) beamCharging.shouldBeRemoved = true;
     }
     
@@ -940,14 +947,18 @@ function getProjectileSentinelBeamCharging(originX, originY, length, width, rota
     var spriteXSize = 32,
 		spriteYSize = 32,
         xScale = length / spriteXSize,
-        yScale = width * 0.125,
+        yScale = width,
         hitBox = new Rectangle(originX, originY, length, width * 2 * spriteYSize);
     var beam = new SimpleSprite(sentinelBeamAnimationBlue, originX, originY, 0, 0, xScale, yScale);
+	beam.yScaleBase = 0.125;
+	beam.yScale = beam.yScaleBase;
     beam.rotation = rotation;
     beam.justCreated = true;
 	beam.hitBox = hitBox;
     beam.parent = parent;
     beam.flying = true; // otherwise gravity will affect it
+	beam.noScaleChangeUntil = now();
+	beam.msBetweenScaleChanges = 100;
     beam.type = PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING;
     localSprites.push(beam);
 }
