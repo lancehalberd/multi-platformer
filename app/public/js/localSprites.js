@@ -2,6 +2,7 @@ var PROJECTILE_TYPE_HOMING_FIREBALL = 'homingFireball';
 var PROJECTILE_TYPE_SENTINEL_BEAM = 'sentinelBeam';
 var PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING = 'sentinelBeamInHarmlessChargingPhase';
 var PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY = 'sentinelTargetingDummyProjectile';
+var PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT = 'sentineBeamSegment';
 
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIR_DASH = 'airDash';
@@ -488,23 +489,20 @@ function updateLocalSprite(localSprite) {
             minChargeTime = eye.minBeamChargeTimeInMs,
             chargeTimeRange = maxChargeTime - minChargeTime,
             beamDamageRange = eye.maxBeamDamage - eye.minBeamDamage,
-            beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9,  // beam won't live long enough to damage target twice
-            normalizedTargetingVector = [],
             targetingDummyVx,
             targetingDummyVy,
             eyeTargetY = eye.target.y - eye.target.hitBox.height * 0.5; // adjusted targeting point away from the origin toward the center of the target's hit box
-		if (!eye.attackBeginning) {
-			// setting beam origin
-			if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
-			else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
-			eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
-		}
+		eye.beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9;  // beam won't live long enough to damage target twice
+		// setting beam origin
+		if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
+		else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
         if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
             eye.wandering = true;
             if (eye.doNotFireTargetingDummyProjectileUntil <= now() && eye.notReadyToAttackUntil <= now()) {
-                normalizedTargetingVector = getNormalizedVector(eye.beamOriginX, eye.target.x, eye.beamOriginY, eyeTargetY);
-                targetingDummyVx = normalizedTargetingVector[0] * eye.targetingDummyMaxSpeed;
-                targetingDummyVy = normalizedTargetingVector[1] * eye.targetingDummyMaxSpeed;
+                eye.normalizedTargetingVector = getNormalizedVector(eye.beamOriginX, eye.target.x, eye.beamOriginY, eyeTargetY);
+                targetingDummyVx = eye.normalizedTargetingVector[0] * eye.targetingDummyMaxSpeed;
+                targetingDummyVy = eye.normalizedTargetingVector[1] * eye.targetingDummyMaxSpeed;
                 getProjectileSentinelTargetingDummy(eye.beamOriginX, eye.beamOriginY, targetingDummyVx, targetingDummyVy, eye.target, eye);
                 eye.doNotFireTargetingDummyProjectileUntil = now() + eye.delayBetweenFiringTargetingDummiesInMs;
             }
@@ -517,22 +515,31 @@ function updateLocalSprite(localSprite) {
         if (eye.shouldAttack && !eye.attackBeginning && eye.notReadyToAttackUntil <= now() && eye.attackingUntil <= now()) {   // these probably aren't all necessary?
             eye.wandering = false;
             eye.dx = eye.dy = eye.vx = eye.vy = 0;
+			// eye faces toward target when it's about to attack
+			if (eye.target.x < eye.x) {
+				eye.xScale = -Math.abs(eye.xScale);
+				eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;
+			}
+			else {
+				eye.xScale = Math.abs(eye.xScale);
+				eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+			}
+			eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;
             eye.animation = eye.attackStartupAnimation;
             eye.randomChargeTime = minChargeTime + Math.random() * chargeTimeRange;
             eye.chargeBeginning = true;
             eye.shouldAttack = false;
             eye.beamChargingUntil = now() + eye.randomChargeTime;
         }
-        // beam charging phase of attack
-        // WRONG: code in the charging and firing phase is duplicated because of the two types of beams that are spawning (charging and damage)
-        //      Maybe store vars as properties of eye if there are scope issues making things register as undefined.
-        //      
+        // beam charging phase of attack  
         if (eye.chargeBeginning && eye.beamChargingUntil > now()) {
+			// NOTE/WRONG: a lot of the stuff inside this 'if' structure will need to be duplicated in the firing phase 'if' structure
+			//		when the beam starts moving and/or targeting even while firing.
             // charging animation
-            eye.xDistanceToBeamTargetPoint = Math.abs(eye.beamTargetX - eye.x);
-            eye.yDistanceToBeamTargetPoint = Math.abs(eye.beamTargetY - eye.y);    
+            eye.xDistanceToBeamTargetPoint = eye.beamTargetX - eye.beamOriginX;
+            eye.yDistanceToBeamTargetPoint = eye.beamTargetY - eye.beamOriginY;    
             // beam damage will be either 1 or 2, depending on how long it charged for
-            eye.beamDamage = Math.ceil(eye.minBeamDamage + Math.round(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
+            eye.beamDamage = Math.floor(eye.minBeamDamage + Math.floor(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
             // wider beam if more damage
             eye.beamWidth = eye.beamDamage * eye.beamWidthScale;
             eye.distanceToObstacle = Math.sqrt(
@@ -540,24 +547,44 @@ function updateLocalSprite(localSprite) {
                 eye.yDistanceToBeamTargetPoint * eye.yDistanceToBeamTargetPoint
             );
 			// offsetting beam center so that rotating it leaves it in the right place
-			if (eye.target.x > eye.beamOriginX) eye.beamOriginX += 0.5 * eye.xDistanceToBeamTargetPoint;
-			else eye.beamOriginX -= 0.5 * eye.xDistanceToBeamTargetPoint;
-			if (eye.target.y > eye.beamOriginY) eye.beamOriginY += 0.5 * eye.yDistanceToBeamTargetPoint;
-			else eye.beamOriginY -= 0.5 * eye.yDistanceToBeamTargetPoint;
-            eye.angleToTarget = Math.atan2(-eye.yDistanceToBeamTargetPoint, eye.xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
-            getProjectileSentinelBeamCharging(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye);
+			eye.beamCenterX = eye.beamOriginX + 0.5 * eye.xDistanceToBeamTargetPoint;
+			eye.beamCenterY = eye.beamOriginY + 0.5 * eye.yDistanceToBeamTargetPoint;
+            eye.angleToTarget = Math.atan2(eye.yDistanceToBeamTargetPoint, eye.xDistanceToBeamTargetPoint) * (180 / Math.PI);
+			getProjectileSentinelBeamCharging(eye.beamCenterX, eye.beamCenterY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye);
             eye.chargeBeginning = false;
             eye.attackBeginning = true;
         }
         // firing phase of attack
         if (eye.attackBeginning && eye.beamChargingUntil <= now()) {
             eye.animation = eye.attackAnimation;
+			var segmentSize = eye.beamWidth * eye.beamWidthBase,
+				distanceBetweenSegments,
+				numberOfSegments = Math.ceil(eye.distanceToObstacle / segmentSize);
+			distanceBetweenSegments = segmentSize;//segmentSize - ((eye.distanceToObstacle % segmentSize) / numberOfSegments);
 			// offsetting beam center so that rotating it leaves it in the right place
-            getProjectileSentinelBeam(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye.beamDamage, beamDuration, eye.target, eye);
+            // not using a beam anymore--just segments
+			//getProjectileSentinelBeam(eye.beamCenterX, eye.beamCenterY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye.beamDamage, eye.beamDuration, eye.target, eye);
+			// creating beam segments for collision detection
+			for (var i = 0; i < numberOfSegments; i++) {
+				var segmentX = eye.beamOriginX + i * (eye.xDistanceToBeamTargetPoint / numberOfSegments),// + (i * (eye.xDistanceToBeamTargetPoint / numberOfSegments)),
+					segmentY = eye.beamOriginY + i * (eye.yDistanceToBeamTargetPoint / numberOfSegments);// + (i * (eye.yDistanceToBeamTargetPiont / numberOfSegments));
+				getProjectilSentinelBeamSegment(segmentX, segmentY, segmentSize, eye.beamDuration, eye.beamDamage, eye.target, eye.angleToTarget);
+			}
 			eye.attackBeginning = false;
-            eye.attackingUntil = now() + beamDuration;
+            eye.attackingUntil = now() + eye.beamDuration;
+			eye.noBeamSparksUntil = now();
             eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
+			eye.hasTarget = false;
         }
+        if (eye.noBeamSparksUntil <= now() && eye.attackingUntil > now()) {
+            getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 2);
+            eye.noBeamSparksUntil = now() + eye.msBetweenBeamSparks;
+        }
+		// displaying the beam target coordinates just for testing
+		/*if (eye.noTargetMarkerUntil <= now()) {
+			getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 1);
+			eye.noTargetMarkerUntil = now() + 200;
+		}*/
     }
     // end sentinel eye update
     
@@ -596,9 +623,11 @@ function updateLocalSprite(localSprite) {
     
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM) {
         var beam = localSprite;
-        if (isObjectCollidingWithNonInvulnerableTarget(beam, beam.target)) {
+        // this beam isn't being used right now. A segmented beam made of many square hit boxes is being used instead.
+		/* hit boxes don't rotate, so collision with this beam isn't very meaningful
+		if (isObjectCollidingWithNonInvulnerableTarget(beam, beam.target)) {
             damageSprite(beam.target, beam.damage);
-        }
+        }*/
         if (beam.justCreated) {
             beam.livesUntil = now() + beam.duration;
             beam.justCreated = false;
@@ -616,19 +645,33 @@ function updateLocalSprite(localSprite) {
         if (beamCharging.parent.beamChargingUntil <= now()) beamCharging.shouldBeRemoved = true;
     }
     
+	if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT) {
+		var segment = localSprite;
+		if (segment.justCreated) {
+			segment.livesUntil = now() + segment.duration;
+			segment.justCreated = false;
+		}
+		if (isObjectCollidingWithNonInvulnerableTarget(segment, segment.target)) {
+				damageSprite(segment.target, segment.damage);
+		}
+		if (segment.livesUntil <= now()) segment.shouldBeRemoved = true;
+	}
+	
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY) {
 		// WRONG: there need to be some reiterative collision detection that locates an accurate point of termination, flush to the collision surface.
 		//		For now, the dummy is sending the parent a location for beam termination that is just the place the dummy died on the frame when it
 		//		would have collided next frame. When it would die next frame, it needs to repeat its check at smaller and smaller intervals, instead
 		//		of just doing the one per-16 (tile size) check.
-        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
-            localSprite.parent.shouldAttack = true;
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target) && !localSprite.parent.hasTarget) {
+			localSprite.hitTarget = true;
+			localSprite.parent.hasTarget = true;
         }
-        if (localSprite.shouldBeRemoved) {
+        if (localSprite.shouldBeRemoved && localSprite.hitTarget && localSprite.parent.hasTarget) {
             localSprite.parent.beamTargetX = localSprite.x;
             localSprite.parent.beamTargetY = localSprite.y;
-            // addFireballDetonation(localSprite, 6, 8, 8); // comment back in to visualize impact point
+            localSprite.parent.shouldAttack = true;
         }
+		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 6, 8, 8); // comment back in to visualize impact point
     }
     
     
@@ -838,6 +881,7 @@ function getCreatureSentinelEye(x, y) {
     eye.dy = 0;
     eye.bobs = false; // WRONG: should be true, but bobbing doesn't work with moving creatures right now.
     eye.beamWidthScale = 0.25;
+	eye.beamWidthBase = 32;
     eye.msBetweenWanderingDirectionChangeMin = 1500;
     eye.msBetweenWanderingDirectionChangeMax = 4500;
     eye.wanderingAccelerationXScale = 0.33;
@@ -847,10 +891,6 @@ function getCreatureSentinelEye(x, y) {
     eye.fleeingAcceleration = 0.15;
     eye.collides = true;
     eye.msBetweenFrames = 90;
-    eye.aggroRadius = 200;  // not being used right now--just fires on line of sight.
-    eye.persistentAggroTime = 2000; //time after target has left aggro radius during which hound will remain aggroed
-    eye.maxSpeedPeaceful = 0.5;
-    eye.maxSpeedAggroed = 6.5;
     eye.maxSpeed = 0.5;
     eye.maxAcceleration = 0.189;
     eye.notReadyToAttackUntil = now();
@@ -860,9 +900,12 @@ function getCreatureSentinelEye(x, y) {
     eye.minBeamDamage = 1;
     eye.maxBeamChargeTimeInMs = 1250;
     eye.minBeamChargeTimeInMs = 500;
+	eye.msBetweenBeamSparks = 100;
     eye.delayBetweenFiringTargetingDummiesInMs = 200; // eye will fire a targeting dummy every 200 ms.
     eye.targetingDummyMaxSpeed = 16; // WRONG: Needs to be faster, but 16 is the fastest speed that won't skip a whole tile in one frame of checks without special collision checks.
     eye.doNotFireTargetingDummyProjectileUntil = now();
+	eye.hasTarget = false; // doesn't actually need to be here because checking !eye.hasTarget should return false if this isn't here at all?
+	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
 }
 
@@ -875,7 +918,7 @@ function getProjectileSentinelBeam(originX, originY, length, width, rotation, da
         xScale = length / spriteXSize,
         yScale = width,
         hitBox = new Rectangle(originX, originY, length, width * 2 * spriteYSize);
-    var beam = new SimpleSprite(sentinelBeamAnimationRed, originX, originY, 0, 0, xScale, yScale);
+    var beam = new SimpleSprite(sentinelTargetingDummyAnimation/*sentinelBeamAnimationRed*/, originX, originY, 0, 0, xScale, yScale);
     beam.damage = damage;
     beam.rotation = rotation;
     beam.parent = parent;
@@ -909,9 +952,27 @@ function getProjectileSentinelBeamCharging(originX, originY, length, width, rota
     localSprites.push(beam);
 }
 
+function getProjectilSentinelBeamSegment(x, y, size, duration, damage, target, rotation) {
+	var	spriteXSize = 32,
+		spriteYSize = 32,
+		xScale = size / spriteXSize,
+		yScale = size / spriteYSize;//,
+//		hitBox = new Rectangle(0, 0, size, size);
+	var segment = new SimpleSprite(sentinelBeamAnimationRed, x, y, 0, 0, xScale, yScale);
+	segment.duration = duration;
+	segment.justCreated = true;
+	segment.damage = damage;
+	segment.target = target;
+	segment.rotation = rotation;
+	segment.flying = true;
+	//segment.hitBox = hitBox;
+	segment.type = PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT;
+	localSprites.push(segment);
+}
+
 function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
     var hitBox = new Rectangle(0, 0, 8, 8);
-    var dummy = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, vx, vy, 0.25, 0.25); // change animation to fireballAnimation to visualize.
+    var dummy = new SimpleSprite(/*fireballAnimation*/sentinelTargetingDummyAnimation, x, y, vx, vy, 0.25, 0.25); // change animation to fireballAnimation to visualize.
     dummy.hitBox = hitBox;
     dummy.collides = true;
     dummy.removedOnCollision = true;
