@@ -489,16 +489,16 @@ function updateLocalSprite(localSprite) {
             chargeTimeRange = maxChargeTime - minChargeTime,
             beamDamageRange = eye.maxBeamDamage - eye.minBeamDamage,
             beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9,  // beam won't live long enough to damage target twice
-            xDistanceToBeamTargetPoint,
-            yDistanceToBeamTargetPoint,
             normalizedTargetingVector = [],
             targetingDummyVx,
             targetingDummyVy,
             eyeTargetY = eye.target.y - eye.target.hitBox.height * 0.5; // adjusted targeting point away from the origin toward the center of the target's hit box
-        // setting beam origin
-		if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
-        else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
-		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
+		if (!eye.attackBeginning) {
+			// setting beam origin
+			if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
+			else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+			eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
+		}
         if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
             eye.wandering = true;
             if (eye.doNotFireTargetingDummyProjectileUntil <= now() && eye.notReadyToAttackUntil <= now()) {
@@ -529,22 +529,22 @@ function updateLocalSprite(localSprite) {
         //      
         if (eye.chargeBeginning && eye.beamChargingUntil > now()) {
             // charging animation
-            xDistanceToBeamTargetPoint = Math.abs(eye.beamTargetX - eye.x);
-            yDistanceToBeamTargetPoint = Math.abs(eye.beamTargetY - eye.y);    
+            eye.xDistanceToBeamTargetPoint = Math.abs(eye.beamTargetX - eye.x);
+            eye.yDistanceToBeamTargetPoint = Math.abs(eye.beamTargetY - eye.y);    
             // beam damage will be either 1 or 2, depending on how long it charged for
             eye.beamDamage = Math.ceil(eye.minBeamDamage + Math.round(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
             // wider beam if more damage
             eye.beamWidth = eye.beamDamage * eye.beamWidthScale;
             eye.distanceToObstacle = Math.sqrt(
-                xDistanceToBeamTargetPoint * xDistanceToBeamTargetPoint +
-                yDistanceToBeamTargetPoint * yDistanceToBeamTargetPoint
+                eye.xDistanceToBeamTargetPoint * eye.xDistanceToBeamTargetPoint +
+                eye.yDistanceToBeamTargetPoint * eye.yDistanceToBeamTargetPoint
             );
 			// offsetting beam center so that rotating it leaves it in the right place
-			if (eye.target.x > eye.beamOriginX) eye.beamOriginX += 0.5 * xDistanceToBeamTargetPoint;
-			else eye.beamOriginX -= 0.5 * xDistanceToBeamTargetPoint;
-			if (eye.target.y > eye.beamOriginY) eye.beamOriginY += 0.5 * yDistanceToBeamTargetPoint;
-			else eye.beamOriginY -= 0.5 * yDistanceToBeamTargetPoint;
-            eye.angleToTarget = Math.atan2(-yDistanceToBeamTargetPoint, xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
+			if (eye.target.x > eye.beamOriginX) eye.beamOriginX += 0.5 * eye.xDistanceToBeamTargetPoint;
+			else eye.beamOriginX -= 0.5 * eye.xDistanceToBeamTargetPoint;
+			if (eye.target.y > eye.beamOriginY) eye.beamOriginY += 0.5 * eye.yDistanceToBeamTargetPoint;
+			else eye.beamOriginY -= 0.5 * eye.yDistanceToBeamTargetPoint;
+            eye.angleToTarget = Math.atan2(-eye.yDistanceToBeamTargetPoint, eye.xDistanceToBeamTargetPoint) * (180 / Math.PI); // WRONG still working this out. Math.atan2 returns a number from pi to -pi, so this is only working in part of an arc.
             getProjectileSentinelBeamCharging(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye);
             eye.chargeBeginning = false;
             eye.attackBeginning = true;
@@ -552,8 +552,9 @@ function updateLocalSprite(localSprite) {
         // firing phase of attack
         if (eye.attackBeginning && eye.beamChargingUntil <= now()) {
             eye.animation = eye.attackAnimation;
+			// offsetting beam center so that rotating it leaves it in the right place
             getProjectileSentinelBeam(eye.beamOriginX, eye.beamOriginY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye.beamDamage, beamDuration, eye.target, eye);
-            eye.attackBeginning = false;
+			eye.attackBeginning = false;
             eye.attackingUntil = now() + beamDuration;
             eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
         }
@@ -857,8 +858,8 @@ function getCreatureSentinelEye(x, y) {
     eye.attackCooldownInMs = 3000;
     eye.maxBeamDamage = 2;
     eye.minBeamDamage = 1;
-    eye.maxBeamChargeTimeInMs = 2000;
-    eye.minBeamChargeTimeInMs = 750;
+    eye.maxBeamChargeTimeInMs = 1250;
+    eye.minBeamChargeTimeInMs = 500;
     eye.delayBetweenFiringTargetingDummiesInMs = 200; // eye will fire a targeting dummy every 200 ms.
     eye.targetingDummyMaxSpeed = 16; // WRONG: Needs to be faster, but 16 is the fastest speed that won't skip a whole tile in one frame of checks without special collision checks.
     eye.doNotFireTargetingDummyProjectileUntil = now();
@@ -868,7 +869,7 @@ function getCreatureSentinelEye(x, y) {
 function getProjectileSentinelBeam(originX, originY, length, width, rotation, damage, duration, target, parent) {
 	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
 	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning  a hit
-	//		based on the sprite (sans rotation).
+	//		based on the sprite (sans rotation) in the absence of a .hitBox property.
     var spriteXSize = 32,
         spriteYSize = 32,
         xScale = length / spriteXSize,
@@ -891,8 +892,8 @@ function getProjectileSentinelBeam(originX, originY, length, width, rotation, da
 
 function getProjectileSentinelBeamCharging(originX, originY, length, width, rotation, parent) {
 	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
-	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning  a hit
-	//		based on the sprite (sans rotation).
+	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning a hit
+	//		based on the sprite (sans rotation) in the absence of a .hitBox property.
     var spriteXSize = 32,
 		spriteYSize = 32,
         xScale = length / spriteXSize,
