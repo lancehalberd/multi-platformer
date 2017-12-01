@@ -49,6 +49,7 @@ class SimpleSprite {
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.facesDirectionOfMovement = false;
         this.facesDirectionOfAcceleration = false;
+		this.facesTarget = false;
         this.currentFrame = 0;
         this.framesToLive = 0;
         this.msBetweenFrames = 200;
@@ -250,33 +251,51 @@ function updateLocalSprite(localSprite) {
     localSprite.currentFrame = Math.floor(now() / (localSprite.slipping ? localSprite.msBetweenFramesWhileSlipping : localSprite.msBetweenFrames) % localSprite.animation.frames.length);
     //geomtry collision checks
     //if something.collides, but !it.removedOnCollision && it.pacing, it reverses at it.speed
+	// the commented-out stuff here about setting localSprite.colliding_____ doesn't work (it maybe registers for one frame, at best), but if it
+	//		*did* work, it would be useful. I wanted to use it to tell a fleeing creature that gets cornered to fight instead of continuing to flee.
     if (localSprite.vx && localSprite.collides) {
         if (localSprite.vx < 0) {
             if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vx = localSprite.xSpeed;
-            }
+				localSprite.collidedHorizontallyRecentlyUntil = now() + 500;	// used for checking for whether the creature is cornered
+				//localSprite.collidingLeft = true;
+				//localSprite.collidingHorizontally = true;
+            } //else localSprite.collidingLeft = false;
         } else {
             if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vx = -localSprite.xSpeed;
-            }
+				localSprite.collidedHorizontallyRecentlyUntil = now() + 500;
+				//localSprite.collidingRight = true;
+				//localSprite.collidingHorizontally = true;
+            } //else localSprite.collidingRight = false;
         }
-    }
+		//if (moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT) || moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT)) localSprite.collidingHorizontally = false;
+	}
     if (localSprite.vy && localSprite.collides) {
         if (localSprite.vy < 0) {
             if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vy = localSprite.ySpeed;
-            }
+				localSprite.collidedVerticallyRecentlyUntil = now() + 500;
+				//localSprite.collidingUp = true;
+				//localSprite.collidingVertically = true;
+            } //else localSprite.collidingUp = false;
         } else {
             if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vy = -localSprite.ySpeed;
-            }
+				localSprite.collidedVerticallyRecentlyUntil = now() + 500;
+				//localSprite.grounded = true;
+				//localSprite.collidingVertically = true;
+            } //else localSprite.grounded = false;
         }
+		//if (moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP) || moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) localSprite.collidingVertically = false;
     }
-    if (localSprite.facesDirectionOfMovement) {
+	if (localSprite.collidedHorizontallyRecentlyUntil > now() && localSprite.collidedVerticallyRecentlyUntil > now()) localSprite.cornered = true;
+	else localSprite.cornered = false;
+	if (localSprite.facesDirectionOfMovement) {
         if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
     }
@@ -289,7 +308,11 @@ function updateLocalSprite(localSprite) {
             else localSprite.slipping = false;
         }
     }
-    // gravity
+    if (localSprite.facesTarget) {
+		if (localSprite.target.x < localSprite.x) localSprite.xScale = -Math.abs(localSprite.xScale);
+		else localSprite.xScale = Math.abs(localSprite.xScale);
+	}
+	// gravity
     if (!localSprite.flying) localSprite.vy++;
     // acceleration
     localSprite.vx += localSprite.dx;
@@ -494,19 +517,49 @@ function updateLocalSprite(localSprite) {
             eyeTargetY = eye.target.y - eye.target.hitBox.height * 0.5; // adjusted targeting point away from the origin toward the center of the target's hit box
 		eye.beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9;  // beam won't live long enough to damage target twice
 		// setting beam origin
-		if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
-		else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+		//if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
+		//else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+		// when beam origin is displaced from center of eye, it might spawn dummies in a wall
+		eye.beamOriginX = eye.x;
 		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
-        if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
+        // flees if target gets too close and eye is not already attacking
+		if (isCharacterInsideRadius(eye.x, eye.y, eye.fleeingRadius, eye.target) && !eye.attackBeginning && eye.attackingUntil <= now() && eye.hasTarget) {
+			eye.fleeing = true;
+			eye.wandering = false;
+			eye.facesDirectionOfAcceleration = false;
+			eye.facesTarget = true;
+			eye.maxSpeed = eye.maxSpeedFleeing;
+			eye.fleeingUntil = now() + eye.persistentFleeingMs;
+			eye.wasFleeing = true;
+			if (eye.cornered) {
+				eye.notReadyToAttackUntil = now();
+				//eye.wasFleeing = false;
+				eye.fleeingUntil = now();
+			} else {
+				eye.notReadyToAttackUntil = now() + eye.persistentFleeingMs;
+			}
+			// WRONG should leave a trail of fading shadow images of itself while fleeing
+		}
+		if (eye.fleeingUntil <= now() && eye.wasFleeing) {
+			eye.facesTarget = false;
+			eye.fleeing = false;
+			eye.maxSpeed = eye.maxSpeedNormal;
+			eye.facesDirectionOfAcceleration = true;
+			eye.wasFleeing = false;
+		}
+		if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
             eye.wandering = true;
-            if (eye.doNotFireTargetingDummyProjectileUntil <= now() && eye.notReadyToAttackUntil <= now()) {
+			//eye.firesDummies = true;
+        }
+		if (eye.firesDummies) {
+            if (eye.doNotFireTargetingDummyProjectileUntil <= now()) {
                 eye.normalizedTargetingVector = getNormalizedVector(eye.beamOriginX, eye.target.x, eye.beamOriginY, eyeTargetY);
                 targetingDummyVx = eye.normalizedTargetingVector[0] * eye.targetingDummyMaxSpeed;
                 targetingDummyVy = eye.normalizedTargetingVector[1] * eye.targetingDummyMaxSpeed;
                 getProjectileSentinelTargetingDummy(eye.beamOriginX, eye.beamOriginY, targetingDummyVx, targetingDummyVy, eye.target, eye);
                 eye.doNotFireTargetingDummyProjectileUntil = now() + eye.delayBetweenFiringTargetingDummiesInMs;
             }
-        }
+		}
         if (!eye.vy && !eye.vx && !eye.attacking) {
             eye.animation = eye.idlingAnimation;
         }
@@ -515,16 +568,8 @@ function updateLocalSprite(localSprite) {
         if (eye.shouldAttack && !eye.attackBeginning && eye.notReadyToAttackUntil <= now() && eye.attackingUntil <= now()) {   // these probably aren't all necessary?
             eye.wandering = false;
             eye.dx = eye.dy = eye.vx = eye.vy = 0;
-			// eye faces toward target when it's about to attack
-			if (eye.target.x < eye.x) {
-				eye.xScale = -Math.abs(eye.xScale);
-				eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;
-			}
-			else {
-				eye.xScale = Math.abs(eye.xScale);
-				eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
-			}
-			eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;
+			eye.facesTarget = true;
+			eye.facesDirectionOfAcceleration = false;
             eye.animation = eye.attackStartupAnimation;
             eye.randomChargeTime = minChargeTime + Math.random() * chargeTimeRange;
             eye.chargeBeginning = true;
@@ -575,6 +620,8 @@ function updateLocalSprite(localSprite) {
 			eye.noBeamSparksUntil = now();
             eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
 			eye.hasTarget = false;
+			eye.facesTarget = false;
+			eye.facesDirectionOfAcceleration = true;
         }
         if (eye.noBeamSparksUntil <= now() && eye.attackingUntil > now()) {
             getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 2);
@@ -638,7 +685,7 @@ function updateLocalSprite(localSprite) {
         }
         if (beam.livesUntil <= now()) beam.shouldBeRemoved = true;
     }
-    
+
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING) {
         var beamCharging = localSprite,
 			minScale = beamCharging.yScaleBase,
@@ -678,7 +725,7 @@ function updateLocalSprite(localSprite) {
             localSprite.parent.beamTargetY = localSprite.y;
             localSprite.parent.shouldAttack = true;
         }
-		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 6, 8, 8); // comment back in to visualize impact point
+		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 1, 8, 8); // comment back in to visualize impact point
     }
     
     
@@ -899,6 +946,10 @@ function getCreatureSentinelEye(x, y) {
     eye.collides = true;
     eye.msBetweenFrames = 90;
     eye.maxSpeed = 0.5;
+	eye.maxSpeedFleeing = 4;
+	eye.maxSpeedNormal = 0.5;
+	eye.fleeingRadius = 200; // radius inside of which eye will flee its target
+	eye.persistentFleeingMs = 1000; // time after target has left fleeing radius during which eye will continue to flee
     eye.maxAcceleration = 0.189;
     eye.notReadyToAttackUntil = now();
     eye.attackingUntil = now();
@@ -912,6 +963,7 @@ function getCreatureSentinelEye(x, y) {
     eye.targetingDummyMaxSpeed = 16; // WRONG: Needs to be faster, but 16 is the fastest speed that won't skip a whole tile in one frame of checks without special collision checks.
     eye.doNotFireTargetingDummyProjectileUntil = now();
 	eye.hasTarget = false; // doesn't actually need to be here because checking !eye.hasTarget should return false if this isn't here at all?
+	eye.firesDummies = true; // while this is true, eye will be firing targeting dummies 
 	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
 }
