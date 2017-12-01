@@ -378,8 +378,9 @@ function updateLocalSprite(localSprite) {
             localSprite.noSmokePlumeUntil = now() + localSprite.msBetweenSmokePlumes;
         }
         // on collision with target
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(localSprite.target))) {
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
             damageSprite(localSprite.target, 1);
+			knockBack(localSprite, localSprite.target);
         }
     }
     // end haunted mask update
@@ -613,7 +614,7 @@ function updateLocalSprite(localSprite) {
 			for (var i = 0; i < numberOfSegments; i++) {
 				var segmentX = eye.beamOriginX + i * (eye.xDistanceToBeamTargetPoint / numberOfSegments),// + (i * (eye.xDistanceToBeamTargetPoint / numberOfSegments)),
 					segmentY = eye.beamOriginY + i * (eye.yDistanceToBeamTargetPoint / numberOfSegments);// + (i * (eye.yDistanceToBeamTargetPiont / numberOfSegments));
-				getProjectilSentinelBeamSegment(segmentX, segmentY, segmentSize, eye.beamDuration, eye.beamDamage, eye.target, eye.angleToTarget);
+				getProjectilSentinelBeamSegment(segmentX, segmentY, segmentSize, eye.beamDuration, eye.beamDamage, eye.target, eye.angleToTarget, eye);
 			}
 			eye.attackBeginning = false;
             eye.attackingUntil = now() + eye.beamDuration;
@@ -632,7 +633,12 @@ function updateLocalSprite(localSprite) {
 			getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 1);
 			eye.noTargetMarkerUntil = now() + 200;
 		}*/
-    }
+		// on collision with target
+		if (isObjectCollidingWithNonInvulnerableTarget(eye, eye.target)) {
+			damageSprite(eye.target, 1);
+			knockBack(eye, eye.target);
+		}
+	}
     // end sentinel eye update
     
     
@@ -648,22 +654,18 @@ function updateLocalSprite(localSprite) {
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) { //on collision with non-invulnerable player
-            var randomVXBoost;
-            //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
-            mainCharacter.vy = -15; //player pops upward if hit
-            if (Math.random() > 0.5) randomVXBoost = Math.random() * 8;   //player gets a random vx if hit.
-            else randomVXBoost = Math.random() * -8;
-            mainCharacter.vx += randomVXBoost;
-            damageSprite(mainCharacter, 1);
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) { //on collision with non-invulnerable player
+            damageSprite(localSprite.target, 1);
+			knockBack(localSprite, localSprite.target);
         }
     }
 
     if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   //WRONG: "mainCharacter" should be localSprite.target
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
             mainCharacter.health--;
+			knockBack(localSprite, localSprite.target);
             localSprite.shouldBeRemoved = true;
         }
     }
@@ -706,7 +708,8 @@ function updateLocalSprite(localSprite) {
 			segment.justCreated = false;
 		}
 		if (isObjectCollidingWithNonInvulnerableTarget(segment, segment.target)) {
-				damageSprite(segment.target, segment.damage);
+			damageSprite(segment.target, segment.damage);
+			knockBack(localSprite.parent, localSprite.target, 20 * segment.damage, 20 * segment.damage, 7 * segment.damage);
 		}
 		if (segment.livesUntil <= now()) segment.shouldBeRemoved = true;
 	}
@@ -917,9 +920,10 @@ function getCreaturePacingFireball(creatureType) {
 
 function getCreatureSentinelEye(x, y) {
     hitBox = new Rectangle(-24, -48, 48, 48);
-    xScale = yScale = 1;
+    xScale = yScale = 1.2;
     var eye = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
     eye.type = CREATURE_TYPE_SENTINEL_EYE;
+	eye.health = 5;
     eye.hitBox = hitBox;
     eye.facesDirectionOfAcceleration = true;
     eye.movingAnimation = sentinelEyeMovingAnimation;
@@ -963,7 +967,7 @@ function getCreatureSentinelEye(x, y) {
     eye.targetingDummyMaxSpeed = 16; // WRONG: Needs to be faster, but 16 is the fastest speed that won't skip a whole tile in one frame of checks without special collision checks.
     eye.doNotFireTargetingDummyProjectileUntil = now();
 	eye.hasTarget = false; // doesn't actually need to be here because checking !eye.hasTarget should return false if this isn't here at all?
-	eye.firesDummies = true; // while this is true, eye will be firing targeting dummies 
+	eye.firesDummies = true; // while this is true, eye will be firing targeting dummies
 	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
 }
@@ -1015,7 +1019,7 @@ function getProjectileSentinelBeamCharging(originX, originY, length, width, rota
     localSprites.push(beam);
 }
 
-function getProjectilSentinelBeamSegment(x, y, size, duration, damage, target, rotation) {
+function getProjectilSentinelBeamSegment(x, y, size, duration, damage, target, rotation, parent) {
 	var	spriteXSize = 32,
 		spriteYSize = 32,
 		xScale = size / spriteXSize,
@@ -1027,6 +1031,7 @@ function getProjectilSentinelBeamSegment(x, y, size, duration, damage, target, r
 	segment.damage = damage;
 	segment.target = target;
 	segment.rotation = rotation;
+	segment.parent = parent;
 	segment.flying = true;
 	//segment.hitBox = hitBox;
 	segment.type = PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT;
@@ -1047,8 +1052,9 @@ function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
     dummy.type = PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY;
     localSprites.push(dummy);
 }
+
 function getNormalizedVector(originX, targetX, originY, targetY) {
-    // WRONG(?) yielding x and y values that together equal magnitudes greater than 1.
+	// return a vector phrased as an x and y magnitude that together amount to a speed of 1, from the origin to the target
     var vectorX = targetX - originX,
         vectorY = targetY - originY,
         normalizedVector = [],
@@ -1057,6 +1063,19 @@ function getNormalizedVector(originX, targetX, originY, targetY) {
 		vectorY /= magnitude;
         normalizedVector.push(vectorX, vectorY);
         return normalizedVector;
+}
+
+function knockBack(objectAnchored, objectKnockedBack, knockBackMagnitudeX, knockBackMagnitudeUp, knockBackMagnitudeDown) {
+	// Note: if you don't send this function specific magnitudes, it will default to some preset values
+	// Note/Wrong?: Might want to scale the force imparted to the target with the "anchored" object's vx & vy,
+	//		but you could do that with the arguments sent for magnitudes from the update function that called knockBack.
+	var vector = getNormalizedVector(objectAnchored.x, objectKnockedBack.x, objectAnchored.y, objectKnockedBack.y),
+	forceX = vector[0] * (knockBackMagnitudeX || 30),
+	forceUp = vector[1] * (knockBackMagnitudeUp || 30),
+	forceDown = vector[1] * (knockBackMagnitudeDown || 10);
+	objectKnockedBack.vx += forceX;
+	if (vector[1] < 0) objectKnockedBack.vy += forceUp;
+	else objectKnockedBack.vy += forceDown;
 }
 
 function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
