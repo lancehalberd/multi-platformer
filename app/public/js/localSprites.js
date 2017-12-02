@@ -582,8 +582,10 @@ function updateLocalSprite(localSprite) {
 			// NOTE/WRONG: a lot of the stuff inside this 'if' structure will need to be duplicated in the firing phase 'if' structure
 			//		when the beam starts moving and/or targeting even while firing.
             // charging animation
-            eye.xDistanceToBeamTargetPoint = eye.beamTargetX - eye.beamOriginX;
-            eye.yDistanceToBeamTargetPoint = eye.beamTargetY - eye.beamOriginY;    
+			eye.committedBeamTargetX = eye.beamTargetX;	// .committedBeamTarget is assigned because we want the beam to not shift its focal point to dummies that fire after the beam starts charging
+			eye.committedBeamTargetY = eye.beamTargetY;
+            eye.xDistanceToBeamTargetPoint = eye.committedBeamTargetX - eye.beamOriginX;
+            eye.yDistanceToBeamTargetPoint = eye.committedBeamTargetY - eye.beamOriginY;
             // beam damage will be either 1 or 2, depending on how long it charged for
             eye.beamDamage = Math.floor(eye.minBeamDamage + Math.floor(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
             // wider beam if more damage
@@ -625,7 +627,7 @@ function updateLocalSprite(localSprite) {
 			eye.facesDirectionOfAcceleration = true;
         }
         if (eye.noBeamSparksUntil <= now() && eye.attackingUntil > now()) {
-            getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 2);
+            getBeamImpactSparks(eye.committedBeamTargetX, eye.committedBeamTargetY, 2);
             eye.noBeamSparksUntil = now() + eye.msBetweenBeamSparks;
         }
 		// displaying the beam target coordinates just for testing
@@ -671,8 +673,9 @@ function updateLocalSprite(localSprite) {
     }
     
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM) {
+		// THIS PROJECTILE IS NOT BEING USED AT ALL--replaced by segmented version for now.
+		//		It might be used again if we end up using rotated hit boxes.
         var beam = localSprite;
-        // this beam isn't being used right now. A segmented beam made of many square hit boxes is being used instead.
 		/* hit boxes don't rotate, so collision with this beam isn't very meaningful
 		if (isObjectCollidingWithNonInvulnerableTarget(beam, beam.target)) {
             damageSprite(beam.target, beam.damage);
@@ -682,7 +685,7 @@ function updateLocalSprite(localSprite) {
             beam.justCreated = false;
         }
         if (beam.noBeamSparksUntil <= now()) {
-            getBeamImpactSparks(beam.parent.beamTargetX, beam.parent.beamTargetY, 2);
+            getBeamImpactSparks(beam.parent.committedBeamTargetX, beam.parent.committedBeamTargetY, 2);
             beam.noBeamSparksUntil = now() + beam.msBetweenSparks;
         }
         if (beam.livesUntil <= now()) beam.shouldBeRemoved = true;
