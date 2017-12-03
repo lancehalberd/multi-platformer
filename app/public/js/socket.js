@@ -4,6 +4,7 @@ var privateId, publicId, connected = false;
 socket = new WebSocket(`ws://${window.location.host}`);
 // Connection opened
 socket.addEventListener('open', event => connected = true);
+
 // Listen for messages
 socket.addEventListener('message', event => {
     // console.log('Message from server ', event.data);
@@ -100,6 +101,20 @@ socket.addEventListener('message', event => {
     if (typeof(data.tileData) !== 'undefined') {
         applyTileToMap(currentMap, data.tileData, data.position);
         currentMap.isDirty = true;
+    }
+    if (data.updatedTile) {
+        updateTilePalette(currentMap, data.oldKey, data.updatedTile);
+        updateTilePropertiesPreview();
+        // Check if we need to update the graphic for this tile
+        var newKey = hashObject(data.updatedTile);
+        var index = currentMap.hash[newKey];
+        if (index && index < $('.js-localTiles').children().length) {
+            var canvas = $('.js-localTiles').children()[index];
+            updateBrushPreviewElement(canvas, currentBrush);
+        }
+    }
+    if (data.newTile) {
+        addTileToPalette(currentMap, data.newTile);
     }
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);

@@ -2,6 +2,7 @@
 <head>
     <style type="text/css" >
         .pagebody {
+            position: relative;
             background-color: black;
             background-repeat: repeat;
             font-size: 16px;
@@ -33,7 +34,7 @@
             width: 200px;
             margin-right: 20px;
         }
-        .link-bar{
+        .link-bar {
             font-size: 20px; position: absolute; left: 5px; top: 5px;
         }
         .link-bar a {
@@ -87,8 +88,16 @@
     <div class="js-saveField editField">
         <button>Save Map</button>
     </div>
-    <div class="js-previewField editField">
-        <canvas class="js-canvas" width="96" height="96"></canvas>
+    <div class="js-previewField editField previewField">
+        <div class="js-tileProperties tileProperties">
+            <div class="js-topTileProperties topTileProperties"></div>
+            <div class="js-leftTileProperties leftTileProperties"></div>
+            <div class="js-rightTileProperties rightTileProperties"></div>
+            <div class="js-bottomTileProperties bottomTileProperties"></div>
+        </div>
+        <div class="previewCanvasContainer">
+            <canvas class="js-previewCanvas" width="96" height="96"></canvas>
+        </div>
     </div>
     <div class="js-tileSourceField editField">
         <select>
@@ -109,7 +118,21 @@
             <input class="js-y" value="64" style="width:40px;" />
         </div>
     </div>
-    <div class="js-brushSelectField editField">
+    <div class="js-brushSelectField editField brushField">
+        <div class="brushColumn">
+            <div class="js-specialBrushes"></div>
+        </div>
+        <div class="brushColumn">
+            <div class="js-localTiles"></div>
+            <div>
+                <button class="js-newTile">New Tile</button>
+                <button class="js-saveTile">Save Tile</button>
+                <button class="js-cancelTile">Discard Tile</button>
+            </div>
+        </div>
+        <div class="brushColumn">
+            <div class="js-foreignTiles"></div>
+        </div>
     </div>
     <div class="js-reloadField editField">
         <button>Reload Map</button>

@@ -1,5 +1,15 @@
 let isEditing = false;
 var cloneStartCoords, cloneLastCoords;
+
+$(document).on('mousedown', function (event) {
+    if (
+        !$(event.target).closest('.js-mouseContainer').length &&
+        !$(event.target).closest('.js-previewField').length &&
+        !$(event.target).closest('.js-tileSourceField').length
+    ) {
+        selectingTileGraphic = false;
+    }
+})
 const updateEditor = () => {
     if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_E, true)) {
         toggleEditing();
@@ -8,19 +18,13 @@ const updateEditor = () => {
     if (selectingTileGraphic) {
         var selectedCoords;
         if (mouseDown && (selectedCoords = getTileSelectionCoords())) {
-            var currentTile = currentBrush.getTile();
-            var oldKey = hashObject(currentTile);
-            currentTile.x = selectedCoords[0];
-            currentTile.y = selectedCoords[1];
-            currentTile.image = getSelectedTileSource();
-            currentTile.size = getSelectedTileSourceSize();
-            updateTilePallete(currentMap, oldKey, currentTile);
-            var newKey = hashObject(currentTile);
-            var index = currentMap.hash[newKey];
-            if (index && index < $('.js-localTiles').children().length) {
-                var canvas = $('.js-localTiles').children()[index];
-                updateBrushPreviewElement(canvas, currentBrush);
-            }
+            var updatedTile = currentBrush.getTile();
+            var oldKey = hashObject(updatedTile);
+            updatedTile.x = selectedCoords[0];
+            updatedTile.y = selectedCoords[1];
+            updatedTile.image = getSelectedTileSource();
+            updatedTile.size = getSelectedTileSourceSize();
+            sendData({action: 'updateTilePalette', oldKey, updatedTile});
         }
         return;
     }
@@ -60,27 +64,62 @@ const updateEditor = () => {
             }
         }
     }
-    currentBrush.update();
+    if (currentBrush) currentBrush.update();
 };
 
+var newTile = null;
 const toggleEditing = () => {
     isEditing = !isEditing;
+    $('.pageBody').toggleClass('isEditing', isEditing);
+    cancelCreatingNewTile(true);
     $('.js-editPanel').toggle(isEditing);
-    // Populate the brush panel if this is the first time opening the edit panel.
-    var $brushList = $('.js-brushSelectField');
-    if (!$brushList.children().length) {
-        $brushList.append($tag('div', 'js-localTiles'));
-        $brushList.append($tag('div', 'js-foreignTiles'));
+    $('.js-saveTile, .js-cancelTile').hide();
+    // Populate the special brush panel if this is the first time opening the edit panel.
+    var $specialBrushList = $('.js-specialBrushes');
+    if (!$specialBrushList.children().length) {
+        intializeTileProperties();
         for (var brush of brushList) {
-            $brushList.append(createBrushPreviewElement(brush));
+            $specialBrushList.append(createBrushPreviewElement(brush));
         }
-        $brushList.on('click', '.js-brushCanvas', function () {
-            selectBrush($(this).data('brush'));
-        });
     }
     selectBrush(currentBrush);
     selectedTrigger = null;
 };
+$('.js-brushSelectField').on('click', '.js-brushCanvas', function () {
+    cancelCreatingNewTile();
+    selectBrush($(this).data('brush'));
+});
+var previousBrush = null;
+$('.js-newTile').on('click', () => {
+    newTile = {image: getSelectedTileSource(), x:0, y:0, size:16, properties: 0};
+    previousBrush = currentBrush;
+    selectBrush(new TileBrush(newTile));
+    selectingTileGraphic = true;
+    $('.js-newTile').hide();
+    $('.js-saveTile, .js-cancelTile').show();
+});
+$('.js-saveTile').on('click', () => {
+    var newKey = hashObject(newTile);
+    // If the tile they attempt to save already exists, just cancel creation
+    // and set the brush to match the existing tile.
+    if (currentMap.hash[newKey]) {
+        cancelCreatingNewTile();
+        selectBrush(new TileBrush(currentMap.hash[newKey]));
+        return;
+    }
+    sendData({action: 'addTileToPalette', newTile});
+});
+
+const cancelCreatingNewTile = (revertBrush) => {
+    newTile = null;
+    selectingTileGraphic = false;
+    if (revertBrush && previousBrush) {
+        selectBrush(previousBrush);
+    }
+    $('.js-saveTile, .js-cancelTile').hide();
+    $('.js-newTile').show();
+};
+$('.js-cancelTile').on('click', cancelCreatingNewTile);
 
 const checkToUpdateLocalTiles = () => {
     var $localTiles = $('.js-localTiles');
@@ -101,13 +140,14 @@ const createBrushPreviewElement = (brush) => {
 };
 const updateBrushPreviewElement = (canvas, brush) => {
     var context = canvas.getContext('2d');
+    context.imageSmoothingEnabled = false;
     context.save();
     context.translate(16, 16);
     draw.fillRectangle(context, new Rectangle(-16, -16, 32, 32), 'white');
     brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
     context.restore();
     $(canvas).data('brush', brush);
-}
+};
 
 const selectBrush = (newBrush) => {
     currentBrush = newBrush;
@@ -118,8 +158,10 @@ const selectBrush = (newBrush) => {
         $('.js-tileSourceField select').toggle(false);
     } else {
         $('.js-tileSourceField select').toggle(true);
-        $('.js-tileSourceField select').val(currentBrush.tileSource && currentBrush.tileSource.image);
+        var tile = currentBrush.getTile();
+        $('.js-tileSourceField select').val(tile && tile.image);
     }
+    updateTilePropertiesPreview();
 
     // Unselect the current entity if it doesn't match the new brush.
     if (selectedTrigger && selectedTrigger.brushClass && selectedTrigger.brushClass !== currentBrush.constructor.name) {
@@ -128,10 +170,32 @@ const selectBrush = (newBrush) => {
     if (selectedTrigger && selectedTrigger.zoneId) {
         $('.js-zoneSelectField select').val(selectedTrigger.zoneId);
     }
-    if (currentBrush.onSelectZone) {
+    if (currentBrush && currentBrush.onSelectZone) {
         requestZoneData($('.js-zoneSelectField select').val());
     }
-}
+};
+
+const updateTilePropertiesPreview = () => {
+    var tile = currentBrush.getTile();
+    if (!tile || !(currentBrush instanceof TileBrush)) {
+        $('.js-tileProperties').hide();
+        return;
+    }
+    $('.js-tileProperties').show();
+
+    $('.js-tileProperties canvas').each(function () {
+        $(this).css('opacity', (tile.properties & $(this).data('value')) ? 1 : .3);
+    });
+};
+var toggleTileProperty = (updatedTile, property) => {
+    var oldKey = hashObject(updatedTile);
+    updatedTile.properties ^= property;
+    sendData({action: 'updateTilePalette', oldKey, updatedTile});
+};
+
+$('.js-tileProperties').on('click', 'canvas', function () {
+    toggleTileProperty(currentBrush.getTile(), $(this).data('value'));
+});
 
 const updateLocationSelect = () => {
     var zone = loadedZonesById[$('.js-zoneSelectField select').val()];
@@ -155,10 +219,11 @@ const updateLocationSelect = () => {
         $locationSelect.find('option:eq(0)').prop('selected', true);
     }
     updateLocationXAndYFields();
-}
+};
 
-var previewCanvas = $('.js-previewField .js-canvas')[0];
+var previewCanvas = $('.js-previewField .js-previewCanvas')[0];
 var previewContext = previewCanvas.getContext('2d');
+previewContext.imageSmoothingEnabled = false;
 
 const renderEditor = () => {
     if (!isEditing) return;
@@ -195,10 +260,11 @@ const renderEditor = () => {
         var imageRectangle = Rectangle.defineFromImage(tileSourceImage);
         //draw.fillRectangle(mainContext, imageRectangle, 'white');
         draw.image(mainContext, tileSourceImage, imageRectangle, imageRectangle);
-        if (currentBrush.tileSource) {
-            var x = currentBrush.tileSource.x;
-            var y = currentBrush.tileSource.y;
-            var size = currentBrush.tileSource.size;
+        var tile = currentBrush.getTile();
+        if (tile) {
+            var x = tile.x;
+            var y = tile.y;
+            var size = tile.size;
             mainContext.lineWidth = 2;
             draw.strokeRectangle(mainContext, new Rectangle(x, y, 1, 1).scale(size), 'red');
         }
@@ -782,7 +848,7 @@ var selectTileUnderMouse = () => {
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
 
-var tileSources = [twilightTiles, customTiles, mansionTiles, desertTiles32];
+var tileSources = [twilightTiles, customTiles, mansionTiles, desertTiles32, desertTiles16];
 // Make sure all brush tile sets are preloaded.
 tileSources.forEach(tileSource => {
     requireImage(tileSource);
@@ -877,12 +943,15 @@ $(document).on('keydown', e => {
     if (e.which === 221) selectNextObject(); // ']'
 });
 
+// Disabling mouse wheel, we don't need it with the tile select and it is annoying
+// when trying to scroll.
+/*
 $('.js-mainGame').on('mousewheel', e => {
     if (!isEditing) return;
     e.preventDefault();
     if (e.originalEvent.wheelDelta < 0) selectPreviousObject();
     if (e.originalEvent.wheelDelta > 0) selectNextObject();
-});
+});*/
 
 var getSelectedZoneId = () => $('.js-zoneSelectField select').val();
 var getSelectedCheckPointId = () => $('.js-locationSelectField select').val();
@@ -908,7 +977,8 @@ $('.js-locationSelectField .js-x, .js-locationSelectField .js-y').on('change', (
     onUpdateLocation();
 });
 var selectingTileGraphic = false;
-$('.js-previewField .js-canvas').on('click', () => {
+$('.js-previewField .js-previewCanvas').on('click', () => {
+    console.log(currentBrush instanceof TileBrush)
     if (currentBrush instanceof TileBrush) {
         selectingTileGraphic = !selectingTileGraphic;
     }
@@ -941,3 +1011,43 @@ var updateLocationXAndYFields = () => {
     $('.js-locationSelectField .js-x').val(checkPoint.x);
     $('.js-locationSelectField .js-y').val(checkPoint.y);
 }
+
+var getTileImageSource = (image, x, y, size) => {
+    var rectangle = new Rectangle(x, y, 1, 1).scale(size);
+    rectangle.image = image;
+    return rectangle;
+};
+var intializeTileProperties = () => {
+    var tileProperties = [
+        {value: TILE_SOLID, frame: getTileImageSource(twilightTiles, 10, 3, 16)},
+        {value: TILE_DAMAGE, frame: getTileImageSource(twilightTiles, 1, 14, 16)},
+        {value: TILE_BOUNCE, frame: getTileImageSource(twilightTiles, 10, 9, 16)},
+        {value: TILE_STICKY, frame: getTileImageSource(twilightTiles, 4, 2, 16)},
+        {value: TILE_SLIPPERY, frame: getTileImageSource(customTiles, 0, 0, 16)}
+    ];
+    // The directions are opposite here, because top means the top of the tile,
+    // but DOWN means the direction of the entity this property effects. So the top
+    // of the tile being solid means it is solid when moving DOWN.
+    $('.js-topTileProperties').data('value', TILE_DOWN);
+    $('.js-bottomTileProperties').data('value', TILE_UP);
+    $('.js-leftTileProperties').data('value', TILE_RIGHT);
+    $('.js-rightTileProperties').data('value', TILE_LEFT);
+
+    // Add a canvas for each property to each child.
+    $('.js-tileProperties').children().each(function() {
+        var directionValue = $(this).data('value');
+        for (var tileProperty of tileProperties) {
+            var canvas = createCanvas(16, 16, 'js-propertyCanvas');
+            var context = canvas.getContext('2d')
+            context.imageSmoothingEnabled = false;
+            var frame = tileProperty.frame;
+            if (typeof frame.image === 'string') {
+                frame.image = requireImage(frame.image);
+            }
+            draw.image(context, frame.image, frame, frame.moveTo(0, 0));
+            var $canvas = $(canvas);
+            $(this).append($canvas);
+            $canvas.data('value', directionValue * tileProperty.value);
+        }
+    });
+};

@@ -7,6 +7,8 @@ var mustache = require('mustache');
 var _ = require('lodash');
 var fs = require('fs');
 
+var {addTileToPalette, convertMapToTileSet, updateTilePalette} = require('./app/public/js/convertMapToTileSet.js');
+
 var colors = ['red', 'blue', 'yellow', 'green', 'purple', 'white', 'grey', 'orange', 'brown'];
 
 
@@ -57,7 +59,6 @@ var writeZoneToFile = (zoneId, map) => {
     });
 };
 
-var {convertMapToTileSet} = require('./app/public/js/convertMapToTileSet.js');
 var readZoneFromFile = (zoneId, width, height, sourceId) => {
     if (!fs.existsSync(`data/zones/${zoneId}.json`)) {
         if (sourceId) return readZoneFromFile(sourceId);
@@ -299,6 +300,14 @@ wsServer.on('request', function(request) {
                 broadcast(player.zoneId, {tileData: data.tileData, position: data.position});
                 map.isDirty = true;
                 return;
+            }
+            if (data.action === 'updateTilePalette') {
+                updateTilePalette(map, data.oldKey, data.updatedTile);
+                broadcast(player.zoneId, {oldKey: data.oldKey, updatedTile: data.updatedTile});
+            }
+            if (data.action === 'addTileToPalette') {
+                addTileToPalette(map, data.newTile);
+                broadcast(player.zoneId, {newTile: data.newTile});
             }
             if (data.action === 'createMapObject') {
                 tiles.applyObjectToMap(map, data.mapObject, data.position);

@@ -3,11 +3,27 @@
     font-size: 16px;
 }
 
+.pagebody.isEditing {
+    height: 650px;
+}
+
+.isEditing .mainGame {
+    margin-left: 0;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.isEditing .link-bar {
+    top: auto;
+    bottom: 0;
+}
+
 .editPanel {
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 100px;
+    display: inline-block;
+    vertical-align: top;
+    right: 20px;
+    top: 20px;
+    width: 300px;
     padding: 2px;
 }
 .editField {
@@ -15,4 +31,52 @@
 }
 .editPanel select {
     width: 100px;
+}
+
+.previewField {
+    position: relative;
+    margin: 20px;
+    width: 96px;
+    height: 96px;
+}
+.previewCanvasContainer {
+    position: absolute;
+}
+.tileProperties {
+    background-color: white;
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    left: 0;
+    top: 0;
+}
+.topTileProperties {
+    position: absolute;
+    top: -16px;
+}
+.bottomTileProperties {
+    position: absolute;
+    bottom: -16px;
+}
+.leftTileProperties {
+    position: absolute;
+    left: -16px;
+}
+.rightTileProperties {
+    position: absolute;
+    right: -16px;
+}
+
+.leftTileProperties canvas, .rightTileProperties canvas{
+    display: block;
+}
+.topTileProperties canvas, .bottomTileProperties canvas{
+    display: inline-block;
+}
+
+.brushColumn {
+    display: inline-block;
+    margin-right: 1px;
+    width: 128px;
+    vertical-align: top;
 }

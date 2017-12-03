@@ -35,7 +35,7 @@ var setMapTile = (map, row, col, tile) => {
     map.composite[row][col] = map.hash[key];
 };
 
-var updateTilePallete = (map, oldKey, newTile) => {
+var updateTilePalette = (map, oldKey, newTile) => {
     var newKey = hashObject(newTile);
     if (newKey === oldKey) return;
     var index = map.hash[oldKey];
@@ -44,11 +44,19 @@ var updateTilePallete = (map, oldKey, newTile) => {
     map.hash[newKey] = index;
 };
 
+var addTileToPalette = (map, newTile) => {
+    var newKey = hashObject(newTile);
+    if (map.hash[newKey]) return;
+    map.hash[newKey] = map.uniqueTiles.length;
+    map.uniqueTiles.push(newTile);
+};
+
 if (typeof(module) !== 'undefined') {
     module.exports = {
+        addTileToPalette,
         convertMapToTileSet,
         setMapTile,
-        updateTilePallete,
+        updateTilePalette,
     };
 };
 
