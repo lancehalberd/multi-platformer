@@ -1,16 +1,22 @@
 var PROJECTILE_TYPE_HOMING_FIREBALL = 'homingFireball';
+var PROJECTILE_TYPE_SENTINEL_BEAM = 'sentinelBeam';
+var PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING = 'sentinelBeamInHarmlessChargingPhase';
+var PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY = 'sentinelTargetingDummyProjectile';
+var PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT = 'sentineBeamSegment';
 
 var POWERUP_TYPE_HEART = 'heart';
-var POWERUP_TYPE_AIRDASH = 'airDash';
+var POWERUP_TYPE_AIR_DASH = 'airDash';
 
 var CREATURE_TYPE_ADORABILIS = 'adorableOctopus';
 var CREATURE_TYPE_PACING_FIREBALL_VERTICAL = 'fireballPacingVertically';
 var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
 var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
 var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
+var CREATURE_TYPE_SENTINEL_EYE = 'sentineEyeCreature';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
+var PARTICLE_TYPE_BEAM_IMPACT = 'beamImpactPartilce';
 var PARTICLE_TYPE_TELEPORTER_IDLING = 'teleporterIdlingParticle';
 var PARTICLE_TYPE_TELEPORTER_TELEPORTING = 'teleporterTeleportingParticle';
 
@@ -29,17 +35,21 @@ class SimpleSprite {
         this.rotation = 0;
         this.rotationPerFrame = 0;
         this.homing = false;
+        this.fleeing = false;
         this.flying = false; //this does two things: non-flying things are affected by gravity; flying things that are homing have homing dy.
-        this.noDirectionChangeUntil = now();    // for wandering behavior
+        this.noWanderingDirectionChangeUntil = now();    // for wandering behavior
         this.wandering = false;
+        this.wanderingChanceOfIdling = 0.33; // 0 will never idle while wandering, 1 will always idle while wandering.
         this.target = null;
         this.homingAcceleration = 0;
+        this.fleeingAcceleration = 0;
         this.maxSpeed = 32767;
         this.maxAcceleration = 3;
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
         this.facesDirectionOfMovement = false;
         this.facesDirectionOfAcceleration = false;
+		this.facesTarget = false;
         this.currentFrame = 0;
         this.framesToLive = 0;
         this.msBetweenFrames = 200;
@@ -67,6 +77,7 @@ class SimpleSprite {
         this.bobHeightPerFrame = 0;
         this.bobMaxY = 0; //farthest, up or down, a bobbing sprite should get away from its original Y before turning around.
         this.originalY = y; //for preventing bobbing from making the sprite's y position drift over time. Should probably change bob implementation to eliminate this.
+        this.invulnerableOnDamageDuration = 1000;
     }
 
     getOriginalHitBox() {
@@ -127,7 +138,9 @@ function updateLocalSprite(localSprite) {
     }
     if (localSprite.homing) { //homing behavior
         var dx = localSprite.target.x - localSprite.x;
-        var dy = localSprite.target.y - localSprite.y;
+        var dy;
+        if (localSprite.target.hitBox) dy = (localSprite.target.y - (localSprite.target.hitBox.height * 0.5)) - localSprite.y;
+        else dy = localSprite.target.y - localSprite.y;
         var magnitude = Math.sqrt(dx * dx + dy * dy);
         if (magnitude > 0) {
             //if (!localSprite.dx) localSprite.vx += dx * localSprite.homingAcceleration / magnitude; // if localSprite doesn't have its own dx, its vx is directly affected
@@ -136,6 +149,18 @@ function updateLocalSprite(localSprite) {
                 // homing only affects vy if sprite is flying
                 //if (!localSprite.dy) localSprite.vy += dy * localSprite.homingAcceleration / magnitude;
                 /*else*/ localSprite.dy += dy * localSprite.homingAcceleration / magnitude;
+            }
+        }
+    }
+    if (localSprite.fleeing) { //fleeing behavior
+        // WRONG I had duplicated this from the homing function, and it said the vars here were already defined. But then, when I deleted their declarations here, it said I was using them out of scope. I just changed their names, but I thought they were in their own scope, or whatever, and I could use the same names for different, local variables. :/
+        var fleeingDx = localSprite.target.x - localSprite.x;
+        var fleeingDy = localSprite.target.y - localSprite.y;
+        var fleeingMagnitude = Math.sqrt(fleeingDx * fleeingDx + fleeingDy * fleeingDy);
+        if (fleeingMagnitude > 0) {
+            localSprite.dx -= fleeingDx * localSprite.fleeingAcceleration / fleeingMagnitude;
+            if (localSprite.flying) {
+                localSprite.dy -= fleeingDy * localSprite.fleeingAcceleration / fleeingMagnitude;
             }
         }
     }
@@ -183,6 +208,18 @@ function updateLocalSprite(localSprite) {
         localSprite.y += localSprite.vy;
     }
     // max speed
+    localSprite.currentSpeed = Math.sqrt(localSprite.vx * localSprite.vx + localSprite.vy * localSprite.vy);
+	if (localSprite.flying ) {
+		if (localSprite.currentSpeed > localSprite.maxSpeed) {
+			var normalizedVector = getNormalizedVector(0, localSprite.vx, 0, localSprite.vy);
+			localSprite.vx = normalizedVector[0] * localSprite.maxSpeed;
+			localSprite.vy = normalizedVector[1] * localSprite.maxSpeed;
+		}
+	} else {
+		localSprite.vx = Math.min(localSprite.vx, localSprite.maxSpeed);
+	}
+    // OLD MAX SPEED CODE
+    /*
     if (localSprite.vx < 0) {
         localSprite.vx = Math.max(-localSprite.maxSpeed, localSprite.vx);
     } else {
@@ -195,6 +232,7 @@ function updateLocalSprite(localSprite) {
             localSprite.vy = Math.min(localSprite.maxSpeed, localSprite.vy);
         }
     }
+    */
     // max acceleration
     if (localSprite.dx < 0) {
         localSprite.dx = Math.max(-(localSprite.maxAcceleration), localSprite.dx);
@@ -213,33 +251,51 @@ function updateLocalSprite(localSprite) {
     localSprite.currentFrame = Math.floor(now() / (localSprite.slipping ? localSprite.msBetweenFramesWhileSlipping : localSprite.msBetweenFrames) % localSprite.animation.frames.length);
     //geomtry collision checks
     //if something.collides, but !it.removedOnCollision && it.pacing, it reverses at it.speed
+	// the commented-out stuff here about setting localSprite.colliding_____ doesn't work (it maybe registers for one frame, at best), but if it
+	//		*did* work, it would be useful. I wanted to use it to tell a fleeing creature that gets cornered to fight instead of continuing to flee.
     if (localSprite.vx && localSprite.collides) {
         if (localSprite.vx < 0) {
             if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vx = localSprite.xSpeed;
-            }
+				localSprite.collidedHorizontallyRecentlyUntil = now() + 500;	// used for checking for whether the creature is cornered
+				//localSprite.collidingLeft = true;
+				//localSprite.collidingHorizontally = true;
+            } //else localSprite.collidingLeft = false;
         } else {
             if (!moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vx = -localSprite.xSpeed;
-            }
+				localSprite.collidedHorizontallyRecentlyUntil = now() + 500;
+				//localSprite.collidingRight = true;
+				//localSprite.collidingHorizontally = true;
+            } //else localSprite.collidingRight = false;
         }
-    }
+		//if (moveSpriteInDirection(localSprite, localSprite.vx, TILE_LEFT) || moveSpriteInDirection(localSprite, localSprite.vx, TILE_RIGHT)) localSprite.collidingHorizontally = false;
+	}
     if (localSprite.vy && localSprite.collides) {
         if (localSprite.vy < 0) {
             if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vy = localSprite.ySpeed;
-            }
+				localSprite.collidedVerticallyRecentlyUntil = now() + 500;
+				//localSprite.collidingUp = true;
+				//localSprite.collidingVertically = true;
+            } //else localSprite.collidingUp = false;
         } else {
             if (!moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) {
                 if (localSprite.removedOnCollision) localSprite.shouldBeRemoved = true;
                 if (localSprite.pacing) localSprite.vy = -localSprite.ySpeed;
-            }
+				localSprite.collidedVerticallyRecentlyUntil = now() + 500;
+				//localSprite.grounded = true;
+				//localSprite.collidingVertically = true;
+            } //else localSprite.grounded = false;
         }
+		//if (moveSpriteInDirection(localSprite, localSprite.vy, TILE_UP) || moveSpriteInDirection(localSprite, localSprite.vy, TILE_DOWN)) localSprite.collidingVertically = false;
     }
-    if (localSprite.facesDirectionOfMovement) {
+	if (localSprite.collidedHorizontallyRecentlyUntil > now() && localSprite.collidedVerticallyRecentlyUntil > now()) localSprite.cornered = true;
+	else localSprite.cornered = false;
+	if (localSprite.facesDirectionOfMovement) {
         if (localSprite.vx > 0) localSprite.xScale = Math.abs(localSprite.xScale);
         if (localSprite.vx < 0) localSprite.xScale = -Math.abs(localSprite.xScale);
     }
@@ -252,26 +308,37 @@ function updateLocalSprite(localSprite) {
             else localSprite.slipping = false;
         }
     }
-    // gravity
+    if (localSprite.facesTarget) {
+		if (localSprite.target.x < localSprite.x) localSprite.xScale = -Math.abs(localSprite.xScale);
+		else localSprite.xScale = Math.abs(localSprite.xScale);
+	}
+	// gravity
     if (!localSprite.flying) localSprite.vy++;
     // acceleration
     localSprite.vx += localSprite.dx;
     localSprite.vy += localSprite.dy;
-    // aggroed or not based on proximity to target
+    // is target inside aggro radius. If so, sets localSprite.targetInAggroRadius to true.
     if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) localSprite.targetInAggroRadius = true;
     else localSprite.targetInAggroRadius = false;
     // wandering behavior
     if (localSprite.wandering) {
-        if (localSprite.noDirectionChangeUntil <= now()) {
-            var randomDx = Math.random() * localSprite.wanderingAccelerationXScale,
-                randomDy = Math.random() * localSprite.wanderingAccelerationYScale;
-            if (Math.random() < 0.5) randomDx = -randomDx;
-            if (Math.random() < 0.5) randomDy = -randomDy;
-            localSprite.dx = randomDx;
-            if (localSprite.flying) localSprite.dy = randomDy;
-            var timeBetweenDirectionChangesRange = localSprite.msBetweenWanderingDirectionChangeMax - localSprite.msBetweenWanderingDirectionChangeMin,
-                randomTimeDisplacement = Math.random() * timeBetweenDirectionChangesRange;
-            localSprite.noDirectionChangeUntil = now() + localSprite.msBetweenWanderingDirectionChangeMin + randomTimeDisplacement;
+        if (localSprite.noWanderingDirectionChangeUntil <= now()) {
+            if (localSprite.wanderingChanceOfIdling > Math.random()) { // creature will wander
+                var randomDx = Math.random() * localSprite.wanderingAccelerationXScale,
+                    randomDy = Math.random() * localSprite.wanderingAccelerationYScale;
+                if (Math.random() < 0.5) randomDx = -randomDx;
+                if (Math.random() < 0.5) randomDy = -randomDy;
+                localSprite.dx = randomDx;
+                if (localSprite.flying) localSprite.dy = randomDy;
+                var timeBetweenDirectionChangesRange = localSprite.msBetweenWanderingDirectionChangeMax - localSprite.msBetweenWanderingDirectionChangeMin,
+                    randomTimeDisplacement = Math.random() * timeBetweenDirectionChangesRange;
+                localSprite.noWanderingDirectionChangeUntil = now() + localSprite.msBetweenWanderingDirectionChangeMin + randomTimeDisplacement;
+            } else { // creature will idle
+                localSprite.dx = 0;
+                localSprite.dy = 0;
+                localSprite.vx = 0;
+                localSprite.vy = 0;
+            }
         }
         localSprite.vx += localSprite.dx;
         localSprite.vy += localSprite.dy;
@@ -311,35 +378,39 @@ function updateLocalSprite(localSprite) {
             localSprite.noSmokePlumeUntil = now() + localSprite.msBetweenSmokePlumes;
         }
         // on collision with target
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(localSprite.target))) {
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
             damageSprite(localSprite.target, 1);
+			knockBack(localSprite, localSprite.target);
         }
     }
     // end haunted mask update
 
     // wraith hound update
-    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) { 
+    if (localSprite.type === CREATURE_TYPE_WRAITH_HOUND) {
         // if target is in aggro radius, hound will stay aggroed for a bit even if target leaves radius
-        if (localSprite.targetInAggroRadius) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
-        if (localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) {
+        if (localSprite.vx === 0 && localSprite.vy === 1) localSprite.animation = localSprite.idlingAnimation;
+        if (localSprite.targetInAggroRadius && localSprite.notReadyToAggroUntil <= now() && !localSprite.target.disabled) localSprite.aggroedUntil = now() + localSprite.persistentAggroTime;
+        if ((localSprite.targetInAggroRadius || localSprite.aggroedUntil > now()) && localSprite.notReadyToAggroUntil <= now() && !localSprite.target.disabled) {
             localSprite.animation = localSprite.runningAnimation;
             //aggroed if target is in aggro radius or *has* been in aggro radius recently
             localSprite.facesDirectionOfMovement = false;
             localSprite.facesDirectionOfAcceleration = true;
+            localSprite.fleeing = false;
             localSprite.wandering = false;
             localSprite.homing = true;
             localSprite.maxSpeed = localSprite.maxSpeedAggroed;
             localSprite.chasing = true;
-            //localSprite.animation = localSprite.runningAnimation;
             //localSprite.msBetweenFrames = 90;
             //BROKEN: working on making animation speed scale with vx.
         }
-        if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now()) {
+        if (!localSprite.targetInAggroRadius && localSprite.aggroedUntil <= now() && !localSprite.target.disabled) {
+            //un-aggroed
             // running animation if moving fast enough, else walking animation.
             if (Math.abs(localSprite.vx) > localSprite.runSpeedThreshold) localSprite.animation = localSprite.runningAnimation;
             else localSprite.animation = localSprite.walkingAnimation;
             //peaceful if target is out of aggro radius and has had time to calm down since target last *was* in aggro radius
             localSprite.homing = false;
+            localSprite.fleeing = false;
             if (!localSprite.chasing) { // if is done chasing (i.e. de-aggroed and has slowed down, then wanders.
                 //localSprite.facesDirectionOfAcceleration = true;
                 localSprite.wandering = true;
@@ -373,49 +444,298 @@ function updateLocalSprite(localSprite) {
         }
         // ghost/shadow trail
         // BROKEN: NOT WORKING and I don't know why
-        if (localSprite.noTrailUntil <= now()) {
+        /*if (localSprite.noTrailUntil <= now()) {
             var houndFps = 1000 / localSprite.msBetweenFrames;
             addEffectWraithHoundGhostTrail(localSprite.x, localSprite.y, localSprite.vx * 0.75, localSprite.vy * 0.75, localSprite.yScale, houndFps); // WRONG: this needs to invert its xScale when it's spawned while the hound is moving left.
             msBetweenTrails = localSprite.msBetweenTrailsScale / Math.abs(localSprite.vx / 4);
             if (localSprite.chasing) localSprite.noTrailUntil = now() + msBetweenTrails;
             else localSprite.noTrailUntil = now() + (msBetweenTrails / 1.5);
-            console.log('hey');
+            console.log('wraith hound trail spawned'); // BROKEN this is happening once, but should happen much.
+        }*/
+        // on collision with player
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target) && localSprite.notReadyToAttackUntil <= now()) {
+            var target = localSprite.target,
+                minKnockBackMagnitude = 23;
+            damageSprite(target, 1);
+            if (localSprite.vx > 0) target.vx += Math.max(localSprite.vx * 0.75, minKnockBackMagnitude);
+            else target.vx += Math.min(localSprite.vx * 0.75, -minKnockBackMagnitude);
+            target.vy -= 6;
+            target.knockedDown = true;
+            // cooldown before creature can attack or aggro again
+            localSprite.notReadyToAttackUntil = now() + localSprite.attackCooldown;
+            localSprite.notReadyToAggroUntil = now() + localSprite.aggroCooldown;
+            // hit-and-run behavior
+            localSprite.homing = false;
+            localSprite.followThroughDuration = 750;
+            localSprite.followThroughUntil = now() + localSprite.followThroughDuration;
+            localSprite.postAttackFleeDuration = 1500;
+            localSprite.fleeUntil = now() + localSprite.postAttackFleeDuration;
+            localSprite.target.wasJustKnockedDown = true;
+            // if target is to the right of hound
+            if (localSprite.x < target.x) {
+                localSprite.followThroughVx = localSprite.maxSpeedAggroed;
+                localSprite.followThroughDx = localSprite.maxAcceleration; 
+            } else {
+                localSprite.followThroughVx = -localSprite.maxSpeedAggroed; // if target is to the left of hound
+                localSprite.followThroughDx = -localSprite.maxAcceleration;
+            }   
         }
+        // at moment of impact, hound accelerates toward target to max speed and goes straight for a short period as an attack follow-through
+        // after that it flees from the target for a while, then resume normal wander/aggro behavior
+        if (localSprite.followThroughUntil <= now() && localSprite.fleeUntil > now()) {
+            localSprite.fleeing = true;
+        }
+        if (localSprite.followThroughUntil > now() && localSprite.notReadyToAggroUntil > now() && !localSprite.wandering && !localSprite.homing) {
+            // if target is to the right of hound
+                localSprite.vx = localSprite.followThroughVx;
+                localSprite.dx = localSprite.followThroughVx; 
+        }
+        ////////////////
+        // WRONG: This 'waits a certain distance from disabled targets' thing and several other hound behaviors are going to need to be adjusted to make sensible behaviors when they encounter walls and drops.
+        // If the target is disabled, the hound moves to a certain distance (outside their aggro radius) and idles.
+        // WRONG: This behavior should probably replace some of what's above. I.e. right now, the hound flee the target for a while after knocking it down and following through
+        //      with the attack. But instead of a timed flee, the hound should flee to a certain distance if the target is disabled, as long as it's not following through.
+        /*if (localSprite.target.disabled && Math.abs(localSprite.x - localSprite.target.x) < localSprite.aggroRadius + 250) localSprite.fleeing = true;
+        if (localSprite.target.disabled && Math.abs(localSprite.x - localSprite.target.x) > localSprite.aggroRadius + 250) {
+            localSprite.vx = 0;
+            localSprite.animation = localSprite.idlingAnimation;
+        }*/
     }
     // end wraith hound update
 
+    // sentinel eye update
+	// NOTE: There are some things are are eye.______ instead of just vars. This is because vars whose values I was assigning in a given 'if' structure
+	//		were yielding the value 'undefined' when called from different 'if' structures, even if the vars were originally declared at a scope that I though
+	//		should include both of those 'if' structures.
+    if (localSprite.type === CREATURE_TYPE_SENTINEL_EYE) {
+        var eye = localSprite,
+            maxChargeTime = eye.maxBeamChargeTimeInMs,
+            minChargeTime = eye.minBeamChargeTimeInMs,
+            chargeTimeRange = maxChargeTime - minChargeTime,
+            beamDamageRange = eye.maxBeamDamage - eye.minBeamDamage,
+            targetingDummyVx,
+            targetingDummyVy,
+            eyeTargetY = eye.target.y - eye.target.hitBox.height * 0.5; // adjusted targeting point away from the origin toward the center of the target's hit box
+		eye.beamDuration = eye.target.invulnerableOnDamageDurationInMs * 0.9;  // beam won't live long enough to damage target twice
+		// setting beam origin
+		//if (eye.xScale < 0) eye.beamOriginX = eye.x + -eye.hitBox.width * 0.75;   // WRONG will need to change with eye rotation
+		//else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
+		// when beam origin is displaced from center of eye, it might spawn dummies in a wall
+		eye.beamOriginX = eye.x;
+		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
+        // flees if target gets too close and eye is not already attacking
+		if (isCharacterInsideRadius(eye.x, eye.y, eye.fleeingRadius, eye.target) && !eye.attackBeginning && eye.attackingUntil <= now() && eye.hasTarget) {
+			eye.fleeing = true;
+			eye.wandering = false;
+			eye.facesDirectionOfAcceleration = false;
+			eye.facesTarget = true;
+			eye.maxSpeed = eye.maxSpeedFleeing;
+			eye.fleeingUntil = now() + eye.persistentFleeingMs;
+			eye.wasFleeing = true;
+			if (eye.cornered) {
+				eye.notReadyToAttackUntil = now();
+				//eye.wasFleeing = false;
+				eye.fleeingUntil = now();
+			} else {
+				eye.notReadyToAttackUntil = now() + eye.persistentFleeingMs;
+			}
+			// WRONG should leave a trail of fading shadow images of itself while fleeing
+		}
+		if (eye.fleeingUntil <= now() && eye.wasFleeing) {
+			eye.facesTarget = false;
+			eye.fleeing = false;
+			eye.maxSpeed = eye.maxSpeedNormal;
+			eye.facesDirectionOfAcceleration = true;
+			eye.wasFleeing = false;
+		}
+		if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
+            eye.wandering = true;
+			//eye.firesDummies = true;
+        }
+		if (eye.firesDummies) {
+            if (eye.doNotFireTargetingDummyProjectileUntil <= now()) {
+                eye.normalizedTargetingVector = getNormalizedVector(eye.beamOriginX, eye.target.x, eye.beamOriginY, eyeTargetY);
+                targetingDummyVx = eye.normalizedTargetingVector[0] * eye.targetingDummyMaxSpeed;
+                targetingDummyVy = eye.normalizedTargetingVector[1] * eye.targetingDummyMaxSpeed;
+                getProjectileSentinelTargetingDummy(eye.beamOriginX, eye.beamOriginY, targetingDummyVx, targetingDummyVy, eye.target, eye);
+                eye.doNotFireTargetingDummyProjectileUntil = now() + eye.delayBetweenFiringTargetingDummiesInMs;
+            }
+		}
+        if (!eye.vy && !eye.vx && !eye.attacking) {
+            eye.animation = eye.idlingAnimation;
+        }
+        // attacking
+        // initiate attack
+        if (eye.shouldAttack && !eye.attackBeginning && eye.notReadyToAttackUntil <= now() && eye.attackingUntil <= now()) {   // these probably aren't all necessary?
+            eye.wandering = false;
+            eye.dx = eye.dy = eye.vx = eye.vy = 0;
+			eye.facesTarget = true;
+			eye.facesDirectionOfAcceleration = false;
+            eye.animation = eye.attackStartupAnimation;
+            eye.randomChargeTime = minChargeTime + Math.random() * chargeTimeRange;
+            eye.chargeBeginning = true;
+            eye.shouldAttack = false;
+            eye.beamChargingUntil = now() + eye.randomChargeTime;
+        }
+        // beam charging phase of attack  
+        if (eye.chargeBeginning && eye.beamChargingUntil > now()) {
+			// NOTE/WRONG: a lot of the stuff inside this 'if' structure will need to be duplicated in the firing phase 'if' structure
+			//		when the beam starts moving and/or targeting even while firing.
+            // charging animation
+			eye.committedBeamTargetX = eye.beamTargetX;	// .committedBeamTarget is assigned because we want the beam to not shift its focal point to dummies that fire after the beam starts charging
+			eye.committedBeamTargetY = eye.beamTargetY;
+            eye.xDistanceToBeamTargetPoint = eye.committedBeamTargetX - eye.beamOriginX;
+            eye.yDistanceToBeamTargetPoint = eye.committedBeamTargetY - eye.beamOriginY;
+            // beam damage will be either 1 or 2, depending on how long it charged for
+            eye.beamDamage = Math.floor(eye.minBeamDamage + Math.floor(beamDamageRange * (eye.randomChargeTime / chargeTimeRange)));
+            // wider beam if more damage
+            eye.beamWidth = eye.beamDamage * eye.beamWidthScale;
+            eye.distanceToObstacle = Math.sqrt(
+                eye.xDistanceToBeamTargetPoint * eye.xDistanceToBeamTargetPoint +
+                eye.yDistanceToBeamTargetPoint * eye.yDistanceToBeamTargetPoint
+            );
+			// offsetting beam center so that rotating it leaves it in the right place
+			eye.beamCenterX = eye.beamOriginX + 0.5 * eye.xDistanceToBeamTargetPoint;
+			eye.beamCenterY = eye.beamOriginY + 0.5 * eye.yDistanceToBeamTargetPoint;
+            eye.angleToTarget = Math.atan2(eye.yDistanceToBeamTargetPoint, eye.xDistanceToBeamTargetPoint) * (180 / Math.PI);
+			getProjectileSentinelBeamCharging(eye.beamCenterX, eye.beamCenterY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye);
+            eye.chargeBeginning = false;
+            eye.attackBeginning = true;
+        }
+        // firing phase of attack
+        if (eye.attackBeginning && eye.beamChargingUntil <= now()) {
+            eye.animation = eye.attackAnimation;
+			var segmentSize = eye.beamWidth * eye.beamWidthBase,
+				distanceBetweenSegments,
+				numberOfSegments = Math.ceil(eye.distanceToObstacle / segmentSize);
+			distanceBetweenSegments = segmentSize;//segmentSize - ((eye.distanceToObstacle % segmentSize) / numberOfSegments);
+			// offsetting beam center so that rotating it leaves it in the right place
+            // not using a beam anymore--just segments
+			//getProjectileSentinelBeam(eye.beamCenterX, eye.beamCenterY, eye.distanceToObstacle, eye.beamWidth, eye.angleToTarget, eye.beamDamage, eye.beamDuration, eye.target, eye);
+			// creating beam segments for collision detection
+			for (var i = 0; i < numberOfSegments; i++) {
+				var segmentX = eye.beamOriginX + i * (eye.xDistanceToBeamTargetPoint / numberOfSegments),// + (i * (eye.xDistanceToBeamTargetPoint / numberOfSegments)),
+					segmentY = eye.beamOriginY + i * (eye.yDistanceToBeamTargetPoint / numberOfSegments);// + (i * (eye.yDistanceToBeamTargetPiont / numberOfSegments));
+				getProjectilSentinelBeamSegment(segmentX, segmentY, segmentSize, eye.beamDuration, eye.beamDamage, eye.target, eye.angleToTarget, eye);
+			}
+			eye.attackBeginning = false;
+            eye.attackingUntil = now() + eye.beamDuration;
+			eye.noBeamSparksUntil = now();
+            eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
+			eye.hasTarget = false;
+			eye.facesTarget = false;
+			eye.facesDirectionOfAcceleration = true;
+        }
+        if (eye.noBeamSparksUntil <= now() && eye.attackingUntil > now()) {
+            getBeamImpactSparks(eye.committedBeamTargetX, eye.committedBeamTargetY, 2);
+            eye.noBeamSparksUntil = now() + eye.msBetweenBeamSparks;
+        }
+		// displaying the beam target coordinates just for testing
+		/*if (eye.noTargetMarkerUntil <= now()) {
+			getBeamImpactSparks(eye.beamTargetX, eye.beamTargetY, 1);
+			eye.noTargetMarkerUntil = now() + 200;
+		}*/
+		// on collision with target
+		if (isObjectCollidingWithNonInvulnerableTarget(eye, eye.target)) {
+			damageSprite(eye.target, 1);
+			knockBack(eye, eye.target);
+		}
+	}
+    // end sentinel eye update
+    
+    
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
             mainCharacter.compelledByOctopusTouch = now() + localSprite.durationOfTouchEffectInMS;
         }
     }
-    //THIS FUNCTION IS ONLY CALLED BY THE ADORABILIS CREATURE, AND SHOULD BE DELTED WITH THE ADORALBILIS IS UPDATED TO NOT USE IT. Or maybe we'll use it for other creatures.
+    //THIS FUNCTION IS ONLY CALLED BY THE ADORABILIS CREATURE, AND SHOULD BE DELETED WHEN THE ADORALBILIS IS UPDATED TO NOT USE IT. Or maybe we'll use it for other creatures.
     function isCreatureReady(creature) {
         return  now() > creature.notReadyToTriggerUntil;
     }
 
     if (localSprite.type === CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL || localSprite.type === CREATURE_TYPE_PACING_FIREBALL_VERTICAL) {
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && !(mainCharacter.invulnerableUntil > now())) {
-            var randomVXBoost;
-            //note: character should get bounced away from fireball, which could use some code similar to that used for homing, but I didn't want to deal with that while I was making this.
-            mainCharacter.vy = -15; //player pops upward if hit
-            if (Math.random() > 0.5) randomVXBoost = Math.random() * 8;   //player gets a random vx if hit.
-            else randomVXBoost = Math.random() * -8;
-            mainCharacter.vx += randomVXBoost;
-            damageSprite(mainCharacter, 1);
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) { //on collision with non-invulnerable player
+            damageSprite(localSprite.target, 1);
+			knockBack(localSprite, localSprite.target);
         }
     }
 
     if (localSprite.type === PROJECTILE_TYPE_HOMING_FIREBALL) {
         // We only need to check against the main character here because each client will be running this
         // check for its own main character, which should cover all players.
-        if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter))) {   //WRONG: "mainCharacter" should be localSprite.target
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
             mainCharacter.health--;
+			knockBack(localSprite, localSprite.target);
             localSprite.shouldBeRemoved = true;
         }
     }
-    // fades out
+    
+    if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM) {
+		// THIS PROJECTILE IS NOT BEING USED AT ALL--replaced by segmented version for now.
+		//		It might be used again if we end up using rotated hit boxes.
+        var beam = localSprite;
+		/* hit boxes don't rotate, so collision with this beam isn't very meaningful
+		if (isObjectCollidingWithNonInvulnerableTarget(beam, beam.target)) {
+            damageSprite(beam.target, beam.damage);
+        }*/
+        if (beam.justCreated) {
+            beam.livesUntil = now() + beam.duration;
+            beam.justCreated = false;
+        }
+        if (beam.noBeamSparksUntil <= now()) {
+            getBeamImpactSparks(beam.parent.committedBeamTargetX, beam.parent.committedBeamTargetY, 2);
+            beam.noBeamSparksUntil = now() + beam.msBetweenSparks;
+        }
+        if (beam.livesUntil <= now()) beam.shouldBeRemoved = true;
+    }
+
+    if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING) {
+        var beamCharging = localSprite,
+			minScale = beamCharging.yScaleBase,
+			maxScale = beamCharging.parent.beamWidth,
+			scaleChangeOverLifespan = maxScale - minScale;
+		// the charging beam scales up to the size of the damage beam over its lifespan
+		if (beamCharging.noScaleChangeUntil <= now()) {
+			beamCharging.yScale += scaleChangeOverLifespan / (beamCharging.parent.beamDuration / beamCharging.msBetweenScaleChanges);
+			beamCharging.noScaleChangeUntil = now() + beamCharging.msBetweenScaleChanges;
+		}
+        if (beamCharging.parent.beamChargingUntil <= now()) beamCharging.shouldBeRemoved = true;
+    }
+    
+	if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT) {
+		var segment = localSprite;
+		if (segment.justCreated) {
+			segment.livesUntil = now() + segment.duration;
+			segment.justCreated = false;
+		}
+		if (isObjectCollidingWithNonInvulnerableTarget(segment, segment.target)) {
+			damageSprite(segment.target, segment.damage);
+			knockBack(localSprite.parent, localSprite.target, 20 * segment.damage, 20 * segment.damage, 7 * segment.damage);
+		}
+		if (segment.livesUntil <= now()) segment.shouldBeRemoved = true;
+	}
+	
+    if (localSprite.type === PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY) {
+		// WRONG: there need to be some reiterative collision detection that locates an accurate point of termination, flush to the collision surface.
+		//		For now, the dummy is sending the parent a location for beam termination that is just the place the dummy died on the frame when it
+		//		would have collided next frame. When it would die next frame, it needs to repeat its check at smaller and smaller intervals, instead
+		//		of just doing the one per-16 (tile size) check.
+        if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target) && !localSprite.parent.hasTarget) {
+			localSprite.hitTarget = true;
+			localSprite.parent.hasTarget = true;
+        }
+        if (localSprite.shouldBeRemoved && localSprite.hitTarget && localSprite.parent.hasTarget) {
+            localSprite.parent.beamTargetX = localSprite.x;
+            localSprite.parent.beamTargetY = localSprite.y;
+            localSprite.parent.shouldAttack = true;
+        }
+		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 1, 8, 8); // comment back in to visualize impact point
+    }
+    
+    
+    // fadeout behavior
     // WRONG: This code needs to fade an animation out over its life span.
     /*if (localSprite.fadesOut) {
         localSprite.alpha =
@@ -482,7 +802,6 @@ function addCreature(x, y, target, creatureType) {
         adorabilisSprite.homingAcceleration = 0.1;
         adorabilisSprite.notReadyToTriggerUntil = now();
         adorabilisSprite.durationOfTouchEffectInMS = 10000;
-        adorabilisSprite.framesToLive = 32767;
         adorabilisSprite.msBetweenFrames = 85;
         adorabilisSprite.cooldownInMS = 2000; //how long after it touches the player before its touch can affect the player again.
         localSprites.push(adorabilisSprite);
@@ -506,6 +825,7 @@ function getCreatureHauntedMask(x, y) {
     hauntedMaskCreature.dx = 0;
     hauntedMaskCreature.dy = 0;
     hauntedMaskCreature.homingAcceleration = 0.3;
+    hauntedMaskCreature.fleeingAcceleration = 0.3;
     hauntedMaskCreature.msBetweenWanderingDirectionChangeMin = 750;
     hauntedMaskCreature.msBetweenWanderingDirectionChangeMax = 3000;
     hauntedMaskCreature.wanderingAccelerationXScale = 0.33;
@@ -532,12 +852,12 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.walkingAnimation = wraithHoundWalkingAnimation;
     wraithHoundCreature.jumpingAnimation = wraithHoundJumpingAnimation;
     wraithHoundCreature.airborneAnimation = wraithHoundAirborneAnimation;
-    wraithHoundCreature.knockDownAnimation = wraithHoundKnockDownAnimation;
-    wraithHoundCreature.groundedAnimation = wraithHoundGroundedAnimation;
+    wraithHoundCreature.knockedDownAnimation = wraithHoundKnockedDownAnimation;
+    wraithHoundCreature.launchedAnimation = wraithHoundLaunchedAnimation;
     wraithHoundCreature.standingUpAnimation = wraithHoundStandingUpAnimation;
     wraithHoundCreature.attackAnimation = wraithHoundAttackAnimation;
     wraithHoundCreature.aggroedButTargetInaccessibleAnimation = wraithHoundBarkingAnimation;
-    wraithHoundCreature.idleAnimation = wraithHoundSittingAnimation;
+    wraithHoundCreature.idlingAnimation = wraithHoundSittingAnimation;
     wraithHoundCreature.animation = wraithHoundCreature.runningAnimation;
     wraithHoundCreature.runSpeedThreshold = 2.5; // vx at which hound will switch from walking to running animation if not aggroed.
     wraithHoundCreature.dx = 0;
@@ -546,8 +866,8 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.msBetweenWanderingDirectionChangeMax = 4500;
     wraithHoundCreature.wanderingAccelerationXScale = 0.33;
     wraithHoundCreature.homingAcceleration = 0.15;
+    wraithHoundCreature.fleeingAcceleration = 0.15;
     wraithHoundCreature.collides = true;
-    wraithHoundCreature.framesToLive = 32767;
     wraithHoundCreature.msBetweenFrames = 90;
     wraithHoundCreature.msBetweenFramesBase = 90;
     wraithHoundCreature.msBetweenFramesWhileSlipping = 33;
@@ -563,6 +883,10 @@ function getCreatureWraithHound(x, y) {
     wraithHoundCreature.msBetweenRunDustPlumes = 250;
     wraithHoundCreature.runDustSpeed = 3.5;
     wraithHoundCreature.msBetweenSlippingRunDustPlumes = 125;
+    wraithHoundCreature.notReadyToAggroUntil = now();
+    wraithHoundCreature.notReadyToAttackUntil = now();
+    wraithHoundCreature.attackCooldown = 5000; // time in ms after having damaged player before hound can attack again
+    wraithHoundCreature.aggroCooldown = wraithHoundCreature.attackCooldown; // time in ms after having damaged player before hound will aggro again
     return wraithHoundCreature;
 }
 
@@ -597,6 +921,165 @@ function getCreaturePacingFireball(creatureType) {
     return pacingFireballSprite;
 }
 
+function getCreatureSentinelEye(x, y) {
+    hitBox = new Rectangle(-24, -48, 48, 48);
+    xScale = yScale = 1.2;
+    var eye = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
+    eye.type = CREATURE_TYPE_SENTINEL_EYE;
+	eye.health = 5;
+    eye.hitBox = hitBox;
+    eye.facesDirectionOfAcceleration = true;
+    eye.movingAnimation = sentinelEyeMovingAnimation;
+    eye.idlingAnimation = sentinelEyeIdlingAnimation;
+    eye.attackStartupAnimation = sentinelEyeAttackStartupAnimation;
+    eye.attackAnimation = sentinelEyeAttackAnimation;
+    eye.attackRecoveryAnimation = sentinelEyeAttackRecoveryAnimation;
+    eye.defeatAnimation = sentinelEyeDefeatAnimation;
+    eye.animation = sentinelEyeMovingAnimation;
+    eye.flying = true;
+    eye.wandering = true;
+    eye.dx = 0;
+    eye.dy = 0;
+    eye.bobs = false; // WRONG: should be true, but bobbing doesn't work with moving creatures right now.
+    eye.beamWidthScale = 0.25;
+	eye.beamWidthBase = 32;
+    eye.msBetweenWanderingDirectionChangeMin = 1500;
+    eye.msBetweenWanderingDirectionChangeMax = 4500;
+    eye.wanderingAccelerationXScale = 0.33;
+    eye.wanderingAccelerationYScale = 0.115;
+    eye.wanderingChanceOfIdling = 0.33;
+    eye.homingAcceleration = 0.15;
+    eye.fleeingAcceleration = 0.15;
+    eye.collides = true;
+    eye.msBetweenFrames = 90;
+    eye.maxSpeed = 0.5;
+	eye.maxSpeedFleeing = 4;
+	eye.maxSpeedNormal = 0.5;
+	eye.fleeingRadius = 200; // radius inside of which eye will flee its target
+	eye.persistentFleeingMs = 1000; // time after target has left fleeing radius during which eye will continue to flee
+    eye.maxAcceleration = 0.189;
+    eye.notReadyToAttackUntil = now();
+    eye.attackingUntil = now();
+    eye.attackCooldownInMs = 3000;
+    eye.maxBeamDamage = 2;
+    eye.minBeamDamage = 1;
+    eye.maxBeamChargeTimeInMs = 1250;
+    eye.minBeamChargeTimeInMs = 500;
+	eye.msBetweenBeamSparks = 100;
+    eye.delayBetweenFiringTargetingDummiesInMs = 200; // eye will fire a targeting dummy every 200 ms.
+    eye.targetingDummyMaxSpeed = 16; // WRONG: Needs to be faster, but 16 is the fastest speed that won't skip a whole tile in one frame of checks without special collision checks.
+    eye.doNotFireTargetingDummyProjectileUntil = now();
+	eye.hasTarget = false; // doesn't actually need to be here because checking !eye.hasTarget should return false if this isn't here at all?
+	eye.firesDummies = true; // while this is true, eye will be firing targeting dummies
+	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
+    return eye;
+}
+
+function getProjectileSentinelBeam(originX, originY, length, width, rotation, damage, duration, target, parent) {
+	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
+	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning  a hit
+	//		based on the sprite (sans rotation) in the absence of a .hitBox property.
+    var spriteXSize = 32,
+        spriteYSize = 32,
+        xScale = length / spriteXSize,
+        yScale = width,
+        hitBox = new Rectangle(originX, originY, length, width * 2 * spriteYSize);
+    var beam = new SimpleSprite(sentinelTargetingDummyAnimation/*sentinelBeamAnimationRed*/, originX, originY, 0, 0, xScale, yScale);
+    beam.damage = damage;
+    beam.rotation = rotation;
+    beam.parent = parent;
+    beam.justCreated = true;
+    beam.hitBox = hitBox;
+    beam.target = target;
+    beam.duration = duration;
+    beam.flying = true; // otherwise gravity will affect it
+    beam.type = PROJECTILE_TYPE_SENTINEL_BEAM;
+    beam.noBeamSparksUntil = now();
+    beam.msBetweenSparks = 100;
+    localSprites.push(beam);
+}
+
+function getProjectileSentinelBeamCharging(originX, originY, length, width, rotation, parent) {
+	// WRONG: giving this a hitBox seems to give it no hit box, where taking it away seems to give it a hit box,
+	//		as visible while holding 'Y' in-game. This may have something to do with something automatically assigning a hit
+	//		based on the sprite (sans rotation) in the absence of a .hitBox property.
+    var spriteXSize = 32,
+		spriteYSize = 32,
+        xScale = length / spriteXSize,
+        yScale = width,
+        hitBox = new Rectangle(originX, originY, length, width * 2 * spriteYSize);
+    var beam = new SimpleSprite(sentinelBeamAnimationBlue, originX, originY, 0, 0, xScale, yScale);
+	beam.yScaleBase = 0.125;
+	beam.yScale = beam.yScaleBase;
+    beam.rotation = rotation;
+    beam.justCreated = true;
+	beam.hitBox = hitBox;
+    beam.parent = parent;
+    beam.flying = true; // otherwise gravity will affect it
+	beam.noScaleChangeUntil = now();
+	beam.msBetweenScaleChanges = 100;
+    beam.type = PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING;
+    localSprites.push(beam);
+}
+
+function getProjectilSentinelBeamSegment(x, y, size, duration, damage, target, rotation, parent) {
+	var	spriteXSize = 32,
+		spriteYSize = 32,
+		xScale = size / spriteXSize,
+		yScale = size / spriteYSize;//,
+//		hitBox = new Rectangle(0, 0, size, size);
+	var segment = new SimpleSprite(sentinelBeamAnimationRed, x, y, 0, 0, xScale, yScale);
+	segment.duration = duration;
+	segment.justCreated = true;
+	segment.damage = damage;
+	segment.target = target;
+	segment.rotation = rotation;
+	segment.parent = parent;
+	segment.flying = true;
+	//segment.hitBox = hitBox;
+	segment.type = PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT;
+	localSprites.push(segment);
+}
+
+function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
+    var hitBox = new Rectangle(0, 0, 8, 8);
+    var dummy = new SimpleSprite(/*fireballAnimation*/sentinelTargetingDummyAnimation, x, y, vx, vy, 0.25, 0.25); // change animation to fireballAnimation to visualize.
+    dummy.hitBox = hitBox;
+    dummy.collides = true;
+    dummy.removedOnCollision = true;
+    dummy.maxSpeed = parent.targetingDummyMaxSpeed;
+    dummy.target = target;
+    dummy.parent = parent;
+    dummy.flying = true;
+    dummy.framesToLive = 75;
+    dummy.type = PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY;
+    localSprites.push(dummy);
+}
+
+function getNormalizedVector(originX, targetX, originY, targetY) {
+	// return a vector phrased as an x and y magnitude that together amount to a speed of 1, from the origin to the target
+    var vectorX = targetX - originX,
+        vectorY = targetY - originY,
+        normalizedVector = [],
+        magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+		vectorX /= magnitude;
+		vectorY /= magnitude;
+        normalizedVector.push(vectorX, vectorY);
+        return normalizedVector;
+}
+
+function knockBack(objectAnchored, objectKnockedBack, knockBackMagnitudeX, knockBackMagnitudeUp, knockBackMagnitudeDown) {
+	// Note: if you don't send this function specific magnitudes, it will default to some preset values
+	// Note/Wrong?: Might want to scale the force imparted to the target with the "anchored" object's vx & vy,
+	//		but you could do that with the arguments sent for magnitudes from the update function that called knockBack.
+	var vector = getNormalizedVector(objectAnchored.x, objectKnockedBack.x, objectAnchored.y, objectKnockedBack.y),
+	forceX = vector[0] * (knockBackMagnitudeX || 30),
+	forceUp = vector[1] * (knockBackMagnitudeUp || 30),
+	forceDown = vector[1] * (knockBackMagnitudeDown || 10);
+	objectKnockedBack.vx += forceX;
+	if (vector[1] < 0) objectKnockedBack.vy += forceUp;
+	else objectKnockedBack.vy += forceDown;
+}
 
 function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
     var hitBox = new Rectangle(0, 0, 8, 8);
@@ -632,7 +1115,7 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
         particle.vy = -3;
         localSprites.push(particle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
     }
-    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //I think collision particles should be redder, like dull ember sparks.
+    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //WRONG: I think collision particles should be redder, like dull ember sparks.
         var randomVX,
         randomVY;
         if (Math.random() < 0.5) {
@@ -651,11 +1134,76 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
     }
 }
 
+function addParticleAtLocation(x, y, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
+    var hitBox = new Rectangle(0, 0, 8, 8);
+    var frames = [
+        $.extend(new Rectangle(0, 0, 8, 8), {image: fireballContrailAImage, hitBox}),
+    ];
+    var particle = new SimpleSprite({frames}, x, y, 0, 0, 1.25, 2.5);
+    particle.type = type;
+    particle.framesToLive = decayFrames;
+    particle.flying = true;
+    particle.scaleOscillation = true;
+    particle.xScalePerFrame = particle.xScale / particle.framesToLive;
+    particle.yScalePerFrame = particle.yScale / particle.framesToLive;
+    particle.xScaleMin = 0;
+    particle.yScaleMin = 0;
+    particle.rotationPerFrame = 50;
+    //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
+    //parent.contrailParticles.push(particle);
+    if (particle.type === PARTICLE_TYPE_FIREBALL_CONTRAIL) {
+        particle.vy = -3;
+        localSprites.push(particle); //WRONG: Should push to parent.contrailParticles, but then render.js should render things in that array. I don't know the syntax for that yet, I don't think.
+    }
+    if (particle.type === PARTICLE_TYPE_FIREBALL_COLLISION) {   //WRONG: I think collision particles should be redder, like dull ember sparks.
+        var randomVX,
+        randomVY;
+        if (Math.random() < 0.5) {
+            randomVX = -(Math.random() * 5);
+        } else {
+            randomVX = Math.random() * 5;
+        }
+        if (Math.random() < 0.5) {
+            randomVY = -(Math.random() * 3);
+        } else {
+            randomVY = Math.random() * 3;
+        }
+        particle.vx = randomVX;
+        particle.vy = randomVY + 2;
+        localSprites.push(particle);
+    }
+    if (particle.type === PARTICLE_TYPE_BEAM_IMPACT) {   //WRONG: Beam impact particles should bounce away from the surface they impact
+        var randomVX,
+        randomVY;
+        if (Math.random() < 0.5) {
+            randomVX = -(Math.random() * 5);
+        } else {
+            randomVX = Math.random() * 5;
+        }
+        if (Math.random() < 0.5) {
+            randomVY = -(Math.random() * 3);
+        } else {
+            randomVY = Math.random() * 3;
+        }
+        particle.vx = randomVX;
+        particle.vy = randomVY - 5;
+        particle.flying = false;
+        localSprites.push(particle);
+    }
+}
+
 function addFireballDetonation(parent, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
     for (var i = 0; i < numberOfFragments; i++) {
         addParticle(parent, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_FIREBALL_COLLISION);
     }
 }
+
+function getBeamImpactSparks(x, y, numberOfFragments, parentPreScalingXSize, parentPreScalingYSize) {
+    for (var i = 0; i < numberOfFragments; i++) {
+        addParticleAtLocation(x, y, 30, parentPreScalingXSize, parentPreScalingYSize, PARTICLE_TYPE_BEAM_IMPACT);
+    }
+}
+
 
 function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, character) { // note: this checks the center of the character, not anywhere in its hibox
     var distanceBetweenRadiusOriginAndCharacterCenterX = Math.abs((getGlobalSpriteHitBox(character).left + (getGlobalSpriteHitBox(character).width / 2)) - radiusOriginX),
@@ -666,4 +1214,14 @@ function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, 
         );
         if (distanceBetweenRadiusOriginAndCharacterCenter <= radiusMagnitude) return true;
         else return false;
+}
+
+function isObjectCollidingWithNonInvulnerableTarget(object, target) {
+    var invulnerableTime,
+        invulnerableState;
+        if (target.invulnerableUntil) invulnerableTime = target.invulnerableUntil > now();
+        else invulnerableTime = false;
+        if (target.invulnerable) invulnerableState = target.invulnerable;
+        else invulnerableState = false;
+    return getGlobalSpriteHitBox(object).overlapsRectangle(getGlobalSpriteHitBox(target)) && !invulnerableTime && !invulnerableState;
 }

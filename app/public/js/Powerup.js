@@ -1,4 +1,4 @@
-var POWERUP_TYPE_AIRDASH = 'airDashPowerup';
+var POWERUP_TYPE_AIR_DASH = 'airDashPowerup';
 var POWERUP_TYPE_HEART = 'heartPowerup';
 var POWERUP_TYPE_SUPERJUMP = 'superJumpPowerup';
 var POWERUP_TYPE_COIN = 'coinPowerup';
@@ -75,11 +75,11 @@ LifePowerup.animation = {frames: rectangleToFrames(new Rectangle(0, 0, 32, 32), 
 class AirDashPowerup extends Powerup {
     constructor(hitBox, cooldownInSeconds) {
         super(hitBox, cooldownInSeconds);
-        this.type = POWERUP_TYPE_AIRDASH;
+        this.type = POWERUP_TYPE_AIR_DASH;
     }
 
     trigger() {
-        mainCharacter.currentActivatableMobilityPowerup = POWERUP_TYPE_AIRDASH;
+        mainCharacter.currentActivatableMobilityPowerup = POWERUP_TYPE_AIR_DASH;
         return true;
     }
 }

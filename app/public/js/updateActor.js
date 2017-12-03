@@ -19,7 +19,7 @@ function updateActor(actor) {
     // User normal scaling when checking if player is under ceiling.
     // scale is set in character defintion area now
     //actor.scale = actor.scale;
-    actor.hitBox = new Rectangle(-20, -60, 40, 60); //Would be nice to slip into 2-tile-wide openeings while falling pretty easily.
+    actor.hitBox = actor.walkingHitBox;//Would be nice to slip into 2-tile-wide openings while falling pretty easily.
     // Main character's movement is controlled with the keyboard.
     // change character
     if (TagGame.taggedId === actor.id /*|| true*/) { // un-comment-out "|| true" to play as Alien
@@ -34,7 +34,38 @@ function updateActor(actor) {
         //changeCharacterToCowbot(actor);
         actor.jumpScaling = [1, 0.7];
     }
-    if (actor === mainCharacter && !actor.deathTime && !isEditing){
+    // disabled behavior
+    // checks to see if character is disabled and updates consequences of the disabling effect, including animations
+    // WRONG: eventually will have to find a way to prioritize one disabliing effect over any other, though if they all make you invulnerable,
+    //      and all places that can subject you to a disabling effect require that you be vulnerable, then maybe prioritizing them will never come up.
+    if (isCharacterSubjectToDisablingEffect(actor)) actor.disabled = true;
+    else actor.disabled = false;
+    if (actor.disabled) {
+        if (actor.knockedDown) {
+            actor.invulnerable = true;
+            if (!actor.grounded) {
+               // actor.animation = fireballAnimation;//actor.knockDownAirborneAnimation;
+                //actor.hitBox = actor.knockDownAnimationHitBox;
+                actor.wasAirborne = true;
+            }
+            if (actor.grounded) {
+                actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
+                //actor.animation = fireballAnimation;
+                if (actor.wasAirborne || actor.wasJustKnockedDown) {
+                    actor.notReadyToStandUpUntil = now() + 2000;
+                    actor.wasAirborne = false;
+                    actor.wasJustKnockedDown = false;
+                }
+            }
+            if (actor.notReadyToStandUpUntil <= now()) {
+                actor.invulnerable = false;
+                actor.knockedDown = false;
+                // WRONG: if you're not invulerable for a while *after* you regain control, you could get knocked down again immeeidately if a dog is hovering right on top of you, either because they're homing or just accidentally.
+                // I'll probably make it so that creatures that can disable you move away from you if you're disabled, but maybe I shouldn't rely on that?
+            }
+        }
+    }
+    if (actor === mainCharacter && !actor.deathTime && !isEditing && !actor.disabled) {
         // Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
@@ -49,6 +80,8 @@ function updateActor(actor) {
             if (actor.fallingUncontrolled) {
                 damageSprite(actor, 1);
                 actor.fallingUncontrolled = false;
+                // WRONG need to add a knockdown effect on landing from an uncontrolled fall, including an animation speed decrease on the downed state and the standing up
+                //      animation based on the player's speed at impact.
             }
             //dust plume on landing
             if (actor.spawnDustOnGrounding) {
@@ -72,9 +105,15 @@ function updateActor(actor) {
                     actor.noSteamPlumeUntil = now() + actor.msBetweenSteamPlumes;
                 }
             }
-            // airDash resets on grounding
-            actor.airDashed = false;
-            actor.currentAirDashDuration = 0;
+            // air dash resets on grounding
+            if (actor.airDashed) {
+                actor.cannotAirDashUntil = now() + actor.airDashCooldownDuration;
+                actor.airDashed = false;
+            }
+            // after grounding and cooldown, air dash key must be released before character can air dash again
+            if (isKeyDown(KEY_SHIFT)) actor.currentAirDashDuration = actor.maxAirDashDuration + 1;
+            else if (!isKeyDown(KEY_SHIFT) && actor.cannotAirDashUntil <= now()) actor.currentAirDashDuration = 0;
+            // super jump resets on grounding
             actor.superJumped = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
@@ -121,17 +160,33 @@ function updateActor(actor) {
                 actor.applyJumpVelocity();
                 actor.currentJumpDuration++;
             }
-            //air dash
-            if (isKeyDown(KEY_RIGHT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
-                actor.vx += actor.airDashMagnitude;
-                actor.vy = 0;
-                actor.currentAirDashDuration++;
-                //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
+            // air dash
+            if (isKeyDown(KEY_SHIFT) && canCharacterAirDash(actor)) {
+                if (isKeyDown(KEY_LEFT) || isKeyDown(KEY_RIGHT)) {
+                    // WRONG: this isn't quite going to handle all situations correctly when you start an air dash and then press the other direction while dashing
+                    //      with regard to resetting the air dash on key release and cooling down and grounding
+                    if (isKeyDown(KEY_LEFT)) {
+                        actor.vx -= actor.airDashMagnitude;
+                        actor.airDashDirectionKey = KEY_LEFT;
+                    }
+                    if (isKeyDown(KEY_RIGHT)) {
+                        actor.vx += actor.airDashMagnitude;
+                        actor.airDashDirectionKey = KEY_RIGHT;
+                    }
+                    actor.vy = 0;
+                    actor.currentAirDashDuration++;
+                    actor.airDashed = true;
+                    // if an air dash interrupts a jump, the jump won't continue after the air dash stops
+                    actor.currentJumpDuration = actor.maxJumpDuration;
+                    //addEffectJumpDust(actor.x - (actor.hitBox.width / 2), actor.x + (actor.hitBox.height / 2), 1.75, 15, 90); // BROKEN: trying to add horizontal dust plume to air dash, but neither the positioning nor rotation are working, and it's not too important, so I'm not worrying about it right now.
+                }
             }
-            if (isKeyDown(KEY_LEFT) && isKeyDown(KEY_SHIFT) && actor.currentAirDashDuration < actor.maxAirDashDuration && canCharacterAirDash(actor)) {
-                actor.vx -= actor.airDashMagnitude;
-                actor.vy = 0;
-                actor.currentAirDashDuration++;
+            // if the actor ended an air dash while still in the air by releasing one of the air dash keys or by maxing out their air dash duration,
+            if (actor.airDashed && (!isKeyDown(KEY_SHIFT) || !isKeyDown(actor.airDashDirectionKey) || actor.currentAirDashDuration > actor.maxAirDashDuration)) {
+                // then the air dash cooldown starts
+                // if neither the key is release nor the duration is maxed out while in the air, these things are reset on grounding.
+                actor.cannotAirDashUntil = now() + actor.airDashCooldownDuration;
+                actor.airDashed = false;
             }
         }
         // super jump
@@ -190,7 +245,7 @@ function updateActor(actor) {
     // If the character is crouching, they are drawn smaller and have a shorter hitbox.
     if (actor.isCrouching ) {
         actor.scale = actor.scale / 2; // This affects visual representation only.
-        actor.hitBox = new Rectangle(-20, -32, 40, 32); //this represents collision. Only yScale is halved. xScale is normal.
+        actor.hitBox = actor.crouchingAnimationHitBox;
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
 
@@ -209,7 +264,7 @@ function updateActor(actor) {
         } else {
             moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
         }
-        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkAnimation.frames.length;
+        actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkingAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
@@ -223,7 +278,7 @@ function updateActor(actor) {
     }
 
     if (actor.grounded && !actor.vx && !actor.attacking) {
-        actor.animation = actor.idleAnimation;
+        actor.animation = actor.idlingAnimation;
         actor.idleFrame =  Math.floor(now() / (actor.slipping ? actor.msBetweenIdleFramesWhileSlipping : actor.msBetweenIdleFrames)) % actor.animation.frames.length;
         actor.currentFrame = actor.idleFrame;
     }
@@ -234,23 +289,23 @@ function updateActor(actor) {
     // gravity
     actor.vy++;
 
-    if (!actor.attacking) {
-        if (actor.vx) {
-            actor.animation = actor.walkAnimation;
-            actor.currentFrame = actor.walkFrame;
-        }
-    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
-        actor.animation = actor.attackAnimation;
-        actor.currentFrame = actor.attackFrame;
-    }
     if (actor.x !== targetPosition[0]) {
         actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
     //jumping
     if (!actor.grounded && actor.vy < actor.uncontrolledFallVyThreshold) {
-        actor.animation = actor.jumpAnimation;
+        actor.animation = actor.jumpingAnimation;
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
+    }
+    if (!actor.attacking) {
+        if (actor.vx) {
+            actor.animation = actor.walkingAnimation;
+            actor.currentFrame = actor.walkFrame;
+        }
+    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
+        actor.animation = actor.attackAnimation;
+        actor.currentFrame = actor.attackFrame;
     }
     // uncontrolled fall animation
     if (actor.vy >= actor.uncontrolledFallVyThreshold) {
@@ -323,7 +378,7 @@ var getLocalSpriteHitBox = (sprite) => {
 
 var getGlobalSpriteHitBox = (sprite) => getLocalSpriteHitBox(sprite).translate(sprite.x, sprite.y);
 
-var canCharacterAirDash = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_AIRDASH && !character.airDashed;
+var canCharacterAirDash = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_AIR_DASH && character.cannotAirDashUntil <= now() && character.currentAirDashDuration <= character.maxAirDashDuration;
 
 var canCharacterSuperJump = (character) => character.currentActivatableMobilityPowerup === POWERUP_TYPE_SUPERJUMP && !character.superJumped && character.superJumpKeyReleased;
 
@@ -340,6 +395,15 @@ function isPlayerTouchingTeleporter(actor) {
 
 function isPlayerCompelledByOctopusTouch(character) {
     return character.compelledByOctopusTouch > now();
+}
+
+function isCharacterSubjectToDisablingEffect(character) {
+    if (character.knockedDown) return true;
+    if (character.stunnedUntil > now()) return true;
+    if (character.grabbed) return true;
+    if (character.launched) return true;
+    if (character.bounced) return true;
+    return false;
 }
 
 function isPlayerUnderCeiling(player) {
@@ -491,9 +555,9 @@ function moveSpriteInDirection(sprite, amount, direction) {
 }
 
 function damageSprite(sprite, amount) {
-    if (sprite.invulnerableUntil && now() < sprite.invulnerableUntil) return;
+    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || (sprite.invulnerable && sprite.unvulnerable === false)) return;
     sprite.health -= amount;
-    sprite.blinkUntil = sprite.invulnerableUntil = now() + 1000;
+    sprite.blinkUntil = sprite.invulnerableUntil = now() + (sprite.invulnerableOnDamageDurationInMs || 1000);
 }
 
 //this function should be a super-simple arrow function using .filter or indexOf or something
@@ -505,14 +569,14 @@ function doesArrayContainSuperJumpChargeWind(array) {
 }
 
 function changeCharacterToAlien(actor) {
-    actor.walkAnimation = characterAlienWalkAnimation;
+    actor.walkingAnimation = characterAlienWalkingAnimation;
     actor.attackAnimation = characterAlienAttackAnimation;
     actor.hasMovementStartAnimation = true;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterAlienIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterAlienJumpAnimation;
+    actor.idlingAnimation = characterAlienIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterAlienJumpingAnimation;
     actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 200;
@@ -524,17 +588,24 @@ function changeCharacterToAlien(actor) {
 }
 
 function changeCharacterToVictoria(actor) {
-    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIRDASH;
-    actor.walkAnimation = characterVictoriaWalkAnimation;
+    actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIR_DASH;
+    actor.walkingAnimation = characterVictoriaWalkingAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterVictoriaIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.idlingAnimation = characterVictoriaIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterVictoriaJumpingAnimation;
     actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
+    actor.standingUpAnimation = characterVictoriaStandingUpAnimation;
+    actor.knockDownAirborneAnimation = characterVictoriaKnockDownAirborneAnimation;
+    actor.knockDownAnimationHitBox = new Rectangle(0, 0, 48, 20);
+    actor.walkingAnimationHitBox = new Rectangle(-20, -60, 40, 60);
+    actor.crouchingAnimationHitBox = new Rectangle(-20, -32, 40, 32);
+    actor.hitBox = actor.walkingAnimationHitBox;
+    actor.knockDownGroundedAnimation = characterVictoriaKnockDownGroundedAnimation;
     actor.msBetweenWalkFrames = 125;
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
@@ -545,14 +616,14 @@ function changeCharacterToVictoria(actor) {
 
 function changeCharacterToCowbot(actor) {
     actor.currentActivatableMobilityPowerup = POWERUP_TYPE_SUPERJUMP;
-    actor.walkAnimation = characterCowbotWalkAnimation;
+    actor.walkingAnimation = characterCowbotWalkingAnimation;
     actor.attackAnimation = characterCowbotAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterCowbotIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterCowbotJumpAnimation;
+    actor.idlingAnimation = characterCowbotIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterCowbotJumpingAnimation;
     actor.uncontrolledFallAnimation = characterCowbotUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 150;
@@ -566,14 +637,14 @@ function changeCharacterToCowbot(actor) {
 }
 
 function changeCharacterToMystery(actor) {
-    actor.walkAnimation = characterMysteryWalkAnimation;
+    actor.walkingAnimation = characterMysteryWalkingAnimation;
     actor.attackAnimation = characterMysteryAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
-    actor.idleAnimation = characterVictoriaIdleAnimation;
-    actor.idleAnimationIntermittent = {};
-    actor.idleAnimationLong = {};
-    actor.jumpAnimation = characterVictoriaJumpAnimation;
+    actor.idlingAnimation = characterVictoriaIdlingAnimation;
+    actor.idlingAnimationIntermittent = {};
+    actor.idlingAnimationLong = {};
+    actor.jumpingAnimation = characterVictoriaJumpingAnimation;
     actor.uncontrolledFallAnimation = characterMysteryUncontrolledFallAnimation;
     actor.uncontrolledLandingAnimation = {};
     actor.msBetweenWalkFrames = 200;
