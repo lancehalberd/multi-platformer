@@ -41,27 +41,50 @@ function updateActor(actor) {
     if (isCharacterSubjectToDisablingEffect(actor)) actor.disabled = true;
     else actor.disabled = false;
     if (actor.disabled) {
+        // knock down behavior
         if (actor.knockedDown) {
             actor.invulnerable = true;
             if (!actor.grounded) {
-               // actor.animation = fireballAnimation;//actor.knockDownAirborneAnimation;
+               actor.animation = actor.knockDownAirborneAnimation;
+                actor.knockDownAirborneFrame =  Math.floor(now() / 200) % actor.animation.frames.length;
+                actor.currentFrame = actor.knockDownAirborneFrame;
                 //actor.hitBox = actor.knockDownAnimationHitBox;
                 actor.wasAirborne = true;
             }
             if (actor.grounded) {
-                actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
-                //actor.animation = fireballAnimation;
                 if (actor.wasAirborne || actor.wasJustKnockedDown) {
-                    actor.notReadyToStandUpUntil = now() + 2000;
+                    actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
+                    actor.notReadyToStandUpUntil = now() + 1000;
                     actor.wasAirborne = false;
                     actor.wasJustKnockedDown = false;
+                    actor.justStartedStandingUp = true;
+                    actor.animation = actor.knockDownGroundedAnimation;
+                    actor.knockDownGroundedFrame =  Math.floor(now() / 200) % actor.animation.frames.length;
+                    actor.currentFrame = actor.knockDownGroundedFrame;
+                }
+                if (actor.notReadyToStandUpUntil <= now() && actor.justStartedStandingUp) {
+                    actor.justStartedStandingUp = false;
+                    actor.justStoodUp = true;
+                    actor.standingUpUntil = now() + 250;
+                    actor.animation = actor.standingUpAnimation;
+                    actor.standingUpFrame =  Math.floor(now() / 200) % actor.animation.frames.length;
+                    actor.currentFrame = actor.standingUpFrame;
+                    // WRONG: if you're not invulerable for a while *after* you regain control, you could get knocked down again immeeidately if a dog is hovering right on top of you, either because they're homing or just accidentally.
+                    // I'll probably make it so that creatures that can disable you move away from you if you're disabled, but maybe I shouldn't rely on that exclusively?
+                }
+                if (actor.standingUpUntil <= now() && actor.justStoodUp) {
+                    actor.justStoodUp = false;
+                    actor.invulnerable = false;
+                    actor.knockedDown = false;
                 }
             }
-            if (actor.notReadyToStandUpUntil <= now()) {
-                actor.invulnerable = false;
-                actor.knockedDown = false;
-                // WRONG: if you're not invulerable for a while *after* you regain control, you could get knocked down again immeeidately if a dog is hovering right on top of you, either because they're homing or just accidentally.
-                // I'll probably make it so that creatures that can disable you move away from you if you're disabled, but maybe I shouldn't rely on that?
+        }
+        // end knock down behavior
+        if (actor.fallingUncontrolled) {
+            if (actor.grounded) {
+                // character subject to knockdown upon landing from an uncontrolled fall
+                actor.knockedDown = true;
+                actor.fallingUncontrolled = false;
             }
         }
     }
@@ -277,7 +300,7 @@ function updateActor(actor) {
         moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
     }
 
-    if (actor.grounded && !actor.vx && !actor.attacking) {
+    if (actor.grounded && !actor.vx && !actor.attacking && !actor.disabled) {
         actor.animation = actor.idlingAnimation;
         actor.idleFrame =  Math.floor(now() / (actor.slipping ? actor.msBetweenIdleFramesWhileSlipping : actor.msBetweenIdleFrames)) % actor.animation.frames.length;
         actor.currentFrame = actor.idleFrame;
@@ -292,18 +315,18 @@ function updateActor(actor) {
     if (actor.x !== targetPosition[0]) {
         actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
-    //jumping
-    if (!actor.grounded && actor.vy < actor.uncontrolledFallVyThreshold) {
+    //jumping behavior
+    if (!actor.grounded && !actor.disabled) {
         actor.animation = actor.jumpingAnimation;
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
     }
     if (!actor.attacking) {
-        if (actor.vx) {
+        if (actor.vx && !actor.disabled && actor.grounded) {
             actor.animation = actor.walkingAnimation;
             actor.currentFrame = actor.walkFrame;
         }
-    } else if (actor.vy < actor.uncontrolledFallVyThreshold) {  //can't attack during an uncontrolled fall
+    } else if (!actor.disabled) {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
     }
@@ -402,6 +425,7 @@ function isCharacterSubjectToDisablingEffect(character) {
     if (character.grabbed) return true;
     if (character.launched) return true;
     if (character.bounced) return true;
+    if (character.fallingUncontrolled) return true;
     return false;
 }
 
@@ -554,7 +578,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
 }
 
 function damageSprite(sprite, amount) {
-    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || (sprite.invulnerable && sprite.unvulnerable === false)) return;
+    if ((sprite.invulnerableUntil && now() < sprite.invulnerableUntil) || (sprite.invulnerable && sprite.invulnerable === false)) return;
     sprite.health -= amount;
     sprite.blinkUntil = sprite.invulnerableUntil = now() + (sprite.invulnerableOnDamageDurationInMs || 1000);
 }
@@ -589,7 +613,7 @@ function changeCharacterToAlien(actor) {
 function changeCharacterToVictoria(actor) {
     actor.currentActivatableMobilityPowerup = POWERUP_TYPE_AIR_DASH;
     actor.walkingAnimation = characterVictoriaWalkingAnimation;
-    actor.attackAnimation = characterMysteryAttackAnimation;
+    actor.attackAnimation = characterVictoriaAttackAnimation;
     actor.hasMovementStartAnimation = false;
     actor.hasMovementStopAnimation = false;
     actor.idlingAnimation = characterVictoriaIdlingAnimation;

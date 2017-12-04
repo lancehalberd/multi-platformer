@@ -457,10 +457,11 @@ function updateLocalSprite(localSprite) {
             var target = localSprite.target,
                 minKnockBackMagnitude = 23;
             damageSprite(target, 1);
-            if (localSprite.vx > 0) target.vx += Math.max(localSprite.vx * 0.75, minKnockBackMagnitude);
-            else target.vx += Math.min(localSprite.vx * 0.75, -minKnockBackMagnitude);
+            //if (localSprite.vx > 0) target.vx += Math.max(localSprite.vx * 0.75, minKnockBackMagnitude);
+            //else target.vx += Math.min(localSprite.vx * 0.75, -minKnockBackMagnitude);
+			knockBack(localSprite, localSprite.target);
             target.vy -= 6;
-            target.knockedDown = true;
+            knockDown(target);
             // cooldown before creature can attack or aggro again
             localSprite.notReadyToAttackUntil = now() + localSprite.attackCooldown;
             localSprite.notReadyToAggroUntil = now() + localSprite.aggroCooldown;
@@ -470,7 +471,6 @@ function updateLocalSprite(localSprite) {
             localSprite.followThroughUntil = now() + localSprite.followThroughDuration;
             localSprite.postAttackFleeDuration = 1500;
             localSprite.fleeUntil = now() + localSprite.postAttackFleeDuration;
-            localSprite.target.wasJustKnockedDown = true;
             // if target is to the right of hound
             if (localSprite.x < target.x) {
                 localSprite.followThroughVx = localSprite.maxSpeedAggroed;
@@ -712,7 +712,11 @@ function updateLocalSprite(localSprite) {
 		}
 		if (isObjectCollidingWithNonInvulnerableTarget(segment, segment.target)) {
 			damageSprite(segment.target, segment.damage);
-			knockBack(localSprite.parent, localSprite.target, 20 * segment.damage, 20 * segment.damage, 7 * segment.damage);
+			if (segment.damage < 2) knockBack(segment.parent, segment.target, 10, 15, -15);
+			if (segment.damage >= 2) {
+				knockBack(segment.parent, segment.target, 5 * segment.damage, 3 * segment.damage, -3 * segment.damage);
+				knockDown(segment.target);
+			}
 		}
 		if (segment.livesUntil <= now()) segment.shouldBeRemoved = true;
 	}
@@ -1079,6 +1083,11 @@ function knockBack(objectAnchored, objectKnockedBack, knockBackMagnitudeX, knock
 	objectKnockedBack.vx += forceX;
 	if (vector[1] < 0) objectKnockedBack.vy += forceUp;
 	else objectKnockedBack.vy += forceDown;
+}
+
+function knockDown(character) {
+	character.knockedDown = true;
+	character.wasJustKnockedDown = true;
 }
 
 function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
