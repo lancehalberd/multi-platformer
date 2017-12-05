@@ -35,15 +35,15 @@ var characterAlienUncontrolledFallAnimation = fireballAnimation;
 var characterAlienAttackAnimation = fireballAnimation;
 
 // Victoria character animations
-var allCharacterVictoriaFrames = rectangleToFrames(new Rectangle(0, 0, 32, 36), requireImage('/gfx/person/characterVictoria.png'), 12);
+var allCharacterVictoriaFrames = rectangleToFrames(new Rectangle(0, 0, 100, 52), requireImage('/gfx/person/characterVictoria.png'), 19);
 var characterVictoriaWalkingAnimation = {frames: allCharacterVictoriaFrames.slice(0, 8)};
-var characterVictoriaStandingUpAnimation = {frames: allMysteryFrames.slice(4, 8)};
-var characterVictoriaKnockDownAirborneAnimation = fireballAnimation;
-var characterVictoriaKnockDownGroundedAnimation = fireballAnimation;
-var characterVictoriaIdlingAnimation = {frames: allCharacterVictoriaFrames.slice(8, 11)};
-var characterVictoriaJumpingAnimation = {frames: allCharacterVictoriaFrames.slice(1, 2)};
+var characterVictoriaStandingUpAnimation = {frames: allCharacterVictoriaFrames.slice(18, 19)};
+var characterVictoriaKnockDownAirborneAnimation = {frames: allCharacterVictoriaFrames.slice(16, 17)};
+var characterVictoriaKnockDownGroundedAnimation = {frames: allCharacterVictoriaFrames.slice(17, 18)};
+var characterVictoriaIdlingAnimation = {frames: allCharacterVictoriaFrames.slice(9, 13)};
+var characterVictoriaJumpingAnimation = {frames: allCharacterVictoriaFrames.slice(8, 9)};
 var characterVictoriaUncontrolledFallAnimation = fireballAnimation;
-var characterVictoriaAttackAnimation = fireballAnimation;
+var characterVictoriaAttackAnimation = {frames: allCharacterVictoriaFrames.slice(14, 16)};
 
 // Cowbot character animations
 var allCharacterCowbotFrames = rectangleToFrames(new Rectangle(0, 0, 32, 44), requireImage('/gfx/person/characterCowbot.png'), 6);
