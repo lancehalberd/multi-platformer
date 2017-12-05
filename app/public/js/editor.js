@@ -176,7 +176,7 @@ const selectBrush = (newBrush) => {
 };
 
 const updateTilePropertiesPreview = () => {
-    var tile = currentBrush.getTile();
+    var tile = currentBrush.getTile && currentBrush.getTile();
     if (!tile || !(currentBrush instanceof TileBrush)) {
         $('.js-tileProperties').hide();
         return;
