@@ -1046,22 +1046,29 @@ function getCreatureSentinelEye(x, y) {
 	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
 }
+function addHitBoxToAnimationFrames(animation, hitBox) {
+    return {frames: animation.frames.map( frame => {
+        // This defines the hitBox inside the frame from the top left corner of that frame.
+        frame.hitBox = hitBox;
+        return frame;
+    })};
+}
 
 function getCreatureDroneBomber(x, y) {
-    var xScale = yScale = 0.12,
-	hitBox = new Rectangle(-192, -192, 384, 384);
+    var xScale = yScale = 0.12;
+    // This defines the hitBox inside the frame from the top left corner of that frame.
+    var hitBox = new Rectangle(210, 255, 400, 550);
     var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x, y, 0, 0, xScale, yScale);
     bomber.type = CREATURE_TYPE_DRONE_BOMBER;
 	//bomber.homing = true;
 	//bomber.target = {x: bomber.x + 1500, y: bomber.y};	// can't have it home on a non-player target right now because there have been target assignment problems and so updateLocalSprite is forcing the mainCharacter to be everything's target right now.
 	bomber.health = 1;
 	bomber.vx = 4;
-    bomber.hitBox = hitBox;
     bomber.facesDirectionOfAcceleration = true;
-    bomber.movingLoadedAnimation = droneBomberMovingLoadedAnimation;
-    bomber.movingEmptyAnimation = droneBomberMovingEmptyAnimation;
-    bomber.attackAnimation = droneBomberAttackAnimation;
-    bomber.defeatAnimation = droneBomberDefeatAnimation;
+    bomber.movingLoadedAnimation = addHitBoxToAnimationFrames(droneBomberMovingLoadedAnimation, hitBox);
+    bomber.movingEmptyAnimation = addHitBoxToAnimationFrames(droneBomberMovingEmptyAnimation, hitBox);
+    bomber.attackAnimation = addHitBoxToAnimationFrames(droneBomberAttackAnimation, hitBox);
+    bomber.defeatAnimation = addHitBoxToAnimationFrames(droneBomberDefeatAnimation, hitBox);
     bomber.flying = true;
 	bomber.maxSpeed = 4;
 	bomber.homingAcceleration = 1;
