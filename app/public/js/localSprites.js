@@ -4,6 +4,7 @@ var PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING = 'sentinelBeamInHarmlessChargingPhas
 var PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY = 'sentinelTargetingDummyProjectile';
 var PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT = 'sentineBeamSegment';
 var PROJECTILE_TYPE_DRONE_BOMB = 'droneBomb';
+var PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL = 'droneBombShrapnel';
 
 var DETONATION_TYPE_DRONE_BOMB = 'droneBombDetonation';
 
@@ -83,6 +84,7 @@ class SimpleSprite {
         this.bobMaxY = 0; //farthest, up or down, a bobbing sprite should get away from its original Y before turning around.
         this.originalY = y; //for preventing bobbing from making the sprite's y position drift over time. Should probably change bob implementation to eliminate this.
         this.invulnerableOnDamageDuration = 1000;
+		this.justCreated = true; // this can be used to perform updates that only happen once upon creation
     }
 
     getOriginalHitBox() {
@@ -656,10 +658,18 @@ function updateLocalSprite(localSprite) {
 			getDroneBomberRotor(bomber.x, bomber.y, bomber, 8);
 			bomber.justCreated = false;
 		}
-		// bomber attacks when is passes over the player with a clear line of sight
-		// WRONG some ad hoc attack condition code just for testing basics
+		// behavior while loaded
 		if (bomber.loaded) {
-			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
+			if (bomber.y > bomber.target.y - 250) bomber.dy -= 0.003;
+			else {
+				if (bomber.vy < 0) {
+					bomber.dy += 0.003;
+					bomber.dx += 0.01;
+				} else bomber.vy = 0;
+			}
+			// bomber attacks when is passes over the player with a clear line of sight
+			// WRONG some ad hoc attack condition code just for testing basics
+			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40 && bomber.y < bomber.target.y - 150) {
 				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
 				bomber.attackingUntil = now() + 800;
 				bomber.animation =  bomber.attackAnimation;
@@ -667,12 +677,14 @@ function updateLocalSprite(localSprite) {
 			}
 		}
 		// finished attacking, unloaded
-		if (!bomber.loaded && bomber.attackingUntil <= now()) {
-			bomber.animation = bomber.movingUnloadedAnimation;
+		if (!bomber.loaded) {
+			// starts pulling up after bomb drop
+			bomber.vy -= 0.03;
+			// folds legs in after delay after dropping bomb
+			if (bomber.attackingUntil <= now()) bomber.animation = bomber.movingUnloadedAnimation;
 		}
-		if (bomber.attackingUntil)
 		// bomber is removed from simulation after it flies off the map and it's cooled down
-		if ((bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) && !bomber.leftMap) {
+		if (((bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100)  || (bomber.y > (currentMap.tileSize * currentMap.height) + 100 || bomber.y < -100)) && !bomber.leftMap) {
 			bomber.leftMap = true;
 			var randomCooldownDuration = bomber.cooldownMinMs + (Math.random() * (bomber.cooldownMaxMs - bomber.cooldownMinMs));
 			bomber.shouldNotRespawnUntil = now() + randomCooldownDuration;
@@ -785,14 +797,18 @@ function updateLocalSprite(localSprite) {
 
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
 		var bomb = localSprite;
-		// should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
+		bomb.vy -= 0.75; // lower gravity due to aerodynamics to help it home/aim;
+		// WRONG MAYBE should have terminal velocity vertically, separate from maxSpeed
+		// WRONG: should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
 		if (bomb.shouldBeRemoved) {
-			getDetonationDroneBomb(bomb.x, bomb.y, 0.3, 0.3, 1, bomb.target, bomb);
+			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
+			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175);
 		}
 	}
 
 	if (localSprite.type === DETONATION_TYPE_DRONE_BOMB) {
 		var explosion = localSprite;
+		/* WRONG updates for old, radius-based drone bomb explosion
 		if (explosion.justCreated) {
 			explosion.livesUntil = now() + 500; // WRONG: this should be timed to last as long as the animation does.
 			addEffectDroneBombExplosion(explosion.x, explosion.y, 0.23, 12);
@@ -809,6 +825,55 @@ function updateLocalSprite(localSprite) {
 			knockBack(explosion, explosion.target);
 		}
 		if (explosion.livesUntil <= now()) explosion.shouldBeRemoved = true;
+		*/
+		if (explosion.noProjectileWaveUntil <= now() && explosion.currentNumberOfProjectileWavesReleased < explosion.maxNumberOfProjectileWaves) {
+			// 8-direction projectile wave
+			for (var j = 0; j < 8; j++) {
+				var shrapnelVx,
+				shrapnelVy;
+				if (j < 3) shrapnelVx = 100;	// these values are obscenely high. the projectiles' maxSpeeds will limit them to the correct speed
+				if (j > 3 && j < 7 ) shrapnelVx = -100;
+				if (j === 7 || j === 3) shrapnelVx = 0;
+				if (j > 1 && j < 5) shrapnelVy = 100;
+				if (j === 0 || j > 5) shrapnelVy = -100;
+				if (j === 1 || j === 5) shrapnelVy = 0;
+				getProjectileDroneBombShrapnel(explosion.x, explosion.y, shrapnelVx, shrapnelVy, explosion.target, explosion, explosion.damage, explosion.projectileSpeed, explosion.animationSpeedInFPS);
+			}
+			explosion.currentNumberOfProjectileWavesReleased++;
+			explosion.noProjectileWaveUntil = now() + explosion.msBetweenProjectileWaves;
+		}
+		if (explosion.currentNumberOfProjectileWavesReleased >= explosion.maxNumberOfProjectileWaves) explosion.shouldBeRemoved = true;
+	}
+	
+	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL) {
+		var shrapnel = localSprite,
+		shrapnelScale,
+		shrapnelAnimationSpeedInFPS = 10;
+		shrapnelScale = 0.1; // MAYBE WRONG this might do some scaling over its lifespan. Maybe the hit box of the shrapnel should scale up along with the sprite over the course of its lifespan.
+		
+		// WRONG MAYBE should alpha out over lifespan
+		// WRONG should live as long as animation lasts
+		// should knock down target and do 2 damage if contact is made with projectile in the first half (third?) of its lifespan
+		// should knock back target and do 1 damage if contact is made with projectile in the second half (two thirds?) of its lifespan
+		// creating the simple animation for the projectile
+		
+		if (isObjectCollidingWithNonInvulnerableTarget(shrapnel, shrapnel.target)) {
+			// knock down and more damage if close to blast center
+			if (shrapnel.framesToLive > shrapnel.originalFramesToLive / 2) {
+				damageSprite(shrapnel.target, shrapnel.maxDamage);
+				knockBack(shrapnel, shrapnel.target, 10, 13, 4);
+				knockDown(shrapnel.target);
+			} else {
+				// knock back and less damage if farther from blast center
+				damageSprite(shrapnel.target, shrapnel.minDamage);
+				knockBack(shrapnel, shrapnel.target);
+			}
+		}
+		
+		if (shrapnel.justCreated) {
+			//addEffectDroneBombExplosion(shrapnel.x, shrapnel.y, shrapnel.vx, shrapnel.vy, shrapnelScale, shrapnelAnimationSpeedInFPS); // MAYBE WRONG: this is just trusting setting the animation's vx and vy to the same as the invisible projectile's will keep them synced, even though their positions aren't actually being updated together. They might drift apart some.
+			shrapnel.justCreated = false;
+		}
 	}
     // fadeout behavior
     // WRONG: This code needs to fade an animation out over its life span.
@@ -1059,7 +1124,7 @@ function addHitBoxToAnimationFrames(animation, hitBox) {
 function getCreatureDroneBomber(x, y) {
     var xScale = yScale = 0.12;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(210, 255, 400, 550);
+    var hitBox = new Rectangle(210, 250, 420, 380);
     var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x, y, 0, 0, xScale, yScale);
     bomber.type = CREATURE_TYPE_DRONE_BOMBER;
 	//bomber.homing = true;
@@ -1068,12 +1133,13 @@ function getCreatureDroneBomber(x, y) {
 	bomber.vx = 4;
     bomber.facesDirectionOfAcceleration = true;
     bomber.movingLoadedAnimation = addHitBoxToAnimationFrames(droneBomberMovingLoadedAnimation, hitBox);
-    bomber.movingEmptyAnimation = addHitBoxToAnimationFrames(droneBomberMovingEmptyAnimation, hitBox);
+    bomber.movingUnloadedAnimation = addHitBoxToAnimationFrames(droneBomberMovingUnloadedAnimation, hitBox);
     bomber.attackAnimation = addHitBoxToAnimationFrames(droneBomberAttackAnimation, hitBox);
     bomber.defeatAnimation = addHitBoxToAnimationFrames(droneBomberDefeatAnimation, hitBox);
     bomber.flying = true;
 	bomber.maxSpeed = 4;
 	bomber.homingAcceleration = 1;
+	bomber.maxAcceleration = 0.03;
 	// maybe bomber should bob and/or wobble (i.e. random, mild rotation forward and backward) or have a "microWandering" behavior where it maintains its heading, but wanders a little bit *around* that heading, like the idea I had for how the bee would move.
     bomber.dx = 0;
     bomber.dy = 0;
@@ -1088,10 +1154,12 @@ function getCreatureDroneBomber(x, y) {
 }
 
 function getDroneBomberRotor(x, y, parent, msBetweenFrames) {
-    xScale = yScale = 0.12;
+    var xScale = yScale = 0.12;
+		hitBox = new Rectangle(210, 255, 400, 550);
     var rotor = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
+	rotor.hitBox = hitBox;
     rotor.type = CREATURE_TYPE_DRONE_BOMBER_ROTOR;
-    rotor.animation = droneBomberRotorAnimation;
+    rotor.animation = addHitBoxToAnimationFrames(droneBomberRotorAnimation, hitBox);
 	rotor.animation.msBetweenFrames = msBetweenFrames;
 	rotor.parent = parent;
 	localSprites.push(rotor);
@@ -1189,6 +1257,7 @@ function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
     bomb.removedOnCollision = true;
 	bomb.animation = droneBombAnimation;
     bomb.maxSpeed = 4;
+	bomb.maxAcceleration = 0.3;
     bomb.target = target;
     bomb.parent = parent;
 	//if (bomb.parent. vx > 0) bomb.rotation = 105;
@@ -1197,9 +1266,10 @@ function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
     localSprites.push(bomb);
 }
 
-function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, animationSpeedInFPS) {
+/* WRONG old, radius-based drone bomb detonation
+    function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, animationSpeedInFPS) {
     var hitBox = new Rectangle(0, 0, 8, 8);
-    var explosion = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 0.2, 0.2); // animation is invisible. Update spanws a SimpleAnimation
+    var explosion = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 0.2, 0.2); // animation is invisible. Update spawns a SimpleAnimation
 	explosion.hitBox = hitBox;
 	explosion.type = DETONATION_TYPE_DRONE_BOMB;
 	explosion.animation = droneBombExplosionAnimation;
@@ -1209,9 +1279,45 @@ function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, an
 	explosion.parent = parent;
 	explosion.justCreated = true;
 	explosion.hit = false; // this will turn to true if the explosion hits its target
-	explosion.closeRadius = 80;
-	explosion.farRadius = 160;
+	explosion.closeRadius = 80;	// target will take 2 damage and be knocked down if inside this radius. Would be good to make a way to visualize radii like hit boxes are while pressing 'Y.'
+	explosion.farRadius = 160; // target will take 1 damage and be knocked back if inside this radius.
 	localSprites.push(explosion);
+}*/
+
+function getDetonationDroneBomb(x, y, damage, projectileSpeed, target, parent, animationSpeedInFPS, numberOfProjectileWaves, msBetweenProjectileWaves) {
+	var detonation = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 1, 1);
+	detonation.type = DETONATION_TYPE_DRONE_BOMB;
+	detonation.maxNumberOfProjectileWaves = numberOfProjectileWaves;
+	detonation.currentNumberOfProjectileWavesReleased = 0;
+	detonation.msBetweenProjectileWaves = msBetweenProjectileWaves;
+	detonation.noProjectileWaveUntil = now();
+	detonation.damage = damage;
+	detonation.animationSpeedInFPS = animationSpeedInFPS;
+	detonation.target = target;
+	detonation.parent = parent;
+	detonation.flying = true;
+	detonation.projectileSpeed = projectileSpeed;
+	localSprites.push(detonation);
+}
+
+function getProjectileDroneBombShrapnel(x, y, vx, vy, target, parent, damage, projectileSpeed, animationSpeedInFPS) {
+    var hitBox = new Rectangle(0, 0, 8, 8);
+    var shrapnel = new SimpleSprite(fireballAnimation, x, y, vx, vy, 0.5, 0.5);
+    shrapnel.hitBox = hitBox;
+    shrapnel.collides = true;
+    shrapnel.removedOnCollision = true;
+    shrapnel.maxSpeed = projectileSpeed;
+    shrapnel.target = target;
+    shrapnel.parent = parent;
+	shrapnel.minDamage = damage;
+	shrapnel.maxDamage = shrapnel.minDamage * 2;
+	shrapnel.animationSpeedInFPS = animationSpeedInFPS;
+    shrapnel.flying = true;
+	shrapnel.originalFramesToLive = 20;
+	shrapnel.framesToLive = shrapnel.originalFramesToLive; // WRONG this will eventually be a "livesUntil" thing that's synced to an animation or something like that
+	shrapnel.justCreated = true;
+    shrapnel.type = PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL;
+    localSprites.push(shrapnel);
 }
 
 function getNormalizedVector(originX, targetX, originY, targetY) {

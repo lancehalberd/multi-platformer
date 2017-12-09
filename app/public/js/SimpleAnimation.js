@@ -153,13 +153,13 @@ function addEffectWraithHoundGhostTrail(x, y, vx, vy, scale, animationSpeedInFPS
     localSprites.push(houndTrail);
 }
 
-function addEffectDroneBombExplosion(x, y, scale, animationSpeedInFPS) {
+function addEffectDroneBombExplosion(x, y, vx, vy, scale, animationSpeedInFPS) {
     var sourceRectangle = new Rectangle(0, 0, 1024, 1024);
     // scale the animation
     var target = sourceRectangle.scale(scale);
-    // x, y coords are given as the middle of the character's 'feet'. The smoke should spawn
-    // at the back of the mask, so we adjust the target rectangle accordingly.
-    var explosion = new SimpleMovingAnimation(droneBombExplosionAnimation, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), 0, 0);
+    //var hitBox = new Rectangle(512, 512, 1024, 1024);
+    // WRONG: this could just be a SimpleAnimation.
+    var explosion = new SimpleMovingAnimation(droneBombExplosionAnimation, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy);
     //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
     explosion.type = EFFECT_DRONE_BOMB_EXPLOSION;
     localSprites.push(explosion);

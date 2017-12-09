@@ -78,7 +78,7 @@ var sentinelTargetingDummyAnimation = {frames: allSentinelBeamFrames.slice(2, 3)
 // drone bomber animations
 var allDroneBomberFrames = rectangleToFrames(new Rectangle(0, 0, 1024, 1024), requireImage('/gfx/creatures/creatureDroneBomber.png'), 15);
 var droneBomberMovingLoadedAnimation = {frames: allDroneBomberFrames.slice(0, 1)};
-var droneBomberMovingEmptyAnimation = {frames: allDroneBomberFrames.slice(2, 3)};
+var droneBomberMovingUnloadedAnimation = {frames: allDroneBomberFrames.slice(2, 3)};
 var droneBomberAttackAnimation = {frames: allDroneBomberFrames.slice(1, 2)};
 var droneBomberDefeatAnimation = {frames: allDroneBomberFrames.slice(1, 2)};
 var droneBomberRotorAnimation = {frames: allDroneBomberFrames.slice(3, 8)};
