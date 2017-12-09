@@ -14,7 +14,7 @@ var render = () => {
 
     //var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
     var bgSourceRectangle = new Rectangle(0, 0, 800, 608);    
-    var target = bgSourceRectangle.scale(1.2);
+    var target = bgSourceRectangle.scale(1.2); // used to be 0.6 when the background pic was yellowMountains.png
     var xPercent = (cameraX / (Math.max(areaRectangle.width, target.width) - mainCanvas.width)) || 0;
     if (areaRectangle.width < mainCanvas.width) xPercent = 0;
     var yPercent = (cameraY / (Math.max(areaRectangle.height, target.height) - mainCanvas.height)) || 0;

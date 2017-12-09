@@ -3,6 +3,9 @@ var PROJECTILE_TYPE_SENTINEL_BEAM = 'sentinelBeam';
 var PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING = 'sentinelBeamInHarmlessChargingPhase';
 var PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY = 'sentinelTargetingDummyProjectile';
 var PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT = 'sentineBeamSegment';
+var PROJECTILE_TYPE_DRONE_BOMB = 'droneBomb';
+
+var DETONATION_TYPE_DRONE_BOMB = 'droneBombDetonation';
 
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIR_DASH = 'airDash';
@@ -13,6 +16,8 @@ var CREATURE_TYPE_PACING_FIREBALL_HORIZONTAL = 'fireballPacingHorizontally';
 var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
 var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
 var CREATURE_TYPE_SENTINEL_EYE = 'sentineEyeCreature';
+var CREATURE_TYPE_DRONE_BOMBER = 'droneBomberCreature';
+var CREATURE_TYPE_DRONE_BOMBER_ROTOR = 'droneBomberRotor';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -643,7 +648,38 @@ function updateLocalSprite(localSprite) {
 	}
     // end sentinel eye update
     
-    
+	// drone bomber update
+    if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER) {
+		var bomber = localSprite;
+		// bomber attacks when is passes over the player with a clear line of sight
+		// WRONG some ad hoc attack condition code just for testing basics
+		if (bomber.loaded) {
+			console.log('loaded');
+			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
+				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
+				bomber.attackingUntil = now() + 800;
+				bomber.animation =  bomber.attackAnimation;
+				bomber.loaded = false;
+				console.log('should drop');
+			}
+		}
+		// finished attacking, unloaded
+		if (bomber.loaded && bomber.attackingUntil <= now()) {
+			bomber.animation = bomber.movingUnloadedAnimation;
+		}
+		if (bomber.attackingUntil)
+		// give the bomber its rotor, separated because it has a separate animation from the rest of the bomber
+		if (bomber.justCreated) {
+			getDroneBomberRotor(bomber.x, bomber.y, bomber, 8);
+			bomber.justCreated = false;
+		}
+		// bomber is removed from simulation after it flies off the map
+		if (bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) {
+			bomber.shouldBeRemoved = true;
+		}
+	}
+	// end drone bomber update
+	
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
@@ -738,7 +774,40 @@ function updateLocalSprite(localSprite) {
 		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 1, 8, 8); // comment back in to visualize impact point
     }
     
-    
+    if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER_ROTOR) {
+		localSprite.x = localSprite.parent.x;
+		localSprite.y = localSprite.parent.y;
+		localSprite.rotation = localSprite.parent.rotation;
+	}
+	
+	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
+		var bomb = localSprite;
+		// should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
+		if (bomb.shouldBeRemoved) {
+			getDetonationDroneBomb(bomb.x, bomb.y, 0.3, 0.3, 1, bomb.target, bomb);
+			console.log('should be removed');
+		}
+	}
+	
+	if (localSprite.type === DETONATION_TYPE_DRONE_BOMB) {
+		var explosion = localSprite;
+		if (explosion.justCreated) {
+			explosion.livesUntil = now() + 500; // WRONG: this should be timed to last as long as the animation does.
+			addEffectDroneBombExplosion(explosion.x, explosion.y, 0.23, 12);
+			explosion.justCreated = false;
+		}
+		if (isCharacterInsideRadius(explosion.x, explosion.y, explosion.closeRadius, explosion.target)) {
+			damageSprite(explosion.target, 2);
+			knockBack(explosion, explosion.target, 10, 13, 4);
+			knockDown(explosion.target);
+			explosion.hit = true;
+		}
+		if (isCharacterInsideRadius(explosion.x, explosion.y, explosion.farRadius, explosion.target) && !explosion.hit) {
+			damageSprite(explosion.target, 1);
+			knockBack(explosion, explosion.target);
+		}
+		if (explosion.livesUntil <= now()) explosion.shouldBeRemoved = true;
+	}
     // fadeout behavior
     // WRONG: This code needs to fade an animation out over its life span.
     /*if (localSprite.fadesOut) {
@@ -944,7 +1013,6 @@ function getCreatureSentinelEye(x, y) {
     eye.wandering = true;
     eye.dx = 0;
     eye.dy = 0;
-    eye.bobs = false; // WRONG: should be true, but bobbing doesn't work with moving creatures right now.
     eye.beamWidthScale = 0.25;
 	eye.beamWidthBase = 32;
     eye.msBetweenWanderingDirectionChangeMin = 1500;
@@ -977,6 +1045,45 @@ function getCreatureSentinelEye(x, y) {
 	eye.firesDummies = true; // while this is true, eye will be firing targeting dummies
 	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
+}
+
+function getCreatureDroneBomber(x, y) {
+    var xScale = yScale = 0.12,
+	hitBox = new Rectangle(-192, -192, 384, 384);
+    var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x, y, 0, 0, xScale, yScale);
+    bomber.type = CREATURE_TYPE_DRONE_BOMBER;
+	//bomber.homing = true;
+	//bomber.target = {x: bomber.x + 1500, y: bomber.y};	// can't have it home on a non-player target right now because there have been target assignment problems and so updateLocalSprite is forcing the mainCharacter to be everything's target right now.
+	bomber.health = 1;
+	bomber.vx = 4;
+    bomber.hitBox = hitBox;
+    bomber.facesDirectionOfAcceleration = true;
+    bomber.movingLoadedAnimation = droneBomberMovingLoadedAnimation;
+    bomber.movingEmptyAnimation = droneBomberMovingEmptyAnimation;
+    bomber.attackAnimation = droneBomberAttackAnimation;
+    bomber.defeatAnimation = droneBomberDefeatAnimation;
+    bomber.flying = true;
+	bomber.maxSpeed = 4;
+	bomber.homingAcceleration = 1;
+	// maybe bomber should bob and/or wobble (i.e. random, mild rotation forward and backward) or have a "microWandering" behavior where it maintains its heading, but wanders a little bit *around* that heading, like the idea I had for how the bee would move.
+    bomber.dx = 0;
+    bomber.dy = 0;
+    bomber.collides = false; // my idea for the moment is that the bomber will just fly all the way across the screen, ignoring level geometry
+    bomber.msBetweenFrames = 90;
+    bomber.maxAcceleration = 0.189;
+	bomber.justCreated = true;
+	bomber.loaded = true;
+	return bomber;
+}
+
+function getDroneBomberRotor(x, y, parent, msBetweenFrames) {
+    xScale = yScale = 0.12;
+    var rotor = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
+    rotor.type = CREATURE_TYPE_DRONE_BOMBER_ROTOR;
+    rotor.animation = droneBomberRotorAnimation;
+	rotor.animation.msBetweenFrames = msBetweenFrames;
+	rotor.parent = parent;
+	localSprites.push(rotor);
 }
 
 function getProjectileSentinelBeam(originX, originY, length, width, rotation, damage, duration, target, parent) {
@@ -1058,6 +1165,42 @@ function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
     dummy.framesToLive = 75;
     dummy.type = PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY;
     localSprites.push(dummy);
+}
+
+function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
+	var xScale = yScale = 0.12;
+    var hitBox = new Rectangle(0, 0, 12, 20);
+    var bomb = new SimpleSprite(droneBombAnimation, x, y, vx, vy, xScale, yScale);
+    bomb.hitBox = hitBox;
+    bomb.collides = true;
+	bomb.homing = true;
+	bomb.homingAcceleration = 0.13;
+    bomb.removedOnCollision = true;
+	bomb.animation = droneBombAnimation;
+    bomb.maxSpeed = 4;
+    bomb.target = target;
+    bomb.parent = parent;
+	//if (bomb.parent. vx > 0) bomb.rotation = 105;
+	//else bomb.rotation = 75;
+    bomb.type = PROJECTILE_TYPE_DRONE_BOMB;
+    localSprites.push(bomb);
+}
+
+function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, animationSpeedInFPS) {
+    var hitBox = new Rectangle(0, 0, 8, 8);
+    var explosion = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 0.2, 0.2); // animation is invisible. Update spanws a SimpleAnimation
+	explosion.hitBox = hitBox;
+	explosion.type = DETONATION_TYPE_DRONE_BOMB;
+	explosion.animation = droneBombExplosionAnimation;
+	explosion.flying = true;
+	explosion.target = target;
+	explosion.damage = damage;
+	explosion.parent = parent;
+	explosion.justCreated = true;
+	explosion.hit = false; // this will turn to true if the explosion hits its target
+	explosion.closeRadius = 48;
+	explosion.farRadius = 96;
+	localSprites.push(explosion);
 }
 
 function getNormalizedVector(originX, targetX, originY, targetY) {
