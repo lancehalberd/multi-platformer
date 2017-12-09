@@ -24,7 +24,10 @@ const updateEditor = () => {
             updatedTile.y = selectedCoords[1];
             updatedTile.image = getSelectedTileSource();
             updatedTile.size = getSelectedTileSourceSize();
-            sendData({action: 'updateTilePalette', oldKey, updatedTile});
+            // Update this tile on the server if it is a saved tile.
+            if (updatedTile !== newTile) {
+                sendData({action: 'updateTilePalette', oldKey, updatedTile});
+            }
         }
         return;
     }
@@ -91,7 +94,12 @@ $('.js-brushSelectField').on('click', '.js-brushCanvas', function () {
 });
 var previousBrush = null;
 $('.js-newTile').on('click', () => {
-    newTile = {image: getSelectedTileSource(), x:0, y:0, size:16, properties: 0};
+    var currentTile = currentBrush.getTile ? currentBrush.getTile() : null;
+    if (currentTile) {
+        newTile = Object.assign({}, currentTile);
+    } else {
+        newTile = {image: getSelectedTileSource(), x:0, y:0, size:16, properties: 0};
+    }
     previousBrush = currentBrush;
     selectBrush(new TileBrush(newTile));
     selectingTileGraphic = true;
@@ -130,6 +138,7 @@ const checkToUpdateLocalTiles = () => {
     for (var n = $localTiles.children().length; n < currentMap.uniqueTiles.length; n++) {
         var brush = new TileBrush(n, currentMap);
         $localTiles.append(createBrushPreviewElement(brush));
+        cancelCreatingNewTile(false);
     }
 };
 
@@ -190,7 +199,12 @@ const updateTilePropertiesPreview = () => {
 var toggleTileProperty = (updatedTile, property) => {
     var oldKey = hashObject(updatedTile);
     updatedTile.properties ^= property;
-    sendData({action: 'updateTilePalette', oldKey, updatedTile});
+    // Update this tile on the server if it is a saved tile.
+    if (updatedTile !== newTile) {
+        sendData({action: 'updateTilePalette', oldKey, updatedTile});
+    } else {
+        updateTilePropertiesPreview();
+    }
 };
 
 $('.js-tileProperties').on('click', 'canvas', function () {
