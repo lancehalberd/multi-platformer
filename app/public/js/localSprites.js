@@ -651,30 +651,33 @@ function updateLocalSprite(localSprite) {
 	// drone bomber update
     if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER) {
 		var bomber = localSprite;
-		// bomber attacks when is passes over the player with a clear line of sight
-		// WRONG some ad hoc attack condition code just for testing basics
-		if (bomber.loaded) {
-			console.log('loaded');
-			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
-				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
-				bomber.attackingUntil = now() + 800;
-				bomber.animation =  bomber.attackAnimation;
-				bomber.loaded = false;
-				console.log('should drop');
-			}
-		}
-		// finished attacking, unloaded
-		if (bomber.loaded && bomber.attackingUntil <= now()) {
-			bomber.animation = bomber.movingUnloadedAnimation;
-		}
-		if (bomber.attackingUntil)
 		// give the bomber its rotor, separated because it has a separate animation from the rest of the bomber
 		if (bomber.justCreated) {
 			getDroneBomberRotor(bomber.x, bomber.y, bomber, 8);
 			bomber.justCreated = false;
 		}
-		// bomber is removed from simulation after it flies off the map
-		if (bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) {
+		// bomber attacks when is passes over the player with a clear line of sight
+		// WRONG some ad hoc attack condition code just for testing basics
+		if (bomber.loaded) {
+			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
+				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
+				bomber.attackingUntil = now() + 800;
+				bomber.animation =  bomber.attackAnimation;
+				bomber.loaded = false;
+			}
+		}
+		// finished attacking, unloaded
+		if (!bomber.loaded && bomber.attackingUntil <= now()) {
+			bomber.animation = bomber.movingUnloadedAnimation;
+		}
+		if (bomber.attackingUntil)
+		// bomber is removed from simulation after it flies off the map and it's cooled down
+		if ((bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) && !bomber.leftMap) {
+			bomber.leftMap = true;
+			var randomCooldownDuration = bomber.cooldownMinMs + (Math.random() * (bomber.cooldownMaxMs - bomber.cooldownMinMs));
+			bomber.shouldNotRespawnUntil = now() + randomCooldownDuration;
+		}
+		if (bomber.shouldNotRespawnUntil && bomber.shouldNotRespawnUntil <= now()) {
 			bomber.shouldBeRemoved = true;
 		}
 	}
@@ -785,7 +788,6 @@ function updateLocalSprite(localSprite) {
 		// should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
 		if (bomb.shouldBeRemoved) {
 			getDetonationDroneBomb(bomb.x, bomb.y, 0.3, 0.3, 1, bomb.target, bomb);
-			console.log('should be removed');
 		}
 	}
 	
@@ -1059,7 +1061,7 @@ function getCreatureDroneBomber(x, y) {
     bomber.hitBox = hitBox;
     bomber.facesDirectionOfAcceleration = true;
     bomber.movingLoadedAnimation = droneBomberMovingLoadedAnimation;
-    bomber.movingEmptyAnimation = droneBomberMovingEmptyAnimation;
+    bomber.movingUnloadedAnimation = droneBomberMovingEmptyAnimation;
     bomber.attackAnimation = droneBomberAttackAnimation;
     bomber.defeatAnimation = droneBomberDefeatAnimation;
     bomber.flying = true;
@@ -1073,6 +1075,8 @@ function getCreatureDroneBomber(x, y) {
     bomber.maxAcceleration = 0.189;
 	bomber.justCreated = true;
 	bomber.loaded = true;
+	bomber.cooldownMaxMs = 5000;	// after leaving map and being removed, max time before respawning
+	bomber.cooldownMinMs = 2500;
 	return bomber;
 }
 
@@ -1198,8 +1202,8 @@ function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, an
 	explosion.parent = parent;
 	explosion.justCreated = true;
 	explosion.hit = false; // this will turn to true if the explosion hits its target
-	explosion.closeRadius = 48;
-	explosion.farRadius = 96;
+	explosion.closeRadius = 80;
+	explosion.farRadius = 160;
 	localSprites.push(explosion);
 }
 
