@@ -479,11 +479,11 @@ function updateLocalSprite(localSprite) {
             // if target is to the right of hound
             if (localSprite.x < target.x) {
                 localSprite.followThroughVx = localSprite.maxSpeedAggroed;
-                localSprite.followThroughDx = localSprite.maxAcceleration; 
+                localSprite.followThroughDx = localSprite.maxAcceleration;
             } else {
                 localSprite.followThroughVx = -localSprite.maxSpeedAggroed; // if target is to the left of hound
                 localSprite.followThroughDx = -localSprite.maxAcceleration;
-            }   
+            }
         }
         // at moment of impact, hound accelerates toward target to max speed and goes straight for a short period as an attack follow-through
         // after that it flees from the target for a while, then resume normal wander/aggro behavior
@@ -493,7 +493,7 @@ function updateLocalSprite(localSprite) {
         if (localSprite.followThroughUntil > now() && localSprite.notReadyToAggroUntil > now() && !localSprite.wandering && !localSprite.homing) {
             // if target is to the right of hound
                 localSprite.vx = localSprite.followThroughVx;
-                localSprite.dx = localSprite.followThroughVx; 
+                localSprite.dx = localSprite.followThroughVx;
         }
         ////////////////
         // WRONG: This 'waits a certain distance from disabled targets' thing and several other hound behaviors are going to need to be adjusted to make sensible behaviors when they encounter walls and drops.
@@ -582,7 +582,7 @@ function updateLocalSprite(localSprite) {
             eye.shouldAttack = false;
             eye.beamChargingUntil = now() + eye.randomChargeTime;
         }
-        // beam charging phase of attack  
+        // beam charging phase of attack
         if (eye.chargeBeginning && eye.beamChargingUntil > now()) {
 			// NOTE/WRONG: a lot of the stuff inside this 'if' structure will need to be duplicated in the firing phase 'if' structure
 			//		when the beam starts moving and/or targeting even while firing.
@@ -647,39 +647,42 @@ function updateLocalSprite(localSprite) {
 		}
 	}
     // end sentinel eye update
-    
+
 	// drone bomber update
     if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER) {
 		var bomber = localSprite;
-		// bomber attacks when is passes over the player with a clear line of sight
-		// WRONG some ad hoc attack condition code just for testing basics
-		if (bomber.loaded) {
-			console.log('loaded');
-			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
-				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
-				bomber.attackingUntil = now() + 800;
-				bomber.animation =  bomber.attackAnimation;
-				bomber.loaded = false;
-				console.log('should drop');
-			}
-		}
-		// finished attacking, unloaded
-		if (bomber.loaded && bomber.attackingUntil <= now()) {
-			bomber.animation = bomber.movingUnloadedAnimation;
-		}
-		if (bomber.attackingUntil)
 		// give the bomber its rotor, separated because it has a separate animation from the rest of the bomber
 		if (bomber.justCreated) {
 			getDroneBomberRotor(bomber.x, bomber.y, bomber, 8);
 			bomber.justCreated = false;
 		}
-		// bomber is removed from simulation after it flies off the map
-		if (bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) {
+		// bomber attacks when is passes over the player with a clear line of sight
+		// WRONG some ad hoc attack condition code just for testing basics
+		if (bomber.loaded) {
+			if (bomber.x < bomber.target.x + 40 && bomber.x > bomber.target.x - 40) {
+				getProjectileDroneBomb(bomber.x, bomber.y, bomber.vx, bomber.vy, bomber.target, bomber);
+				bomber.attackingUntil = now() + 800;
+				bomber.animation =  bomber.attackAnimation;
+				bomber.loaded = false;
+			}
+		}
+		// finished attacking, unloaded
+		if (!bomber.loaded && bomber.attackingUntil <= now()) {
+			bomber.animation = bomber.movingUnloadedAnimation;
+		}
+		if (bomber.attackingUntil)
+		// bomber is removed from simulation after it flies off the map and it's cooled down
+		if ((bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100) && !bomber.leftMap) {
+			bomber.leftMap = true;
+			var randomCooldownDuration = bomber.cooldownMinMs + (Math.random() * (bomber.cooldownMaxMs - bomber.cooldownMinMs));
+			bomber.shouldNotRespawnUntil = now() + randomCooldownDuration;
+		}
+		if (bomber.shouldNotRespawnUntil && bomber.shouldNotRespawnUntil <= now()) {
 			bomber.shouldBeRemoved = true;
 		}
 	}
 	// end drone bomber update
-	
+
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
             localSprite.notReadyToTriggerUntil = now() + localSprite.cooldownInMS;
@@ -707,7 +710,7 @@ function updateLocalSprite(localSprite) {
             localSprite.shouldBeRemoved = true;
         }
     }
-    
+
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM) {
 		// THIS PROJECTILE IS NOT BEING USED AT ALL--replaced by segmented version for now.
 		//		It might be used again if we end up using rotated hit boxes.
@@ -739,7 +742,7 @@ function updateLocalSprite(localSprite) {
 		}
         if (beamCharging.parent.beamChargingUntil <= now()) beamCharging.shouldBeRemoved = true;
     }
-    
+
 	if (localSprite.type === PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT) {
 		var segment = localSprite;
 		if (segment.justCreated) {
@@ -756,7 +759,7 @@ function updateLocalSprite(localSprite) {
 		}
 		if (segment.livesUntil <= now()) segment.shouldBeRemoved = true;
 	}
-	
+
     if (localSprite.type === PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY) {
 		// WRONG: there need to be some reiterative collision detection that locates an accurate point of termination, flush to the collision surface.
 		//		For now, the dummy is sending the parent a location for beam termination that is just the place the dummy died on the frame when it
@@ -773,22 +776,21 @@ function updateLocalSprite(localSprite) {
         }
 		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 1, 8, 8); // comment back in to visualize impact point
     }
-    
+
     if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER_ROTOR) {
 		localSprite.x = localSprite.parent.x;
 		localSprite.y = localSprite.parent.y;
 		localSprite.rotation = localSprite.parent.rotation;
 	}
-	
+
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
 		var bomb = localSprite;
 		// should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
 		if (bomb.shouldBeRemoved) {
 			getDetonationDroneBomb(bomb.x, bomb.y, 0.3, 0.3, 1, bomb.target, bomb);
-			console.log('should be removed');
 		}
 	}
-	
+
 	if (localSprite.type === DETONATION_TYPE_DRONE_BOMB) {
 		var explosion = localSprite;
 		if (explosion.justCreated) {
@@ -1080,6 +1082,8 @@ function getCreatureDroneBomber(x, y) {
     bomber.maxAcceleration = 0.189;
 	bomber.justCreated = true;
 	bomber.loaded = true;
+	bomber.cooldownMaxMs = 5000;	// after leaving map and being removed, max time before respawning
+	bomber.cooldownMinMs = 2500;
 	return bomber;
 }
 
@@ -1205,8 +1209,8 @@ function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, an
 	explosion.parent = parent;
 	explosion.justCreated = true;
 	explosion.hit = false; // this will turn to true if the explosion hits its target
-	explosion.closeRadius = 48;
-	explosion.farRadius = 96;
+	explosion.closeRadius = 80;
+	explosion.farRadius = 160;
 	localSprites.push(explosion);
 }
 
