@@ -515,6 +515,7 @@ function updateLocalSprite(localSprite) {
 	//		were yielding the value 'undefined' when called from different 'if' structures, even if the vars were originally declared at a scope that I though
 	//		should include both of those 'if' structures.
     if (localSprite.type === CREATURE_TYPE_SENTINEL_EYE) {
+		// WRONG the eye's thruster needs to be drawn seaparately and pivot based on vx, and strengthen or weaken its jet based on vy.
         var eye = localSprite,
             maxChargeTime = eye.maxBeamChargeTimeInMs,
             minChargeTime = eye.minBeamChargeTimeInMs,
@@ -529,13 +530,13 @@ function updateLocalSprite(localSprite) {
 		//else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
 		// when beam origin is displaced from center of eye, it might spawn dummies in a wall
 		eye.beamOriginX = eye.x;
-		eye.beamOriginY = eye.y - eye.hitBox.height * 0.2;  // WRONG will need to change with eye rotation
+		eye.beamOriginY = eye.y - eye.hitBox.height * eye.yScale * 0.6;  // WRONG will need to change with eye rotation
         // flees if target gets too close and eye is not already attacking
 		if (isCharacterInsideRadius(eye.x, eye.y, eye.fleeingRadius, eye.target) && !eye.attackBeginning && eye.attackingUntil <= now() && eye.hasTarget) {
 			eye.fleeing = true;
 			eye.wandering = false;
 			eye.facesDirectionOfAcceleration = false;
-			eye.facesTarget = true;
+			//eye.facesTarget = true;
 			eye.maxSpeed = eye.maxSpeedFleeing;
 			eye.fleeingUntil = now() + eye.persistentFleeingMs;
 			eye.wasFleeing = true;
@@ -552,7 +553,7 @@ function updateLocalSprite(localSprite) {
 			eye.facesTarget = false;
 			eye.fleeing = false;
 			eye.maxSpeed = eye.maxSpeedNormal;
-			eye.facesDirectionOfAcceleration = true;
+			//eye.facesDirectionOfAcceleration = true;
 			eye.wasFleeing = false;
 		}
 		if ((!eye.attacking || eye.notReadyToAttackUntil > now()) && !eye.attackBeginning && eye.attackingUntil <= now()) {
@@ -576,7 +577,7 @@ function updateLocalSprite(localSprite) {
         if (eye.shouldAttack && !eye.attackBeginning && eye.notReadyToAttackUntil <= now() && eye.attackingUntil <= now()) {   // these probably aren't all necessary?
             eye.wandering = false;
             eye.dx = eye.dy = eye.vx = eye.vy = 0;
-			eye.facesTarget = true;
+			//eye.facesTarget = true;
 			eye.facesDirectionOfAcceleration = false;
             eye.animation = eye.attackStartupAnimation;
             eye.randomChargeTime = minChargeTime + Math.random() * chargeTimeRange;
@@ -631,7 +632,7 @@ function updateLocalSprite(localSprite) {
             eye.notReadyToAttackUntil = now() + eye.attackCooldownInMs;
 			eye.hasTarget = false;
 			eye.facesTarget = false;
-			eye.facesDirectionOfAcceleration = true;
+			//eye.facesDirectionOfAcceleration = true;
         }
         if (eye.noBeamSparksUntil <= now() && eye.attackingUntil > now()) {
             getBeamImpactSparks(eye.committedBeamTargetX, eye.committedBeamTargetY, 2);
@@ -1062,19 +1063,21 @@ function getCreaturePacingFireball(creatureType) {
 }
 
 function getCreatureSentinelEye(x, y) {
-    hitBox = new Rectangle(-24, -48, 48, 48);
-    xScale = yScale = 1.2;
+    var hitBox = new Rectangle(-320, -1024, 640, 1024),
+    xScale = yScale = 0.085;
     var eye = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
     eye.type = CREATURE_TYPE_SENTINEL_EYE;
 	eye.health = 5;
     eye.hitBox = hitBox;
-    eye.facesDirectionOfAcceleration = true;
-    eye.movingAnimation = sentinelEyeMovingAnimation;
-    eye.idlingAnimation = sentinelEyeIdlingAnimation;
-    eye.attackStartupAnimation = sentinelEyeAttackStartupAnimation;
-    eye.attackAnimation = sentinelEyeAttackAnimation;
-    eye.attackRecoveryAnimation = sentinelEyeAttackRecoveryAnimation;
-    eye.defeatAnimation = sentinelEyeDefeatAnimation;
+	eye.xScale = xScale;
+	eye.yScale = yScale;
+    //eye.facesDirectionOfAcceleration = true;
+    eye.movingAnimation = addHitBoxToAnimationFrames(sentinelEyeMovingAnimation, hitBox);
+    eye.idlingAnimation = addHitBoxToAnimationFrames(sentinelEyeIdlingAnimation, hitBox);
+    eye.attackStartupAnimation = addHitBoxToAnimationFrames(sentinelEyeAttackStartupAnimation, hitBox);
+    eye.attackAnimation = addHitBoxToAnimationFrames(sentinelEyeAttackAnimation, hitBox);
+    eye.attackRecoveryAnimation = addHitBoxToAnimationFrames(sentinelEyeAttackRecoveryAnimation, hitBox);
+    eye.defeatAnimation = addHitBoxToAnimationFrames(sentinelEyeDefeatAnimation, hitBox);
     eye.animation = sentinelEyeMovingAnimation;
     eye.flying = true;
     eye.wandering = true;
@@ -1113,18 +1116,11 @@ function getCreatureSentinelEye(x, y) {
 	eye.noTargetMarkerUntil = now(); // this is just for testing, to spawn a marker at intervals
     return eye;
 }
-function addHitBoxToAnimationFrames(animation, hitBox) {
-    return {frames: animation.frames.map( frame => {
-        // This defines the hitBox inside the frame from the top left corner of that frame.
-        frame.hitBox = hitBox;
-        return frame;
-    })};
-}
 
 function getCreatureDroneBomber(x, y) {
     var xScale = yScale = 0.12;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(210, 250, 420, 380);
+    var hitBox = new Rectangle(210, 245, 400, 390);
     var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x, y, 0, 0, xScale, yScale);
     bomber.type = CREATURE_TYPE_DRONE_BOMBER;
 	//bomber.homing = true;
@@ -1318,6 +1314,14 @@ function getProjectileDroneBombShrapnel(x, y, vx, vy, target, parent, damage, pr
 	shrapnel.justCreated = true;
     shrapnel.type = PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL;
     localSprites.push(shrapnel);
+}
+
+function addHitBoxToAnimationFrames(animation, hitBox) {
+    return {frames: animation.frames.map( frame => {
+        // This defines the hitBox inside the frame from the top left corner of that frame.
+        frame.hitBox = hitBox;
+        return frame;
+    })};
 }
 
 function getNormalizedVector(originX, targetX, originY, targetY) {

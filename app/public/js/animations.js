@@ -61,13 +61,13 @@ var hauntedMaskAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
 var hauntedMaskSmokePlume = {frames: allHauntedMaskFrames.slice(5, 11)};
 
 // sentinel eye animations
-var allSentinelEyeFrames = rectangleToFrames(new Rectangle(0, 0, 56, 48), requireImage('/gfx/creatures/creatureHauntedMask.png'), 12);
-var sentinelEyeMovingAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
-var sentinelEyeIdlingAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
-var sentinelEyeAttackStartupAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
-var sentinelEyeAttackAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
-var sentinelEyeAttackRecoveryAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
-var sentinelEyeDefeatAnimation = {frames: allHauntedMaskFrames.slice(0, 5)};
+var allSentinelEyeFrames = rectangleToFrames(new Rectangle(0, 0, 1024, 1536), requireImage('/gfx/creatures/creatureSentinelEye.png'), 2);
+var sentinelEyeMovingAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
+var sentinelEyeIdlingAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
+var sentinelEyeAttackStartupAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
+var sentinelEyeAttackAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
+var sentinelEyeAttackRecoveryAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
+var sentinelEyeDefeatAnimation = {frames: allSentinelEyeFrames.slice(0, 1)};
 
 // sentinel beam animation
 var allSentinelBeamFrames = rectangleToFrames(new Rectangle(0, 0, 32, 32), requireImage('/gfx/projectiles/sentinelBeam.png'), 3);
