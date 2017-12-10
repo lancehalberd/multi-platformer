@@ -530,7 +530,7 @@ function updateLocalSprite(localSprite) {
 		//else eye.beamOriginX = eye.x + eye.hitBox.width * 0.75;
 		// when beam origin is displaced from center of eye, it might spawn dummies in a wall
 		eye.beamOriginX = eye.x;
-		eye.beamOriginY = eye.y - eye.hitBox.height * eye.yScale * 0.6;  // WRONG will need to change with eye rotation
+		eye.beamOriginY = eye.y - eye.getHitBox().height * 0.685;
         // flees if target gets too close and eye is not already attacking
 		if (isCharacterInsideRadius(eye.x, eye.y, eye.fleeingRadius, eye.target) && !eye.attackBeginning && eye.attackingUntil <= now() && eye.hasTarget) {
 			eye.fleeing = true;
@@ -1063,14 +1063,12 @@ function getCreaturePacingFireball(creatureType) {
 }
 
 function getCreatureSentinelEye(x, y) {
-    var hitBox = new Rectangle(-320, -1024, 640, 1024),
-    xScale = yScale = 0.085;
+    var xScale = yScale = 0.085,
+		hitBox = new Rectangle(192, 512, 640, 1024);
     var eye = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
     eye.type = CREATURE_TYPE_SENTINEL_EYE;
+	eye.referenceHitBox = hitBox;
 	eye.health = 5;
-    eye.hitBox = hitBox;
-	eye.xScale = xScale;
-	eye.yScale = yScale;
     //eye.facesDirectionOfAcceleration = true;
     eye.movingAnimation = addHitBoxToAnimationFrames(sentinelEyeMovingAnimation, hitBox);
     eye.idlingAnimation = addHitBoxToAnimationFrames(sentinelEyeIdlingAnimation, hitBox);
