@@ -801,6 +801,7 @@ function updateLocalSprite(localSprite) {
 		bomb.vy -= 0.75; // lower gravity due to aerodynamics to help it home/aim;
 		// WRONG MAYBE should have terminal velocity vertically, separate from maxSpeed
 		// WRONG: should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
+		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target)) bomb.shouldBeRemoved = true;
 		if (bomb.shouldBeRemoved) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
 			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175);
@@ -1247,11 +1248,11 @@ function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
     bomb.hitBox = hitBox;
     bomb.collides = true;
 	bomb.homing = true;
-	bomb.homingAcceleration = 0.13;
+	bomb.homingAcceleration = 0.11;
     bomb.removedOnCollision = true;
 	bomb.animation = droneBombAnimation;
     bomb.maxSpeed = 4;
-	bomb.maxAcceleration = 0.3;
+	bomb.maxAcceleration = 0.25;
     bomb.target = target;
     bomb.parent = parent;
 	//if (bomb.parent. vx > 0) bomb.rotation = 105;
