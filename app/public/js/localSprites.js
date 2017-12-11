@@ -109,6 +109,11 @@ class SimpleSprite {
         return hitBox;
     }
 
+	getCurrentFrame() {
+		var currentFrame = this.animation.frames[this.currentFrame];
+	    return currentFrame;
+	}
+	
     update() {
         updateLocalSprite(this);
     }
@@ -798,10 +803,17 @@ function updateLocalSprite(localSprite) {
 
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
 		var bomb = localSprite;
-		bomb.vy -= 0.75; // lower gravity due to aerodynamics to help it home/aim;
+		bomb.vy -= 0.82; // lower gravity due to aerodynamics to help it home/aim;
+		// max fall speed
+		if (bomb.vy > 6) bomb.vy = 6;
 		// WRONG MAYBE should have terminal velocity vertically, separate from maxSpeed
 		// WRONG: should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
-		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target)) bomb.shouldBeRemoved = true;
+		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(bomb.target, bomb)) {
+			knockBack(bomb.target, bomb, 20, 12, 5);
+			bomb.invulnerable = true;
+			bomb.livesUntil = now() + 1000;
+		}
+		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target) || bomb.livesUntil <= now()) bomb.shouldBeRemoved = true;
 		if (bomb.shouldBeRemoved) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
 			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175);
@@ -1243,14 +1255,13 @@ function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
 
 function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
 	var xScale = yScale = 0.12;
-    var hitBox = new Rectangle(0, 0, 12, 20);
+    var framesHitBox = new Rectangle(360, 450, 210, 320);
     var bomb = new SimpleSprite(droneBombAnimation, x, y, vx, vy, xScale, yScale);
-    bomb.hitBox = hitBox;
     bomb.collides = true;
 	bomb.homing = true;
 	bomb.homingAcceleration = 0.11;
     bomb.removedOnCollision = true;
-	bomb.animation = droneBombAnimation;
+	bomb.animation = addHitBoxToAnimationFrames(droneBombAnimation, framesHitBox);
     bomb.maxSpeed = 4;
 	bomb.maxAcceleration = 0.25;
     bomb.target = target;
@@ -1491,9 +1502,23 @@ function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, 
 function isObjectCollidingWithNonInvulnerableTarget(object, target) {
     var invulnerableTime,
         invulnerableState;
-        if (target.invulnerableUntil) invulnerableTime = target.invulnerableUntil > now();
-        else invulnerableTime = false;
-        if (target.invulnerable) invulnerableState = target.invulnerable;
-        else invulnerableState = false;
+	if (target.invulnerableUntil) invulnerableTime = target.invulnerableUntil > now();
+	else invulnerableTime = false;
+	if (target.invulnerable) invulnerableState = target.invulnerable;
+	else invulnerableState = false;
     return getGlobalSpriteHitBox(object).overlapsRectangle(getGlobalSpriteHitBox(target)) && !invulnerableTime && !invulnerableState;
+}
+
+function isDamageHitBoxCollidingWithNonInvulnerableTarget(attackingSprite, target) {
+	var invulnerableTime,
+        invulnerableState,
+		currentFrame = attackingSprite.animation.frames[attackingSprite.currentFrame],
+		damageHitBox;
+		if (currentFrame.damageHitBox) damageHitBox = currentFrame.damageHitBox;
+		else return null;
+	if (target.invulnerableUntil) invulnerableTime = target.invulnerableUntil > now();
+	else invulnerableTime = false;
+	if (target.invulnerable) invulnerableState = target.invulnerable;
+	else invulnerableState = false;
+    return getGlobalSpriteHitBox(target).overlapsRectangle(getDamageHitBox(attackingSprite)) && !invulnerableTime && !invulnerableState;
 }

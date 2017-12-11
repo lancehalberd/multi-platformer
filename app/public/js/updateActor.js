@@ -271,13 +271,14 @@ function updateActor(actor) {
         actor.hitBox = actor.crouchingAnimationHitBox;
     }
     var targetPosition = [actor.x + 100 * actor.vx, actor.y];
-
+    // attacking behavior
     if (actor.attacking) {
-        actor.attackFrame = Math.floor((now() - actor.attackTime) / 100);
+        actor.attackFrame = Math.floor((now() - actor.attackTime) / actor.attackAnimationMsPerFrame);
         // Autojump when the mouse is higher than the character.
         // if (actor.attackFrame === 1 && targetPosition[1] < groundY - 100) actor.jump();
         if (actor.attackFrame >= actor.attackAnimation.frames.length) {
             actor.attacking = false;
+            actor.cannotAttackUntil = now() + actor.attackCooldownInMs;
         }
     }
     actor.stuck = false;
@@ -315,8 +316,8 @@ function updateActor(actor) {
     if (actor.x !== targetPosition[0]) {
         actor.xScale = (actor.x > targetPosition[0]) ? -1 : 1;
     }
-    //jumping behavior
-    if (!actor.grounded && !actor.disabled) {
+    // jumping behavior
+    if (!actor.grounded && !actor.disabled && !actor.attacking) {
         actor.animation = actor.jumpingAnimation;
         actor.jumpFrame =  Math.floor(now() / (actor.slipping ? 100 : 200)) % actor.animation.frames.length;
         actor.currentFrame = actor.jumpFrame;
@@ -326,7 +327,8 @@ function updateActor(actor) {
             actor.animation = actor.walkingAnimation;
             actor.currentFrame = actor.walkFrame;
         }
-    } else if (!actor.disabled) {
+    // attacking animation and attacking behavior part 2
+    } else if (!actor.disabled && actor.cannotAttackUntil <= now()) {
         actor.animation = actor.attackAnimation;
         actor.currentFrame = actor.attackFrame;
     }
@@ -584,6 +586,21 @@ function damageSprite(sprite, amount) {
     sprite.blinkUntil = sprite.invulnerableUntil = now() + (sprite.invulnerableOnDamageDurationInMs || 1000);
 }
 
+function getDamageHitBox(sprite) {
+    var currentFrame = sprite.getCurrentFrame();
+    if (!currentFrame.damageHitBox) return null;
+    else {
+        var damageHitBox = currentFrame.damageHitBox;
+        if ((sprite.scale || 1) !== 1 || (sprite.xScale || 1) !== 1 || (sprite.yScale || 1) !== 1) {
+            damageHitBox = damageHitBox.stretch(
+                Math.abs((sprite.scale || 1) * (sprite.xScale || 1)),
+                Math.abs((sprite.scale || 1) * (sprite.yScale || 1))
+            ).snap();
+        }
+        return damageHitBox.translate(sprite.x, sprite.y);
+    }
+}
+
 //this function should be a super-simple arrow function using .filter or indexOf or something
 function doesArrayContainSuperJumpChargeWind(array) {
     for (var i = 0; i < array.length; i++) {
@@ -625,7 +642,7 @@ function changeCharacterToVictoria(actor) {
     actor.uncontrolledLandingAnimation = {};
     actor.standingUpAnimation = characterVictoriaStandingUpAnimation;
     actor.knockDownAirborneAnimation = characterVictoriaKnockDownAirborneAnimation;
-    actor.knockDownAnimationHitBox = new Rectangle(0, 0, 48, 20);
+    actor.knockDownAnimationHitBox = new Rectangle(-24, -20, 48, 20);
     actor.walkingAnimationHitBox = new Rectangle(-20, -60, 40, 60);
     actor.crouchingAnimationHitBox = new Rectangle(-20, -32, 40, 32);
     actor.hitBox = actor.walkingAnimationHitBox;

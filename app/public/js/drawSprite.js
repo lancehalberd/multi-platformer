@@ -5,9 +5,11 @@ function drawSprite(context, sprite) {
     // This will need to be updated for sprites that do not
     // have hitBox set on them directly as a property.
     if (isKeyDown('Y'.charCodeAt(0))) {
-        draw.fillRectangle(mainContext, getGlobalSpriteHitBox(sprite), 'red');
+        draw.fillRectangle(mainContext, getGlobalSpriteHitBox(sprite), 'blue');
         var originRectangle = new Rectangle (sprite.x - 2, sprite.y, 4, 4);
         draw.fillRectangle(mainContext, originRectangle , 'yellow');
+        var currentFrame = sprite.getCurrentFrame();
+        if (currentFrame.damageHitBox) draw.fillRectangle(mainContext, getDamageHitBox(sprite), 'red');
     }
     var scale = ifdefor(sprite.scale, 1);
     drawFrameTo(context,

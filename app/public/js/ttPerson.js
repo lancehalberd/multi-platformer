@@ -139,6 +139,7 @@ class TTCharacter {
         this.hasMovementStopAnimation = true; // Alien character vanishes upon beginning to idle, spawning a winkOut effect.
         //this.movementStartAnimation = addEffectTeleportation();   //BROKEN. placeholder that doesn't do anything. Right now any character with "hasMovementStartAnimation" spawns a teleporter effect (see updateActor.js) if they move after idling for 750ms or more.
         this.attackAnimation = characterMysteryAttackAnimation;
+        this.attackAnimationMsPerFrame = 130;
         //this.idlingAnimation = characterMysteryIdlingAnimation;
         this.idlingAnimation = characterAlienIdlingAnimation;
         this.idlingAnimationIntermittent = {};    //to be filled in with an occasional action during idling. At random, longish intervals.
@@ -172,7 +173,14 @@ class TTCharacter {
         this.cannotAirDashUntil = now();
         this.color = 'white';
         this.invulnerableOnDamageDurationInMs = 1000;
+        this.attackCooldownInMs = 350;
+        this.cannotAttackUntil = now();
     }
+    
+	getCurrentFrame() {
+		var currentFrame = this.animation.frames[this.currentFrame];
+	    return currentFrame;
+	}
 
     jump() {
         if (this.currentNumberOfJumps < this.maxJumps) {

@@ -45,6 +45,10 @@ var characterVictoriaJumpingAnimation = {frames: allCharacterVictoriaFrames.slic
 var characterVictoriaUncontrolledFallAnimation = fireballAnimation;
 var characterVictoriaAttackAnimation = {frames: allCharacterVictoriaFrames.slice(14, 16)};
 
+// Victoria character attack animation hit boxes created
+characterVictoriaAttackAnimation.frames[1].damageHitBox = new Rectangle(-48, -64, 96, 64);// (-16, -48, 64, 48); this version commented out until I figure out how to get the hit box to flip when the character faces left
+characterVictoriaAttackAnimation.frames[1].damageHitBox.damage = 1;
+
 // Cowbot character animations
 var allCharacterCowbotFrames = rectangleToFrames(new Rectangle(0, 0, 32, 44), requireImage('/gfx/person/characterCowbot.png'), 6);
 var characterCowbotWalkingAnimation = {frames: allCharacterCowbotFrames.slice(0, 6)};
