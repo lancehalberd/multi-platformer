@@ -131,7 +131,11 @@
             </div>
         </div>
         <div class="brushColumn">
-            <div class="js-foreignTiles"></div>
+            <select class="js-foreignZoneSelect foreignZoneSelect">
+                <option selected value="">Secondary Palette</option>
+                {{#zones}}<option value="{{id}}">{{name}}</option>{{/zones}}
+            </select>
+            <div class="js-foreignBrushes"></div>
         </div>
     </div>
     <div class="js-reloadField editField">

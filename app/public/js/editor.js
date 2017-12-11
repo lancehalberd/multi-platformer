@@ -131,15 +131,20 @@ $('.js-cancelTile').on('click', cancelCreatingNewTile);
 
 const checkToUpdateLocalTiles = () => {
     var $localTiles = $('.js-localTiles');
+    var changed = false;
     if ($localTiles.data('zoneId') !== currentMap.id) {
         $localTiles.empty();
+        changed = true;
     }
     $localTiles.data('zoneId', currentMap.id);
     for (var n = $localTiles.children().length; n < currentMap.uniqueTiles.length; n++) {
         var brush = new TileBrush(n, currentMap);
         $localTiles.append(createBrushPreviewElement(brush));
         cancelCreatingNewTile(false);
+        changed = true;
     }
+
+    if (changed) updateSecondaryBrushes();
 };
 
 const createBrushPreviewElement = (brush) => {
@@ -156,6 +161,28 @@ const updateBrushPreviewElement = (canvas, brush) => {
     brush.renderHUD(context, new Rectangle(-16, -16, 32, 32));
     context.restore();
     $(canvas).data('brush', brush);
+};
+
+const $foreignBrushes = $('.js-foreignBrushes');
+const $foreignZoneSelect = $('.js-foreignZoneSelect');
+$foreignZoneSelect.on('change', () => updateSecondaryBrushes());
+const updateSecondaryBrushes = () => {
+    $foreignBrushes.empty();
+    const zoneId = $foreignZoneSelect.val();
+    if (!zoneId) return;
+    var secondaryZone = loadedZonesById[zoneId];
+    if (!secondaryZone) {
+        requestZoneData(zoneId);
+        return;
+    }
+    for (var n = 0; n < secondaryZone.uniqueTiles.length; n++) {
+        var brush = new TileBrush(n, secondaryZone);
+        var tile = brush.getTile();
+        // Don't display brushes in the secondary palette that
+        // are already in the primary palette.
+        if (!tile || currentMap.hash[hashObject(tile)]) continue;
+        $foreignBrushes.append(createBrushPreviewElement(brush));
+    }
 };
 
 const selectBrush = (newBrush) => {
@@ -993,7 +1020,6 @@ $('.js-locationSelectField .js-x, .js-locationSelectField .js-y').on('change', (
 });
 var selectingTileGraphic = false;
 $('.js-previewField .js-previewCanvas').on('click', () => {
-    console.log(currentBrush instanceof TileBrush)
     if (currentBrush instanceof TileBrush) {
         selectingTileGraphic = !selectingTileGraphic;
     }

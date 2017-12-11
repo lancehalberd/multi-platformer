@@ -168,6 +168,9 @@ socket.addEventListener('message', event => {
         if (data.zone.id === $('.js-zoneSelectField select').val()) {
             updateLocationSelect();
         }
+        if (data.zone.id === $('.js-foreignZoneSelect').val()) {
+            updateSecondaryBrushes();
+        }
     }
     if (data.savedMap) {
         currentMap.isDirty = false;

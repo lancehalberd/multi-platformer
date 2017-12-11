@@ -23,7 +23,6 @@
     vertical-align: top;
     right: 20px;
     top: 20px;
-    width: 300px;
     padding: 2px;
 }
 .editField {
@@ -72,6 +71,10 @@
 }
 .topTileProperties canvas, .bottomTileProperties canvas{
     display: inline-block;
+}
+
+.foreignZoneSelect {
+    margin-bottom: 10px;
 }
 
 .brushColumn {
