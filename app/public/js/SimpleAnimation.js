@@ -11,6 +11,7 @@ var EFFECT_WINKOUT = 'winkoutEffect';
 var EFFECT_JUMP_WIND = 'jumpWindEffect';
 var EFFECT_HAUNTED_MASK_SMOKE = 'hauntedMaskContrailSmoke';
 var EFFECT_WRAITH_HOUND_GHOST_TRAIL = 'wraithHoundGhostTrail';
+var EFFECT_DRONE_BOMB_EXPLOSION = 'droneBombExplosion';
 
 class SimpleAnimation {
 
@@ -150,4 +151,16 @@ function addEffectWraithHoundGhostTrail(x, y, vx, vy, scale, animationSpeedInFPS
     // createdAt set to 0 hopefully synchronizing the ghost trail animations with the main running animation.
     houndTrail.createdAt = 0;
     localSprites.push(houndTrail);
+}
+
+function addEffectDroneBombExplosion(x, y, vx, vy, scale, animationSpeedInFPS) {
+    var sourceRectangle = new Rectangle(0, 0, 1024, 1024);
+    // scale the animation
+    var target = sourceRectangle.scale(scale);
+    //var hitBox = new Rectangle(512, 512, 1024, 1024);
+    // WRONG: this could just be a SimpleAnimation.
+    var explosion = new SimpleMovingAnimation(droneBombExplosionAnimation, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height), vx, vy);
+    //var steamPlume = new SimpleAnimation({frames}, now(), animationSpeedInFPS, target.moveTo(x - target.width / 2, y - target.height));
+    explosion.type = EFFECT_DRONE_BOMB_EXPLOSION;
+    localSprites.push(explosion);
 }

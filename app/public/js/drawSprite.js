@@ -6,6 +6,8 @@ function drawSprite(context, sprite) {
     // have hitBox set on them directly as a property.
     if (isKeyDown('Y'.charCodeAt(0))) {
         draw.fillRectangle(mainContext, getGlobalSpriteHitBox(sprite), 'red');
+        var originRectangle = new Rectangle (sprite.x - 2, sprite.y, 4, 4);
+        draw.fillRectangle(mainContext, originRectangle , 'yellow');
     }
     var scale = ifdefor(sprite.scale, 1);
     drawFrameTo(context,

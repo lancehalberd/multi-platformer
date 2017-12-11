@@ -958,6 +958,7 @@ var brushList = [
     new PointEntityBrush(new PointSpawner(getCreatureHauntedMask(0, 0), 0)),
     new PointEntityBrush(new PointSpawner(getCreatureWraithHound(0, 0), 0)),
     new PointEntityBrush(new PointSpawner(getCreatureSentinelEye(0, 0), 0)),
+    new PointEntityBrush(new PointSpawner(getCreatureDroneBomber(0, 0), 0)),
     new PointEntityBrush(new CheckPoint()),
     new DoorTriggerBrush(new DoorTrigger(dummyRectangle)),
     new InsertRowBrush(),
