@@ -841,6 +841,15 @@ function updateLocalSprite(localSprite) {
 			bomb.invulnerable = true;
 			bomb.livesUntil = now() + 1000;
 		}
+		// after bomb has been hit, but before it's died:
+		if (bomb.livesUntil && bomb.livesUntil > now()) {
+			bomb.rotation += 10;
+			if (bomb.noSmokeContrailUntil <= now() || !bomb.noSmokeContrailUntil) {
+				// WRONG should be black smoke cloud
+				addEffectSteamPlume(bomb.x, bomb.y, 0, 0, 2.67, 8);
+				bomb.noSmokeContrailUntil = now() + 500;
+			}
+		}
 		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target) || bomb.livesUntil <= now()) {
 			damageSprite(bomb.target, bomb.shrapnelMaxDamage);
 			knockBack(bomb, bomb.target, 10, 13, 4);

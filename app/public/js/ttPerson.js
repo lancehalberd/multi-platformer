@@ -216,6 +216,7 @@ class TTCharacter {
         } else if (this.blinkUntil > now()) {
             // Certain effects like being tagged or injured make the sprite blink for a period.
             mainContext.globalAlpha = Math.cos((this.blinkUntil - now()) / 10) / 8 + 0.6;
+            // maybe this could make the character flash white to be a bit more attention-getting.
         }
         drawSprite(mainContext, this);
         mainContext.restore();
