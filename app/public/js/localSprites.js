@@ -707,24 +707,17 @@ function updateLocalSprite(localSprite) {
 		// bomber is defeated
 		if (bomber.health <= 0 && !bomber.defeated) {
 			bomber.flying = false;
-			bomber.justDefeated = true;
-			//bomber.maxSpeed = 6; // when out of control, goes faster
+			bomber.defeated = true;
+			bomber.maxSpeed = 6; // when out of control, goes faster
 			bomber.invulnerable = true;
 			bomber.dx = bomber.dy = 0;
 		}
-		if (bomber.justDefeated) {
-			bomber.dx = 0;
-			bomber.dy = 0;
-			bomber.justDefeated = false;
-			bomber.defeated = true;
-		}
 		if (bomber.defeated) {
 			bomber.rotation += 10;
-			bomber.vy -= 0.67;
+			bomber.vy -= 0.81;
 			if (bomber.vy > 6) bomber.vy = 6; // limited fall speed
-			if (bomber.vy < 6) bomber.vy = -6;
-			if (bomber.vx > 0) bomber.dx += 0.11; // accelerates out of control
-			else bomber.dx -= 0.11;
+			if (bomber.vx > 0) bomber.dx += 0.16; // accelerates out of control
+			else bomber.dx -= 0.16;
 			if (bomber.noDefeatContrailUntil <= now() || !bomber.noDefeatContrailUntil) {
 				addEffectDroneBombExplosion(bomber.x, bomber.y, 0, 0, 0.1, 10);
 				bomber.noDefeatContrailUntil = now() + 500;
@@ -1186,12 +1179,21 @@ function getCreatureDroneBomber(x, y, movesLEFTorRIGHT) {
     var xScale = yScale = 0.12;
 	if (movesLEFTorRIGHT === LEFT) xScale = -xScale;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(210, 245, 400, 390);
-    var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x, y, 0, 0, xScale, yScale);
+    var hitBox = new Rectangle(210, 245, 400, 390),
+		xDisplacementFromSpawnPoint;
+	if (movesLEFTorRIGHT === RIGHT) xDisplacementFromSpawnPoint = -150;
+	if (movesLEFTorRIGHT === LEFT) xDisplacementFromSpawnPoint = 150;
+    var bomber = new SimpleSprite(droneBomberMovingLoadedAnimation, x + xDisplacementFromSpawnPoint, y, 0, 0, xScale, yScale);
     bomber.type = CREATURE_TYPE_DRONE_BOMBER;
 	bomber.health = 1;
-	if (movesLEFTorRIGHT === RIGHT) bomber.vx = 4;
-	if (movesLEFTorRIGHT === LEFT) bomber.vx = -4;
+	if (movesLEFTorRIGHT === RIGHT) {
+		//bomber.x -= 150;
+		bomber.vx = 4;
+	}
+	if (movesLEFTorRIGHT === LEFT) {
+		//bomber.x += 150;
+		bomber.vx = -4;
+	}
 	bomber.facesDirectionOfAcceleration = true;
     bomber.movingLoadedAnimation = addHitBoxToAnimationFrames(droneBomberMovingLoadedAnimation, hitBox);
     bomber.movingUnloadedAnimation = addHitBoxToAnimationFrames(droneBomberMovingUnloadedAnimation, hitBox);
