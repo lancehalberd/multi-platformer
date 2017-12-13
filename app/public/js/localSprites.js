@@ -707,16 +707,24 @@ function updateLocalSprite(localSprite) {
 		// bomber is defeated
 		if (bomber.health <= 0 && !bomber.defeated) {
 			bomber.flying = false;
-			bomber.defeated = true;
-			bomber.maxSpeed = 6; // when out of control, goes faster
+			bomber.justDefeated = true;
+			//bomber.maxSpeed = 6; // when out of control, goes faster
 			bomber.invulnerable = true;
 			bomber.dx = bomber.dy = 0;
 		}
+		if (bomber.justDefeated) {
+			bomber.dx = 0;
+			bomber.dy = 0;
+			bomber.justDefeated = false;
+			bomber.defeated = true;
+		}
 		if (bomber.defeated) {
 			bomber.rotation += 10;
-			bomber.vy -= 0.9;
+			bomber.vy -= 0.67;
 			if (bomber.vy > 6) bomber.vy = 6; // limited fall speed
-			bomber.dx += 0.33; // accelerates out of control
+			if (bomber.vy < 6) bomber.vy = -6;
+			if (bomber.vx > 0) bomber.dx += 0.11; // accelerates out of control
+			else bomber.dx -= 0.11;
 			if (bomber.noDefeatContrailUntil <= now() || !bomber.noDefeatContrailUntil) {
 				addEffectDroneBombExplosion(bomber.x, bomber.y, 0, 0, 0.1, 10);
 				bomber.noDefeatContrailUntil = now() + 500;
@@ -831,34 +839,38 @@ function updateLocalSprite(localSprite) {
 
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
 		var bomb = localSprite;
-		bomb.vy -= 0.82; // lower gravity due to aerodynamics to help it home/aim;
+		bomb.vy -= 0.81; // lower gravity due to aerodynamics to help it home/aim;
 		bomb.vx *= 0.75; // lots of drag helps it aim
 		// max fall speed
 		if (bomb.vy > 6) bomb.vy = 6;
 		// WRONG: should swing its rotation to the opposite of how it spawns, so that its aerodynamic element drags slightly behind it.
+		// bomb takes damage from player attack
 		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(bomb.target, bomb)) {
+			bomb.homing = false;
+			bomb.dx = 0;
 			knockBack(bomb.target, bomb, 20, 12, 5);
 			bomb.invulnerable = true;
 			bomb.livesUntil = now() + 1000;
 		}
 		// after bomb has been hit, but before it's died:
 		if (bomb.livesUntil && bomb.livesUntil > now()) {
-			bomb.rotation += 10;
+			bomb.rotation += 15;
 			if (bomb.noSmokeContrailUntil <= now() || !bomb.noSmokeContrailUntil) {
 				// WRONG should be black smoke cloud
 				addEffectSteamPlume(bomb.x, bomb.y, 0, 0, 2.67, 8);
-				bomb.noSmokeContrailUntil = now() + 500;
+				bomb.noSmokeContrailUntil = now() + 300;
 			}
 		}
-		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target) || bomb.livesUntil <= now()) {
+		if (isObjectCollidingWithNonInvulnerableTarget(bomb, bomb.target)) {
 			damageSprite(bomb.target, bomb.shrapnelMaxDamage);
 			knockBack(bomb, bomb.target, 10, 13, 4);
 			knockDown(bomb.target);
 			bomb.shouldBeRemoved = true;
 		}
+		if (bomb.livesUntil <= now()) bomb.shouldBeRemoved = true;
 		if (bomb.shouldBeRemoved) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
-			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175);
+			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
 		}
 	}
 
