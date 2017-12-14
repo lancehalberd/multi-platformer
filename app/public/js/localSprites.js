@@ -9,7 +9,7 @@ var PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL = 'droneBombShrapnel';
 var PROJECTILE_TYPE_STEAM_TANK_SHELL = 'steamTankShell';
 
 var DETONATION_TYPE_DRONE_BOMB = 'droneBombDetonation';
-var DETONATION_TYPE_STEAM_TANK_VOLLEY = 'steamTankVolley';
+var DETONATION_TYPE_STEAM_TANK_FLAK_VOLLEY = 'steamTankFlakVolley';
 
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIR_DASH = 'airDash';
@@ -737,9 +737,9 @@ function updateLocalSprite(localSprite) {
 	
 	// steam tank update
 	if (localSprite.type === CREATURE_TYPE_STEAM_TANK) {
-		var tank = localSprite,
-			projectileOriginX = tank.x,
-			projectileOriginY = tank.y - tank.getHitBox().height * 0.5;
+		var tank = localSprite;
+		tank.projectileOriginX = tank.x,
+		tank.projectileOriginY = tank.y - tank.getHitBox().height * 0.5;
 		// recoil on firing. Uses moving animation for rolling wheels. puff of smoke on firing.
 		// turrets rotate to face target that's in range and within line of sight.
 		//		turret targeting dummies only fire in an arc that matches the turrets' rotation limitations,
@@ -747,14 +747,17 @@ function updateLocalSprite(localSprite) {
 		// can attack with a flame thrower or a shell that is fast but affected by gravity, and on detonation launched a shotgun blast forward
 		// missile fires up and over barriers. They have super-jump-like contrails and wobble some, esp. just after launch and after turning.
 		// belches steam
-		firesTargetingDummies(projectileOriginX, projectileOriginY, 200, 400, tank.target, tank);
+		// Flees when player is close.
+		// very aggressive when cornered
+		firesTargetingDummies(tank.projectileOriginX, tank.projectileOriginY, 200, 400, tank.target, tank);
 		if (tank.hasLineOfSightToTargetInRange && (tank.notReadyToAttackUntil <= now() || !tank.notReadyToAttackUntil)) {
 			// WRONG: tank should go through a visible set of startup frames (stopping and shaking) so that you can time a knocking back of the shell.
 			tank.targetYCenter = tank.target.y - getGlobalSpriteHitBox(tank.target).height * 0.5;
-			tank.targetingVector = getNormalizedVector(projectileOriginX, tank.target.x, projectileOriginY, tank.targetYCenter);
+			tank.targetingVector = getNormalizedVector(tank.projectileOriginX, tank.target.x, tank.projectileOriginY, tank.targetYCenter);
 			tank.wandering = false;
 			tank.dy = tank.dx = 0;
-			getProjectileSteamTankShell(projectileOriginX, projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target);
+			//getProjectileSteamTankShell(tank.projectileOriginX, tank.projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target);
+			getDetonationSteamTankFlakVolley(tank.projectileOriginX, tank.projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target, tank);
 			var randomTankAttackCooldownDuration = tank.attackCooldownMinMs + (
 					Math.random() * (tank.attackCooldownMaxMs - tank.attackCooldownMinMs)
 				);
@@ -946,7 +949,7 @@ function updateLocalSprite(localSprite) {
 			for (var j = 0; j < 8; j++) {
 				var shrapnelVx,
 				shrapnelVy;
-				if (j < 3) shrapnelVx = explosion.projectileInitialSpeed;	// these values are obscenely high. the projectiles' maxSpeeds will limit them to the correct speed
+				if (j < 3) shrapnelVx = explosion.projectileInitialSpeed;
 				if (j > 3 && j < 7 ) shrapnelVx = -explosion.projectileInitialSpeed;
 				if (j === 7 || j === 3) shrapnelVx = 0;
 				if (j > 1 && j < 5) shrapnelVy = explosion.projectileInitialSpeed;
@@ -965,7 +968,7 @@ function updateLocalSprite(localSprite) {
 		// WRONG MAYBE should alpha out over lifespan
 		if (isObjectCollidingWithNonInvulnerableTarget(shrapnel, shrapnel.target)) {
 			// knock down and more damage if close to blast center
-			if (shrapnel.framesToLive > shrapnel.originalFramesToLive / 2) {
+			if (getCurrentDistanceFromSpawnPoint(shrapnel) < shrapnel.range / 2) {
 				damageSprite(shrapnel.target, shrapnel.maxDamage);
 				knockBack(shrapnel, shrapnel.target, 10, 13, 4);
 				knockDown(shrapnel.target);
@@ -1007,6 +1010,31 @@ function updateLocalSprite(localSprite) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
 			getDetonationDroneBomb(shell.x, shell.y - 4, 1, 10, 1, shell.target, shell, 3, 175, 80); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
 		}
+	}
+	
+	if (localSprite.type === DETONATION_TYPE_STEAM_TANK_FLAK_VOLLEY) {
+		var volley = localSprite;
+		if ((volley.noProjectileFiredUntil <= now() || !volley.noProjectileFiredUntil) && volley.currentNumberOfProjectilesReleased < volley.maxNumberOfProjectiles) {
+			volley.x = volley.parent.x;
+			volley.y = volley.parent.y - volley.parent.getHitBox().height * 0.5;
+			// this line makes the volley track the moving player
+			volley.targetingVector = getNormalizedVector(volley.parent.projectileOriginX, volley.target.x, volley.parent.projectileOriginY, volley.parent.targetYCenter);
+			var randomFlakVxAddition,
+				randomFlakVyAddition,
+				flakVx = volley.projectileInitialSpeed * volley.targetingVector[0],
+				flakVy = volley.projectileInitialSpeed * volley.targetingVector[1],
+				innaccuracyScale = 0.4;
+			if (Math.random() > 0.5) randomFlakVxAddition = Math.random() * (volley.projectileInitialSpeed * innaccuracyScale);
+			else randomFlakVxAddition = -Math.random() * (volley.projectileInitialSpeed * innaccuracyScale);
+			if (Math.random() > 0.5) randomFlakVyAddition = Math.random() * (volley.projectileInitialSpeed * innaccuracyScale);
+			else randomFlakVyAddition = -Math.random() * (volley.projectileInitialSpeed * innaccuracyScale);
+			flakVx += randomFlakVxAddition;
+			flakVy += randomFlakVyAddition;
+			getProjectileDroneBombShrapnel(volley.x, volley.y, flakVx, flakVy, volley.target, volley, volley.projectileInitialSpeed, volley.projectileTerminalSpeed, volley.range);
+			volley.currentNumberOfProjectilesReleased++;
+			volley.noProjectileFiredUntil = now() + 150 + Math.random() * 150;
+		}
+		if (volley.currentNumberOfProjectilesReleased >= volley.maxNumberOfProjectiles) volley.shouldBeRemoved = true;
 	}
 	
 	// fadeout behavior
@@ -1464,16 +1492,21 @@ function getProjectileSteamTankShell(x, y, targetingVectorX, targetingVectorY, t
     localSprites.push(shell);
 }
 
-function getProjectileSteamTankVolley(x, y, targetingVectorX, targetingVectorY, target, parent) {
-    volley.initialSpeed = 14;
-	volley.terminalSpeed = 2;
-	volley.vx = targetingVectorX * shell.maxSpeed;
-	volley.vy = targetingVectorY * shell.maxSpeed - 8;
+function getDetonationSteamTankFlakVolley(x, y, targetingVectorX, targetingVectorY, target, parent) {
+	var volley = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 1, 1);
+    volley.projectileInitialSpeed = 6;
+	volley.projectileTerminalSpeed = 0.5;
+	volley.range = 170;
+	volley.targetingVector = [targetingVectorX, targetingVectorY];
     volley.target = target;
     volley.parent = parent;
-	volley.shrapnelMaxDamage = 2;
+	volley.shrapnelMaxDamage = 2; // this name is important to keep, as it's used by getDroneBombShrapnel
 	volley.shrapnelMinDamage = 1;
-    volley.type = DETONATION_TYPE_STEAM_TANK_VOLLEY;
+	volley.currentNumberOfProjectilesReleased = 0;
+	volley.maxNumberOfProjectiles = 5;
+	volley.flying = true;
+    volley.type = DETONATION_TYPE_STEAM_TANK_FLAK_VOLLEY;
+	localSprites.push(volley);
 }
 
 /* WRONG old, radius-based drone bomb detonation
