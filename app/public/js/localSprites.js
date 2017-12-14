@@ -9,6 +9,7 @@ var PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL = 'droneBombShrapnel';
 var PROJECTILE_TYPE_STEAM_TANK_SHELL = 'steamTankShell';
 
 var DETONATION_TYPE_DRONE_BOMB = 'droneBombDetonation';
+var DETONATION_TYPE_STEAM_TANK_VOLLEY = 'steamTankVolley';
 
 var POWERUP_TYPE_HEART = 'heart';
 var POWERUP_TYPE_AIR_DASH = 'airDash';
@@ -266,7 +267,7 @@ function updateLocalSprite(localSprite) {
             localSprite.dy = Math.min(localSprite.maxAcceleration, localSprite.dy);
         }
     }
-    //animation stuff. msBetweenFrames sets sprite's animation speed. Might want to doe this in FPS at some point.
+	//animation stuff. msBetweenFrames sets sprite's animation speed. Might want to doe this in FPS at some point.
     localSprite.currentFrame = Math.floor(now() / (localSprite.slipping ? localSprite.msBetweenFramesWhileSlipping : localSprite.msBetweenFrames) % localSprite.animation.frames.length);
     //geomtry collision checks
     //if something.collides, but !it.removedOnCollision && it.pacing, it reverses at it.speed
@@ -858,12 +859,7 @@ function updateLocalSprite(localSprite) {
     }
 	
 	if (localSprite.type === PROJECTILE_TYPE_TARGETING_DUMMY) {
-		// vars are for checking how far projectile has traveled so that it can be removed after traveling its range without colliding
-		var squareOfXDistanceTraveled = (localSprite.x - localSprite.originalX) * (localSprite.x - localSprite.originalX),
-			squareOfYDistanceTraveled = (localSprite.y - localSprite.originalY) * (localSprite.y - localSprite.originalY);
-			distanceTraveled = Math.sqrt(squareOfXDistanceTraveled + squareOfYDistanceTraveled);
-		// removed if it's reached or exceeded its range
-		if (Math.abs(distanceTraveled) >= localSprite.range) localSprite.shouldBeRemoved = true;
+		removeAfterTravelingDistanceFromSpawnPoint(localSprite, localSprite.range);
 		// if dummy hits its target, it tells its parent that it (the parent) has line of sight to its target.
 		//		The dummy will then be removed.
 		if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
@@ -921,7 +917,7 @@ function updateLocalSprite(localSprite) {
 		if (bomb.livesUntil <= now()) bomb.shouldBeRemoved = true;
 		if (bomb.shouldBeRemoved) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
-			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 4, bomb.target, bomb, 10, 3, 175); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
+			getDetonationDroneBomb(bomb.x, bomb.y - 4, 1, 10, 1, bomb.target, bomb, 3, 175, 90); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
 		}
 	}
 
@@ -950,13 +946,13 @@ function updateLocalSprite(localSprite) {
 			for (var j = 0; j < 8; j++) {
 				var shrapnelVx,
 				shrapnelVy;
-				if (j < 3) shrapnelVx = 100;	// these values are obscenely high. the projectiles' maxSpeeds will limit them to the correct speed
-				if (j > 3 && j < 7 ) shrapnelVx = -100;
+				if (j < 3) shrapnelVx = explosion.projectileInitialSpeed;	// these values are obscenely high. the projectiles' maxSpeeds will limit them to the correct speed
+				if (j > 3 && j < 7 ) shrapnelVx = -explosion.projectileInitialSpeed;
 				if (j === 7 || j === 3) shrapnelVx = 0;
-				if (j > 1 && j < 5) shrapnelVy = 100;
-				if (j === 0 || j > 5) shrapnelVy = -100;
+				if (j > 1 && j < 5) shrapnelVy = explosion.projectileInitialSpeed;
+				if (j === 0 || j > 5) shrapnelVy = -explosion.projectileInitialSpeed;
 				if (j === 1 || j === 5) shrapnelVy = 0;
-				getProjectileDroneBombShrapnel(explosion.x, explosion.y, shrapnelVx, shrapnelVy, explosion.target, explosion.parent, explosion.projectileSpeed, explosion.animationSpeedInFPS);
+				getProjectileDroneBombShrapnel(explosion.x, explosion.y, shrapnelVx, shrapnelVy, explosion.target, explosion.parent, explosion.projectileInitialSpeed, explosion.projectileTerminalSpeed, explosion.radius);
 			}
 			explosion.currentNumberOfProjectileWavesReleased++;
 			explosion.noProjectileWaveUntil = now() + explosion.msBetweenProjectileWaves;
@@ -965,17 +961,8 @@ function updateLocalSprite(localSprite) {
 	}
 	
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL) {
-		var shrapnel = localSprite,
-		shrapnelScale,
-		shrapnelAnimationSpeedInFPS = 10;
-		shrapnelScale = 0.1; // MAYBE WRONG this might do some scaling over its lifespan. Maybe the hit box of the shrapnel should scale up along with the sprite over the course of its lifespan.
-		
+		var shrapnel = localSprite;
 		// WRONG MAYBE should alpha out over lifespan
-		// WRONG should live as long as animation lasts
-		// should knock down target and do 2 damage if contact is made with projectile in the first half (third?) of its lifespan
-		// should knock back target and do 1 damage if contact is made with projectile in the second half (two thirds?) of its lifespan
-		// creating the simple animation for the projectile
-		
 		if (isObjectCollidingWithNonInvulnerableTarget(shrapnel, shrapnel.target)) {
 			// knock down and more damage if close to blast center
 			if (shrapnel.framesToLive > shrapnel.originalFramesToLive / 2) {
@@ -988,11 +975,8 @@ function updateLocalSprite(localSprite) {
 				knockBack(shrapnel, shrapnel.target);
 			}
 		}
-		
-		if (shrapnel.justCreated) {
-			//addEffectDroneBombExplosion(shrapnel.x, shrapnel.y, shrapnel.vx, shrapnel.vy, shrapnelScale, shrapnelAnimationSpeedInFPS); // MAYBE WRONG: this is just trusting setting the animation's vx and vy to the same as the invisible projectile's will keep them synced, even though their positions aren't actually being updated together. They might drift apart some.
-			shrapnel.justCreated = false;
-		}
+		acceleratesOrDeceleratesOverDistanceFromSpawnPoint(shrapnel, shrapnel.terminalSpeed, shrapnel.terminalSpeed, shrapnel.range);
+		removeAfterTravelingDistanceFromSpawnPoint(shrapnel, shrapnel.range);
 	}
     
 	if (localSprite.type === PROJECTILE_TYPE_STEAM_TANK_SHELL){
@@ -1021,7 +1005,7 @@ function updateLocalSprite(localSprite) {
 		if (shell.livesUntil <= now()) shell.shouldBeRemoved = true;
 		if (shell.shouldBeRemoved) {
 			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
-			getDetonationDroneBomb(shell.x, shell.y - 4, 1, 4, shell.target, shell, 10, 3, 175); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
+			getDetonationDroneBomb(shell.x, shell.y - 4, 1, 10, 1, shell.target, shell, 3, 175, 80); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
 		}
 	}
 	
@@ -1429,8 +1413,6 @@ function getProjectileTargetingDummy(x, y, vx, vy, range, target, parent) {
     var hitBox = new Rectangle(0, 0, 8, 8);
     var dummy = new SimpleSprite(/*fireballAnimation*/sentinelTargetingDummyAnimation, x, y, vx, vy, 0.25, 0.25); // change animation to fireballAnimation to visualize.
     dummy.hitBox = hitBox;
-	dummy.originalX = x;	// used to check against future location to see how far projectile has traveled, which will be checked against dummy.range to see if sprite should be removed.
-	dummy.originalY = y;
     dummy.range = range;	// shouldBeRemoved = true after projectile has traveled this far.
     dummy.collides = true;
     dummy.removedOnCollision = true;
@@ -1482,6 +1464,18 @@ function getProjectileSteamTankShell(x, y, targetingVectorX, targetingVectorY, t
     localSprites.push(shell);
 }
 
+function getProjectileSteamTankVolley(x, y, targetingVectorX, targetingVectorY, target, parent) {
+    volley.initialSpeed = 14;
+	volley.terminalSpeed = 2;
+	volley.vx = targetingVectorX * shell.maxSpeed;
+	volley.vy = targetingVectorY * shell.maxSpeed - 8;
+    volley.target = target;
+    volley.parent = parent;
+	volley.shrapnelMaxDamage = 2;
+	volley.shrapnelMinDamage = 1;
+    volley.type = DETONATION_TYPE_STEAM_TANK_VOLLEY;
+}
+
 /* WRONG old, radius-based drone bomb detonation
     function getDetonationDroneBomb(x, y, xScale, yScale, damage, target, parent, animationSpeedInFPS) {
     var hitBox = new Rectangle(0, 0, 8, 8);
@@ -1500,7 +1494,7 @@ function getProjectileSteamTankShell(x, y, targetingVectorX, targetingVectorY, t
 	localSprites.push(explosion);
 }*/
 
-function getDetonationDroneBomb(x, y, damage, projectileSpeed, target, parent, animationSpeedInFPS, numberOfProjectileWaves, msBetweenProjectileWaves) {
+function getDetonationDroneBomb(x, y, damage, projectileInitialSpeed, projectileTerminalSpeed, target, parent, numberOfProjectileWaves, msBetweenProjectileWaves, radius) {
 	var detonation = new SimpleSprite(sentinelTargetingDummyAnimation, x, y, 0, 0, 1, 1);
 	detonation.type = DETONATION_TYPE_DRONE_BOMB;
 	detonation.maxNumberOfProjectileWaves = numberOfProjectileWaves;
@@ -1508,30 +1502,29 @@ function getDetonationDroneBomb(x, y, damage, projectileSpeed, target, parent, a
 	detonation.msBetweenProjectileWaves = msBetweenProjectileWaves;
 	detonation.noProjectileWaveUntil = now();
 	detonation.damage = damage;
-	detonation.animationSpeedInFPS = animationSpeedInFPS;
 	detonation.target = target;
 	detonation.parent = parent;
 	detonation.flying = true;
-	detonation.projectileSpeed = projectileSpeed;
+	detonation.radius = radius;
+	detonation.projectileInitialSpeed = projectileInitialSpeed;
+	detonation.projectileTerminalSpeed = projectileTerminalSpeed;
 	localSprites.push(detonation);
 }
 
-function getProjectileDroneBombShrapnel(x, y, vx, vy, target, parent, projectileSpeed, animationSpeedInFPS) {
+function getProjectileDroneBombShrapnel(x, y, vx, vy, target, parent, projectileInitialSpeed, projectileTerminalSpeed, projectileRange) {
     var hitBox = new Rectangle(0, 0, 8, 8);
     var shrapnel = new SimpleSprite(fireballAnimation, x, y, vx, vy, 0.5, 0.5);
     shrapnel.hitBox = hitBox;
     shrapnel.collides = true;
     shrapnel.removedOnCollision = true;
-    shrapnel.maxSpeed = projectileSpeed;
+    shrapnel.initialSpeed = projectileInitialSpeed;
+	shrapnel.terminalSpeed = projectileTerminalSpeed;
     shrapnel.target = target;
     shrapnel.parent = parent;
 	shrapnel.minDamage = shrapnel.parent.shrapnelMinDamage;
 	shrapnel.maxDamage = shrapnel.parent.shrapnelMaxDamage;
-	shrapnel.animationSpeedInFPS = animationSpeedInFPS;
     shrapnel.flying = true;
-	shrapnel.originalFramesToLive = 20;
-	shrapnel.framesToLive = shrapnel.originalFramesToLive; // WRONG this will eventually be a "livesUntil" thing that's synced to an animation or something like that
-	shrapnel.justCreated = true;
+	shrapnel.range = projectileRange;
     shrapnel.type = PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL;
     localSprites.push(shrapnel);
 }
@@ -1708,6 +1701,41 @@ function firesTargetingDummies(originX, originY, msBetweenDummies, range, target
 		parent.doesNotFireTargetingDummyUntil = now() + msBetweenDummies;
 		localSprites.push(dummy);
 	}
+}
+
+function removeAfterTravelingDistanceFromSpawnPoint(sprite, distance) {
+	// removed if sprite has reached or exceeded its range
+	var currentDistanceFromSpawnPoint = getCurrentDistanceFromSpawnPoint(sprite);
+	if (Math.abs(currentDistanceFromSpawnPoint) >= distance) sprite.shouldBeRemoved = true;
+}
+
+function getCurrentDistanceFromSpawnPoint(sprite) {
+	if (!sprite.functionGetCurrentDistanceFromSpawnPointInitialized) {
+		sprite.spawnLocationX = sprite.x;
+		sprite.spawnLocationY = sprite.y;
+		sprite.functionGetCurrentDistanceFromSpawnPointInitialized = true;
+	}
+	var squareOfXDistanceTraveled = (sprite.x - sprite.spawnLocationX) * (sprite.x - sprite.spawnLocationX),
+		squareOfYDistanceTraveled = (sprite.y - sprite.spawnLocationY) * (sprite.y - sprite.spawnLocationY),
+		distanceFromSpawnPoint = Math.sqrt(squareOfXDistanceTraveled + squareOfYDistanceTraveled);
+	return distanceFromSpawnPoint;
+}
+
+function acceleratesOrDeceleratesOverDistanceFromSpawnPoint(sprite, terminalVx, terminalVy, distance) {
+	if (!sprite.functionAcceleratesOrDeceleratesOverDistanceFromSpawnPointInitialized) {
+		sprite.vxOnSpawn = sprite.vx;	// this property name isn't necessarily accurate, as this function could theoretically be called at a time other than upon the sprite's creation
+		sprite.vyOnSpawn = sprite.vy;
+		if (sprite.vx >= 0) sprite.changeInVxOverRange = terminalVx - sprite.vxOnSpawn;
+		else sprite.changeInVxOverRange = -terminalVx - sprite.vxOnSpawn;
+		if (sprite.vy >= 0) sprite.changeInVyOverRange = terminalVy - sprite.vyOnSpawn;
+		else sprite.changeInVyOverRange = -terminalVy - sprite.vyOnSpawn;
+		sprite.functionAcceleratesOrDeceleratesOverDistanceFromSpawnPointInitialized = true;
+	}
+	var currentDistance = getCurrentDistanceFromSpawnPoint(sprite),
+		maxDistance = distance,
+		currentParametricDistanceTraveled = currentDistance / maxDistance;
+	if (sprite.vx !== 0) sprite.vx = sprite.vxOnSpawn + sprite.changeInVxOverRange * currentParametricDistanceTraveled;
+	if (sprite.vy !== 0) sprite.vy = sprite.vyOnSpawn + sprite.changeInVyOverRange * currentParametricDistanceTraveled;
 }
 
 function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, character) { // note: this checks the center of the character, not anywhere in its hibox
