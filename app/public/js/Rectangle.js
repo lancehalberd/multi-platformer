@@ -26,7 +26,17 @@ class Rectangle {
     constructor(left = 0, top = 0, width = 0, height = 0) {
         this.left = left;
         this.top = top;
+        // Don't allow negative width/height. Update left/top so
+        // that width/height are always positive.
+        if (width <= 0) {
+            width *= -1;
+            this.left -= width;
+        }
         this.width = width;
+        if (height <= 0) {
+            height *= -1;
+            this.top -= height;
+        }
         this.height = height;
         this.right = left + width;
         this.bottom = top + height;
