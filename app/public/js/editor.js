@@ -103,7 +103,7 @@ $('.js-newTile').on('click', () => {
     previousBrush = currentBrush;
     selectBrush(new TileBrush(newTile));
     selectingTileGraphic = true;
-    $('.js-newTile').hide();
+    $('.js-newTile', '.js-deleteTile').hide();
     $('.js-saveTile, .js-cancelTile').show();
 });
 $('.js-saveTile').on('click', () => {
@@ -117,6 +117,25 @@ $('.js-saveTile').on('click', () => {
     }
     sendData({action: 'addTileToPalette', newTile});
 });
+$('.js-deleteTile').on('click', () => {
+    if (!canDeleteCurrentBrush()) return;
+    var uniqueTileIndex = currentMap.hash[hashObject(currentBrush.getTile())];
+    if (confirm('Are you sure you want to delete this tile from this zone? Existing instances will be replaced with blank tiles.')) {
+        sendData({action: 'deleteTileFromPalette', uniqueTileIndex});
+    }
+});
+
+const canDeleteCurrentBrush = () => {
+    // Can't delete a brush while defining a new brush (use discard action instead).
+    if (newTile) return false;
+    // Cannot currently delete brushes with no getTile method.
+    if (!currentBrush.getTile) return false;
+    var tile = currentBrush.getTile();
+    if (!tile) return false;
+    var uniqueTileIndex = currentMap.hash[hashObject(tile)];
+    if (!uniqueTileIndex) return false;
+    return true;
+};
 
 const cancelCreatingNewTile = (revertBrush) => {
     newTile = null;
@@ -126,6 +145,7 @@ const cancelCreatingNewTile = (revertBrush) => {
     }
     $('.js-saveTile, .js-cancelTile').hide();
     $('.js-newTile').show();
+    $('.js-deleteTile').toggle(canDeleteCurrentBrush());
 };
 $('.js-cancelTile').on('click', cancelCreatingNewTile);
 
@@ -189,6 +209,7 @@ const selectBrush = (newBrush) => {
     currentBrush = newBrush;
     $('.js-zoneSelectField').toggle(currentBrush && !!currentBrush.onSelectZone);
     $('.js-locationSelectField').toggle(currentBrush && !!currentBrush.onSelectLocation);
+    $('.js-deleteTile').toggle(canDeleteCurrentBrush());
     if (!(currentBrush instanceof TileBrush) || !currentBrush.tileSource) {
         selectingTileGraphic = false;
         $('.js-tileSourceField select').toggle(false);
@@ -601,7 +622,10 @@ class TileBrush {
 
     update() {
         if (mouseDown) {
-            updateTileIfDifferent(getMouseCoords(), this.getTile());
+            var coords = getMouseCoords();
+            if (onMap(coords[1], coords[0])) {
+                updateTileIfDifferent(coords, this.getTile());
+            }
         }
     }
 

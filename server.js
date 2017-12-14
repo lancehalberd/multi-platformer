@@ -7,7 +7,7 @@ var mustache = require('mustache');
 var _ = require('lodash');
 var fs = require('fs');
 
-var {addTileToPalette, convertMapToTileSet, updateTilePalette} = require('./app/public/js/convertMapToTileSet.js');
+var {addTileToPalette, convertMapToTileSet, deleteTileFromPalette, updateTilePalette} = require('./app/public/js/convertMapToTileSet.js');
 
 var colors = ['red', 'blue', 'yellow', 'green', 'purple', 'white', 'grey', 'orange', 'brown'];
 
@@ -308,6 +308,10 @@ wsServer.on('request', function(request) {
             if (data.action === 'addTileToPalette') {
                 addTileToPalette(map, data.newTile);
                 broadcast(player.zoneId, {newTile: data.newTile});
+            }
+            if (data.action === 'deleteTileFromPalette') {
+                deleteTileFromPalette(map, data.uniqueTileIndex);
+                broadcast(player.zoneId, {deletedUniqueTileIndex: data.uniqueTileIndex});
             }
             if (data.action === 'createMapObject') {
                 tiles.applyObjectToMap(map, data.mapObject, data.position);

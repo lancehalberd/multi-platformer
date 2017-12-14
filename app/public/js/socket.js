@@ -116,6 +116,15 @@ socket.addEventListener('message', event => {
     if (data.newTile) {
         addTileToPalette(currentMap, data.newTile);
     }
+    if (data.deletedUniqueTileIndex) {
+        if (deleteTileFromPalette(currentMap, data.deletedUniqueTileIndex)) {
+            // The local tile brushes don't check for missing brushes on update,
+            // so explicitly remove the element for the delete brush when a
+            // brush is deleted.
+            $('.js-localTiles').children()[data.deletedUniqueTileIndex].remove();
+            updateSecondaryBrushes();
+        }
+    }
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);
         currentMap.isDirty = true;
