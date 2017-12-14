@@ -89,6 +89,13 @@ var droneBomberRotorAnimation = {frames: allDroneBomberFrames.slice(3, 8)};
 var droneBombAnimation = {frames: allDroneBomberFrames.slice(8, 9)};
 var droneBombExplosionAnimation = {frames: allDroneBomberFrames.slice(9, 15)};
 
+// steam tank animations
+var allSteamTankFrames = rectangleToFrames(new Rectangle(0, 0, 256, 256), requireImage('/gfx/creatures/creatureSteamTank.png'), 1);
+var steamTankMovingAnimation = {frames: allSteamTankFrames.slice(0, 1)};
+var steamTankIdlingAnimation = {frames: allSteamTankFrames.slice(0, 1)};
+var steamTankAttackAnimation = {frames: allSteamTankFrames.slice(0, 1)};
+var steamTankDefeatAnimation = {frames: allSteamTankFrames.slice(0, 1)};
+
 
 // Get the current frame for a given set of frames assuming that it is looping at fps based on now().
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];

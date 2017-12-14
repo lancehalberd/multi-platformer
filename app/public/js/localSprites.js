@@ -2,9 +2,11 @@ var PROJECTILE_TYPE_HOMING_FIREBALL = 'homingFireball';
 var PROJECTILE_TYPE_SENTINEL_BEAM = 'sentinelBeam';
 var PROJECTILE_TYPE_SENTINEL_BEAM_CHARGING = 'sentinelBeamInHarmlessChargingPhase';
 var PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY = 'sentinelTargetingDummyProjectile';
+var PROJECTILE_TYPE_TARGETING_DUMMY = 'genericTargetingDummyProjectile';
 var PROJECTILE_TYPE_SENTINEL_BEAM_SEGMENT = 'sentineBeamSegment';
 var PROJECTILE_TYPE_DRONE_BOMB = 'droneBomb';
 var PROJECTILE_TYPE_DRONE_BOMB_SHRAPNEL = 'droneBombShrapnel';
+var PROJECTILE_TYPE_STEAM_TANK_SHELL = 'steamTankShell';
 
 var DETONATION_TYPE_DRONE_BOMB = 'droneBombDetonation';
 
@@ -19,6 +21,7 @@ var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
 var CREATURE_TYPE_SENTINEL_EYE = 'sentineEyeCreature';
 var CREATURE_TYPE_DRONE_BOMBER = 'droneBomberCreature';
 var CREATURE_TYPE_DRONE_BOMBER_ROTOR = 'droneBomberRotor';
+var CREATURE_TYPE_STEAM_TANK = 'steamTankCreature';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -231,7 +234,8 @@ function updateLocalSprite(localSprite) {
 			localSprite.vy = normalizedVector[1] * localSprite.maxSpeed;
 		}
 	} else {
-		localSprite.vx = Math.min(localSprite.vx, localSprite.maxSpeed);
+		if (localSprite.vx > 0) localSprite.vx = Math.min(localSprite.vx, localSprite.maxSpeed);
+		if (localSprite.vx < 0) localSprite.vx = Math.max(localSprite.vx, -localSprite.maxSpeed);
 	}
     // OLD MAX SPEED CODE
     /*
@@ -337,7 +341,7 @@ function updateLocalSprite(localSprite) {
     else localSprite.targetInAggroRadius = false;
     // wandering behavior
     if (localSprite.wandering) {
-        if (localSprite.noWanderingDirectionChangeUntil <= now()) {
+        if (localSprite.noWanderingDirectionChangeUntil <= now() || !localSprite.noWanderingDirectionChangeUntil) {
             if (localSprite.wanderingChanceOfIdling > Math.random()) { // creature will wander
                 var randomDx = Math.random() * localSprite.wanderingAccelerationXScale,
                     randomDy = Math.random() * localSprite.wanderingAccelerationYScale;
@@ -696,9 +700,9 @@ function updateLocalSprite(localSprite) {
 		// bomber is removed from simulation after it flies off the map and it's cooled down
 		if (((bomber.x > (currentMap.tileSize * currentMap.width) + 100 || bomber.x < -100)  || (bomber.y > (currentMap.tileSize * currentMap.height) + 100 || bomber.y < -100)) && !bomber.leftMap) {
 			bomber.leftMap = true;
-			var randomCooldownDuration = bomber.cooldownMinMs + (Math.random() * (bomber.cooldownMaxMs - bomber.cooldownMinMs));
+			var randomCooldownDuration = bomber.spawnCooldownMinMs + (Math.random() * (bomber.beamWidthScale - bomber.spawnCooldownMinMs));
 			if (!bomber.defeated) bomber.shouldNotRespawnUntil = now() + randomCooldownDuration;
-			else bomber.shouldNotRespawnUntil = now() + randomCooldownDuration * bomber.cooldownScaleOnDefeat;
+			else bomber.shouldNotRespawnUntil = now() + randomCooldownDuration * bomber.spawnCooldownScaleOnDefeat;
 		}
 		// bomber takes damage
 		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(bomber.target, bomber)) { // doesn't need to check for .defeated because bomber becomes invulnerable upon defeat
@@ -728,6 +732,31 @@ function updateLocalSprite(localSprite) {
 		}
 	}
 	// end drone bomber update
+	
+	// steam tank update
+	if (localSprite.type === CREATURE_TYPE_STEAM_TANK) {
+		var tank = localSprite,
+			projectileOriginX = tank.x,
+			projectileOriginY = tank.y - tank.getHitBox().height * 0.5;
+		// recoil on firing. Uses moving animation for rolling wheels.
+		// can attack with a flame thrower or a shell that is fast but affected by gravity, and on detonation launched a shotgun blast forward
+		// missile fires up and over barriers
+		firesTargetingDummies(projectileOriginX, projectileOriginY, 200, 400, tank.target, tank);
+		if (tank.hasLineOfSightToTargetInRange && (tank.notReadyToAttackUntil <= now() || !tank.notReadyToAttackUntil)) {
+			// WRONG: tank should go through a visible set of startup frames (stopping and shaking) so that you can time a knocking back of the shell.
+			tank.targetYCenter = tank.target.y - getGlobalSpriteHitBox(tank.target).height * 0.5;
+			tank.targetingVector = getNormalizedVector(projectileOriginX, tank.target.x, projectileOriginY, tank.targetYCenter);
+			tank.wandering = false;
+			tank.dy = tank.dx = 0;
+			getProjectileSteamTankShell(projectileOriginX, projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target);
+			var randomTankAttackCooldownDuration = tank.attackCooldownMinMs + (
+					Math.random() * (tank.attackCooldownMaxMs - tank.attackCooldownMinMs)
+				);
+			tank.notReadyToAttackUntil = now() + randomTankAttackCooldownDuration;
+		} else tank.wandering = true;
+	}
+	
+	// end steam tank update
 
     if (localSprite.type === CREATURE_TYPE_ADORABILIS) {
         if (getGlobalSpriteHitBox(localSprite).overlapsRectangle(getGlobalSpriteHitBox(mainCharacter)) && isCreatureReady(localSprite)) {
@@ -822,6 +851,30 @@ function updateLocalSprite(localSprite) {
         }
 		//if (localSprite.shouldBeRemoved) addFireballDetonation(localSprite, 1, 8, 8); // comment back in to visualize impact point
     }
+	
+	if (localSprite.type === PROJECTILE_TYPE_TARGETING_DUMMY) {
+		// vars are for checking how far projectile has traveled so that it can be removed after traveling its range without colliding
+		var squareOfXDistanceTraveled = (localSprite.x - localSprite.originalX) * (localSprite.x - localSprite.originalX),
+			squareOfYDistanceTraveled = (localSprite.y - localSprite.originalY) * (localSprite.y - localSprite.originalY);
+			distanceTraveled = Math.sqrt(squareOfXDistanceTraveled + squareOfYDistanceTraveled);
+		// removed if it's reached or exceeded its range
+		if (Math.abs(distanceTraveled) >= localSprite.range) localSprite.shouldBeRemoved = true;
+		// if dummy hits its target, it tells its parent that it (the parent) has line of sight to its target.
+		//		The dummy will then be removed.
+		if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
+			localSprite.parent.hasLineOfSightToTargetInRange = true;
+			localSprite.shouldBeRemoved = true;
+		// if the dummy shouldBeRemoved due to reaching/exceeding its range or due to impact level geometry, it tells its parent
+		//		that it (the parent) doesn't have line of sight to its target.
+		// not really WRONG, probably, but worth NOTING: An older dummy could hit a wall or reach its range AFTER a younger dummy had hit the target.
+		//		this would yield a false 'parent.hasLineOfSightToTargetInRange === false'
+		//		BUT, this shouldn't matter, practically speaking, because:
+		//		A) if the creature is ready to attack, it will initiate its attack upon getting any positive for line of sight, and it will ignore a following 'false'
+		//		B) a new, young dummy will probably hit the target again soon, giving a positive re: line of sight.
+		} else if (localSprite.shouldBeRemoved) {
+			localSprite.parent.hasLineOfSightToTargetInRange = false;
+		}
+	}
 
     if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER_ROTOR) {
 		localSprite.x = localSprite.parent.x;
@@ -936,7 +989,38 @@ function updateLocalSprite(localSprite) {
 			shrapnel.justCreated = false;
 		}
 	}
-    // fadeout behavior
+    
+	if (localSprite.type === PROJECTILE_TYPE_STEAM_TANK_SHELL){
+		var shell = localSprite;
+		//shell.vy -= 0.67; // light gravity so it can travel farther without moving too fast
+		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(shell.target, shell)) {
+			knockBack(shell.target, shell, 20, 12, 5);
+			shell.invulnerable = true;
+			shell.livesUntil = now() + 1000;
+		}
+		// after shell has been hit, but before it's died:
+		if (shell.livesUntil && shell.livesUntil > now()) {
+			shell.rotation += 15;
+			if (shell.noSmokeContrailUntil <= now() || !shell.noSmokeContrailUntil) {
+				// WRONG should be black smoke cloud
+				addEffectSteamPlume(shell.x, shell.y, 0, 0, 2.67, 8);
+				shell.noSmokeContrailUntil = now() + 300;
+			}
+		}
+		if (isObjectCollidingWithNonInvulnerableTarget(shell, shell.target)) {
+			damageSprite(shell.target, shell.shrapnelMaxDamage);
+			knockBack(shell, shell.target, 10, 13, 4);
+			knockDown(shell.target);
+			shell.shouldBeRemoved = true;
+		}
+		if (shell.livesUntil <= now()) shell.shouldBeRemoved = true;
+		if (shell.shouldBeRemoved) {
+			// WRONG: some problem as targeting projectiles: removal site not flush with collision surface. Update collision code for localSprites to something like what the mainCharacter uses.
+			getDetonationDroneBomb(shell.x, shell.y - 4, 1, 4, shell.target, shell, 10, 3, 175); // the '-4' elevates the detonation just above the ground so that horizontal shrapnel doesn't die immediately due to colliding with the ground.
+		}
+	}
+	
+	// fadeout behavior
     // WRONG: This code needs to fade an animation out over its life span.
     /*if (localSprite.fadesOut) {
         localSprite.alpha =
@@ -1202,7 +1286,6 @@ function getCreatureDroneBomber(x, y, movesLEFTorRIGHT) {
     bomber.flying = true;
 	bomber.maxSpeed = 4;
 	bomber.homingAcceleration = 1;
-	bomber.maxAcceleration = 0.03;
 	// maybe bomber should bob and/or wobble (i.e. random, mild rotation forward and backward) or have a "microWandering" behavior where it maintains its heading, but wanders a little bit *around* that heading, like the idea I had for how the bee would move.
     bomber.dx = 0;
     bomber.dy = 0;
@@ -1211,10 +1294,38 @@ function getCreatureDroneBomber(x, y, movesLEFTorRIGHT) {
     bomber.maxAcceleration = 0.189;
 	bomber.justCreated = true;
 	bomber.loaded = true;
-	bomber.cooldownMaxMs = 5000;	// after leaving map and being removed, max time before respawning
-	bomber.cooldownMinMs = 2500;
-	bomber.cooldownScaleOnDefeat = 7.5; // if the bomber leaves the map after having been defeated, its cooldown duration is amplified by this factor
+	bomber.beamWidthScale = 5000;	// after leaving map and being removed, max time before respawning
+	bomber.spawnCooldownMinMs = 2500;
+	bomber.spawnCooldownScaleOnDefeat = 7.5; // if the bomber leaves the map after having been defeated, its cooldown duration is amplified by this factor
 	return bomber;
+}
+
+function getCreatureSteamTank(x, y) {
+    var xScale = yScale = 0.75;
+    // This defines the hitBox inside the frame from the top left corner of that frame.
+    var hitBox = new Rectangle(52, 78, 152, 178);
+    var tank = new SimpleSprite(steamTankMovingAnimation, x, y, 0, 0, xScale, yScale);
+    tank.type = CREATURE_TYPE_STEAM_TANK;
+	tank.health = 7;
+    tank.movingAnimation = addHitBoxToAnimationFrames(steamTankMovingAnimation, hitBox);
+    tank.idlingAnimation = addHitBoxToAnimationFrames(steamTankIdlingAnimation, hitBox);
+    tank.attackAnimation = addHitBoxToAnimationFrames(steamTankAttackAnimation, hitBox);
+    tank.defeatAnimation = addHitBoxToAnimationFrames(steamTankDefeatAnimation, hitBox);
+	tank.maxSpeed = 0.5;
+	tank.maxAcceleration = 0.011;
+    tank.collides = true;
+    tank.msBetweenFrames = 90;
+	tank.wandering = true;
+    tank.msBetweenWanderingDirectionChangeMin = 1500;
+    tank.msBetweenWanderingDirectionChangeMax = 4500;
+    tank.wanderingAccelerationXScale = 0.03;
+    tank.wanderingAccelerationYScale = 0;
+    tank.wanderingChanceOfIdling = 0.5;
+	tank.attackCooldownMaxMs = 4000;
+	tank.attackCooldownMinMs = 2000;
+	tank.spawnCooldownMaxMs = 50000;	// after being removed, max time before respawning
+	tank.spawnCooldownMinMs = 35000;
+	return tank;
 }
 
 function getDroneBomberRotor(x, y, parent, msBetweenFrames) {
@@ -1305,8 +1416,25 @@ function getProjectileSentinelTargetingDummy(x, y, vx, vy, target, parent) {
     dummy.parent = parent;
     dummy.flying = true;
     dummy.framesToLive = 75;
-    dummy.type = PROJECTILE_TYPE_SENTINEL_TARGETING_DUMMY;
+    dummy.type = PROJECTILE_TYPE_TARGETING_DUMMY;
     localSprites.push(dummy);
+}
+
+function getProjectileTargetingDummy(x, y, vx, vy, range, target, parent) {
+    var hitBox = new Rectangle(0, 0, 8, 8);
+    var dummy = new SimpleSprite(/*fireballAnimation*/sentinelTargetingDummyAnimation, x, y, vx, vy, 0.25, 0.25); // change animation to fireballAnimation to visualize.
+    dummy.hitBox = hitBox;
+	dummy.originalX = x;	// used to check against future location to see how far projectile has traveled, which will be checked against dummy.range to see if sprite should be removed.
+	dummy.originalY = y;
+    dummy.range = range;	// shouldBeRemoved = true after projectile has traveled this far.
+    dummy.collides = true;
+    dummy.removedOnCollision = true;
+    dummy.maxSpeed = 15;
+    dummy.target = target;
+    dummy.parent = parent;
+    dummy.flying = true;
+    dummy.type = PROJECTILE_TYPE_TARGETING_DUMMY;
+    return (dummy);
 }
 
 function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
@@ -1329,6 +1457,24 @@ function getProjectileDroneBomb(x, y, vx, vy, target, parent) {
 	//else bomb.rotation = 75;
     bomb.type = PROJECTILE_TYPE_DRONE_BOMB;
     localSprites.push(bomb);
+}
+
+function getProjectileSteamTankShell(x, y, targetingVectorX, targetingVectorY, target, parent) {
+	var xScale = yScale = 0.12;
+    var framesHitBox = new Rectangle(360, 450, 210, 320);
+    var shell = new SimpleSprite(droneBombAnimation, x, y, targetingVectorX, targetingVectorX, xScale, yScale);
+    shell.collides = true;
+    shell.removedOnCollision = true;
+	shell.animation = addHitBoxToAnimationFrames(droneBombAnimation, framesHitBox);
+    shell.maxSpeed = 14;
+	shell.vx = targetingVectorX * shell.maxSpeed;
+	shell.vy = targetingVectorY * shell.maxSpeed - 8;
+    shell.target = target;
+    shell.parent = parent;
+	shell.shrapnelMaxDamage = 2;
+	shell.shrapnelMinDamage = 1;
+    shell.type = PROJECTILE_TYPE_STEAM_TANK_SHELL;
+    localSprites.push(shell);
 }
 
 /* WRONG old, radius-based drone bomb detonation
@@ -1546,6 +1692,18 @@ function getBeamImpactSparks(x, y, numberOfFragments, parentPreScalingXSize, par
     }
 }
 
+function firesTargetingDummies(originX, originY, msBetweenDummies, range, target, parent) {
+	if (parent.doesNotFireTargetingDummyUntil <= now() || !parent.doesNotFireTargetingDummyUntil) {
+		var vector = getNormalizedVector(originX, target.x, originY, target.y - 0.5 * getGlobalSpriteHitBox(target).height),
+			vx = vector[0],
+			vy = vector[1];
+		var dummy = getProjectileTargetingDummy(originX, originY, vx, vy, range, target, parent);
+		dummy.vx = dummy.maxSpeed * vx;
+		dummy.vy = dummy.maxSpeed * vy;
+		parent.doesNotFireTargetingDummyUntil = now() + msBetweenDummies;
+		localSprites.push(dummy);
+	}
+}
 
 function isCharacterInsideRadius(radiusOriginX, radiusOriginY, radiusMagnitude, character) { // note: this checks the center of the character, not anywhere in its hibox
     var distanceBetweenRadiusOriginAndCharacterCenterX = Math.abs((getGlobalSpriteHitBox(character).left + (getGlobalSpriteHitBox(character).width / 2)) - radiusOriginX),
