@@ -666,13 +666,14 @@ function updateLocalSprite(localSprite) {
 	// drone bomber update
     if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER) {
 		var bomber = localSprite;
+		firesTargetingDummies(bomber.x, bomber.y, 200, 800, bomber.target, bomber);
 		// give the bomber its rotor, separated because it has a separate animation from the rest of the bomber
 		if (bomber.justCreated) {
 			getDroneBomberRotor(bomber.x, bomber.y, bomber, 8);
 			bomber.justCreated = false;
 		}
 		// behavior while loaded
-		if (bomber.loaded && !bomber.defeated) {
+		if (bomber.loaded && !bomber.defeated && bomber.hasLineOfSightToTargetInRange) {
 			if (bomber.y > bomber.target.y - 250) bomber.dy -= 0.003;
 			else {
 				if (bomber.vy < 0) {
@@ -738,9 +739,13 @@ function updateLocalSprite(localSprite) {
 		var tank = localSprite,
 			projectileOriginX = tank.x,
 			projectileOriginY = tank.y - tank.getHitBox().height * 0.5;
-		// recoil on firing. Uses moving animation for rolling wheels.
+		// recoil on firing. Uses moving animation for rolling wheels. puff of smoke on firing.
+		// turrets rotate to face target that's in range and within line of sight.
+		//		turret targeting dummies only fire in an arc that matches the turrets' rotation limitations,
+		//			or don't fire at all in that case, and the turret.hasLineOfSightToTargetInRange would be set to false.
 		// can attack with a flame thrower or a shell that is fast but affected by gravity, and on detonation launched a shotgun blast forward
-		// missile fires up and over barriers
+		// missile fires up and over barriers. They have super-jump-like contrails and wobble some, esp. just after launch and after turning.
+		// belches steam
 		firesTargetingDummies(projectileOriginX, projectileOriginY, 200, 400, tank.target, tank);
 		if (tank.hasLineOfSightToTargetInRange && (tank.notReadyToAttackUntil <= now() || !tank.notReadyToAttackUntil)) {
 			// WRONG: tank should go through a visible set of startup frames (stopping and shaking) so that you can time a knocking back of the shell.
