@@ -589,16 +589,14 @@ function damageSprite(sprite, amount) {
 function getDamageHitBox(sprite) {
     var currentFrame = sprite.getCurrentFrame();
     if (!currentFrame.damageHitBox) return null;
-    else {
-        var damageHitBox = currentFrame.damageHitBox;
-        if ((sprite.scale || 1) !== 1 || (sprite.xScale || 1) !== 1 || (sprite.yScale || 1) !== 1) {
-            damageHitBox = damageHitBox.stretch(
-                Math.abs((sprite.scale || 1) * (sprite.xScale || 1)),
-                Math.abs((sprite.scale || 1) * (sprite.yScale || 1))
-            ).snap();
-        }
-        return damageHitBox.translate(sprite.x, sprite.y);
+    var damageHitBox = currentFrame.damageHitBox;
+    if ((sprite.scale || 1) !== 1 || (sprite.xScale || 1) !== 1 || (sprite.yScale || 1) !== 1) {
+        damageHitBox = damageHitBox.stretch(
+            (sprite.scale || 1) * (sprite.xScale || 1),
+            (sprite.scale || 1) * (sprite.yScale || 1)
+        ).snap();
     }
+    return damageHitBox.translate(sprite.x, sprite.y);
 }
 
 //this function should be a super-simple arrow function using .filter or indexOf or something

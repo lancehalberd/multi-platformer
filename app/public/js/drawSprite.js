@@ -9,7 +9,8 @@ function drawSprite(context, sprite) {
         var originRectangle = new Rectangle (sprite.x - 2, sprite.y, 4, 4);
         draw.fillRectangle(mainContext, originRectangle , 'yellow');
         var currentFrame = sprite.getCurrentFrame();
-        if (currentFrame.damageHitBox) draw.fillRectangle(mainContext, getDamageHitBox(sprite), 'red');
+        var damageHitBox = getDamageHitBox(sprite);
+        if (damageHitBox) draw.fillRectangle(mainContext, damageHitBox, 'red');
     }
     var scale = ifdefor(sprite.scale, 1);
     drawFrameTo(context,
