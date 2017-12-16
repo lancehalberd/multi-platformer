@@ -175,6 +175,8 @@ class TTCharacter {
         this.invulnerableOnDamageDurationInMs = 1000;
         this.attackCooldownInMs = 350;
         this.cannotAttackUntil = now();
+        this.msOnGroundAfterKnockDownBase = 1000; // time before standing up upon being knocked down. "base" because it's scaled based on how fast you were traveling when landing from an unctronlled fall, and will be scaled based on how much damage you took when you were knocked down by a damage source.
+        this.timeOnGroundAfterKnockDownScale = 1; // ... base is multiplied by this in the knock down update
     }
     
 	getCurrentFrame() {

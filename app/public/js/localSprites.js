@@ -746,22 +746,32 @@ function updateLocalSprite(localSprite) {
 		//			or don't fire at all in that case, and the turret.hasLineOfSightToTargetInRange would be set to false.
 		// can attack with a flame thrower or a shell that is fast but affected by gravity, and on detonation launched a shotgun blast forward
 		// missile fires up and over barriers. They have super-jump-like contrails and wobble some, esp. just after launch and after turning.
+		// 		alternative (maybe better) to missiles: spherical, spidery drones that launch into the air, then parachute/glide down toward the player's last known location, at which point they scuttle toward the player and explode on contact or within range.
 		// belches steam
 		// Flees when player is close.
 		// very aggressive when cornered
+		// shakes due to engine activity.
+		
+		// firesTargetingDummies sets the property sprite.hasLineOfSightToTargetInRange to true or false for each projectile.
 		firesTargetingDummies(tank.projectileOriginX, tank.projectileOriginY, 200, 400, tank.target, tank);
+		// attacking
+		// WRONG this will be 'turret.turrentLeft.hasLineOfSightToTarget' or something.
 		if (tank.hasLineOfSightToTargetInRange && (tank.notReadyToAttackUntil <= now() || !tank.notReadyToAttackUntil)) {
 			// WRONG: tank should go through a visible set of startup frames (stopping and shaking) so that you can time a knocking back of the shell.
 			tank.targetYCenter = tank.target.y - getGlobalSpriteHitBox(tank.target).height * 0.5;
 			tank.targetingVector = getNormalizedVector(tank.projectileOriginX, tank.target.x, tank.projectileOriginY, tank.targetYCenter);
 			tank.wandering = false;
-			tank.dy = tank.dx = 0;
+			if (!tank.fleeing) tank.dy = tank.dx = 0;
 			//getProjectileSteamTankShell(tank.projectileOriginX, tank.projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target);
 			getDetonationSteamTankFlakVolley(tank.projectileOriginX, tank.projectileOriginY, tank.targetingVector[0], tank.targetingVector[1], tank.target, tank);
 			var randomTankAttackCooldownDuration = tank.attackCooldownMinMs + (
 					Math.random() * (tank.attackCooldownMaxMs - tank.attackCooldownMinMs)
 				);
 			tank.notReadyToAttackUntil = now() + randomTankAttackCooldownDuration;
+		}
+		if (isCharacterInsideRadius(tank.x, tank.y, tank.fleeingRadius, tank.target) && tank.hasLineOfSightToTargetInRange) {
+			tank.wandering = false;
+			tank.fleeing = true;
 		} else tank.wandering = true;
 	}
 	
@@ -1019,6 +1029,10 @@ function updateLocalSprite(localSprite) {
 			volley.y = volley.parent.y - volley.parent.getHitBox().height * 0.5;
 			// this line makes the volley track the moving player
 			volley.targetingVector = getNormalizedVector(volley.parent.projectileOriginX, volley.target.x, volley.parent.projectileOriginY, volley.parent.targetYCenter);
+			// recoil
+			volley.parent.vx += volley.targetingVector[0] * 10;
+			// smoke puff. WRONG Might later be muzzle flash.
+			addEffectSteamPlume(volley.x, volley.y, 0, -3, 0.5, 10);
 			var randomFlakVxAddition,
 				randomFlakVyAddition,
 				flakVx = volley.projectileInitialSpeed * volley.targetingVector[0],
@@ -1032,7 +1046,7 @@ function updateLocalSprite(localSprite) {
 			flakVy += randomFlakVyAddition;
 			getProjectileDroneBombShrapnel(volley.x, volley.y, flakVx, flakVy, volley.target, volley, volley.projectileInitialSpeed, volley.projectileTerminalSpeed, volley.range);
 			volley.currentNumberOfProjectilesReleased++;
-			volley.noProjectileFiredUntil = now() + 150 + Math.random() * 150;
+			volley.noProjectileFiredUntil = now() + Math.random() * 200;
 		}
 		if (volley.currentNumberOfProjectilesReleased >= volley.maxNumberOfProjectiles) volley.shouldBeRemoved = true;
 	}
@@ -1338,6 +1352,8 @@ function getCreatureSteamTank(x, y) {
     tank.wanderingAccelerationXScale = 0.03;
     tank.wanderingAccelerationYScale = 0;
     tank.wanderingChanceOfIdling = 0.5;
+	tank.fleeingRadius = 120; // when the player is inside this radius, the tank will back away
+	tank.fleeingAcceleration = 0.011;
 	tank.attackCooldownMaxMs = 4000;
 	tank.attackCooldownMinMs = 2000;
 	tank.spawnCooldownMaxMs = 50000;	// after being removed, max time before respawning
@@ -1595,9 +1611,10 @@ function knockBack(objectAnchored, objectKnockedBack, knockBackMagnitudeX, knock
 	else objectKnockedBack.vy += forceDown;
 }
 
-function knockDown(character) {
+function knockDown(character, timeOnGroundScale) {
 	character.knockedDown = true;
 	character.wasJustKnockedDown = true;
+	character.timeOnGroundAfterKnockDownScale = timeOnGroundScale || 1;
 }
 
 function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalingYSize, type) {
