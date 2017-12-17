@@ -50,13 +50,14 @@ class SimpleSprite {
         this.homing = false;
         this.fleeing = false;
         this.flying = false; //this does two things: non-flying things are affected by gravity; flying things that are homing have homing dy.
-        this.noWanderingDirectionChangeUntil = now();    // for wandering behavior
         this.wandering = false;
+		this.shaking = false;
+        this.noWanderingDirectionChangeUntil = now();    // for wandering behavior
         this.wanderingChanceOfIdling = 0.33; // 0 will never idle while wandering, 1 will always idle while wandering.
-        this.target = null;
         this.homingAcceleration = 0;
         this.fleeingAcceleration = 0;
         this.maxSpeed = 32767;
+        this.target = null;
         this.maxAcceleration = 3;
         this.collides = false;  //checks for collision with level geometry.
         this.removedOnCollision = false; //if sprite collides (with level geometry) it will be removed.
@@ -338,6 +339,7 @@ function updateLocalSprite(localSprite) {
     localSprite.vx += localSprite.dx;
     localSprite.vy += localSprite.dy;
     // is target inside aggro radius. If so, sets localSprite.targetInAggroRadius to true.
+	// WRONG, probably. This probably shouldn't be calculated for all sprites. I think only the wraith hound uses this, and maybe the haunted mask? Sentinel eye?
     if (isCharacterInsideRadius(localSprite.x, localSprite.y, localSprite.aggroRadius, localSprite.target)) localSprite.targetInAggroRadius = true;
     else localSprite.targetInAggroRadius = false;
     // wandering behavior
@@ -363,7 +365,50 @@ function updateLocalSprite(localSprite) {
         localSprite.vx += localSprite.dx;
         localSprite.vy += localSprite.dy;
     }
-    // haunted mask update
+    // shaking behavior
+	if (localSprite.shaking) {
+		var msUntilNextDirectionChangeY = localSprite.minShakeMs + (Math.random() * localSprite.maxShakeMs - localSprite.minShakeMs),
+			magnitudeOfCurrentShakeY = localSprite.minShakeMagnitude + (Math.random() * localSprite.maxShakeMagnitude - localSprite.minShakeMagnitude);
+		// x-axis component of shake
+		if (localSprite.noNewXShakeUntil <= now() || !localSprite.noNewXShakeUntil) {
+			if (localSprite.xShakeOscillationComplete) {
+				localSprite.magnitudeOfCurrentShakeX = localSprite.minShakeMagnitude + (Math.random() * localSprite.maxShakeMagnitude - localSprite.minShakeMagnitude);
+				localSprite.msUntilNextDirectionChangeX = localSprite.minShakeMs + (Math.random() * localSprite.maxShakeMs - localSprite.minShakeMs);
+				if (Math.random() > 0.5) {
+					localSprite.vx += localSprite.magnitudeOfCurrentShakeX;
+					localSprite.xShakeMagnitudeIsPositive = true;
+				} else {
+					localSprite.vx -= localSprite.magnitudeOfCurrentShakeX;
+					localSprite.xShakeMagnitudeIsPositive = false;
+				}
+				localSprite.xShakeOscillationComplete = false;
+			} else {
+				if (localSprite.xShakeMagnitudeIsPositive) localSprite.vx -= localSprite.magnitudeOfCurrentShakeX;
+				localSprite.xShakeOscillationComplete = true;
+				localSprite.noNewXShakeUntil = now() + localSprite.msUntilNextDirectionChangeX;
+			}
+		}
+		// y-axis component of shake
+		if (localSprite.noNewYShakeUntil <= now() || !localSprite.noNewYShakeUntil) {
+			if (localSprite.yShakeOscillationComplete) {
+				localSprite.magnitudeOfCurrentShakeY = localSprite.minShakeMagnitude + (Math.random() * localSprite.maxShakeMagnitude - localSprite.minShakeMagnitude);
+				localSprite.msUntilNextDirectionChangeY = localSprite.minShakeMs + (Math.random() * localSprite.maxShakeMs - localSprite.minShakeMs);
+				if (Math.random() > 0.5) {
+					localSprite.yx += localSprite.magnitudeOfCurrentShakeX;
+					localSprite.yShakeMagnitudeIsPositive = true;
+				} else {
+					localSprite.y -= localSprite.magnitudeOfCurrentShakeY;
+					localSprite.yShakeMagnitudeIsPositive = false;
+				}
+				localSprite.yShakeOscillationComplete = false;
+			} else {
+				if (localSprite.yShakeMagnitudeIsPositive) localSprite.vy -= localSprite.magnitudeOfCurrentShakeY;
+				localSprite.yShakeOscillationComplete = true;
+				localSprite.noNewYShakeUntil = now() + localSprite.msUntilNextDirectionChangeY;
+			}
+		}
+	}
+	// haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
         if (localSprite.targetInAggroRadius) {
@@ -738,7 +783,7 @@ function updateLocalSprite(localSprite) {
 	// steam tank update
 	if (localSprite.type === CREATURE_TYPE_STEAM_TANK) {
 		var tank = localSprite;
-		tank.projectileOriginX = tank.x,
+		tank.projectileOriginX = tank.x;
 		tank.projectileOriginY = tank.y - tank.getHitBox().height * 0.5;
 		// recoil on firing. Uses moving animation for rolling wheels. puff of smoke on firing.
 		// turrets rotate to face target that's in range and within line of sight.
@@ -1358,8 +1403,32 @@ function getCreatureSteamTank(x, y) {
 	tank.attackCooldownMinMs = 2000;
 	tank.spawnCooldownMaxMs = 50000;	// after being removed, max time before respawning
 	tank.spawnCooldownMinMs = 35000;
+	tank.shaking = true;
+	tank.minShakeMs = 15;
+	tank.maxShakeMs = 40;
+	tank.minShakeMagnitude = 1;
+	tank.maxShakeMagnitude = 2.5;
+	tank.xShakeOscillationComplete = true;
+	tank.yShakeOscillationComplete = true;
 	return tank;
 }
+
+/* 	if (localSprite.shaking) {
+		var msUntilNextDirectionChangeX = localSprite.minShakeMs + (Math.random() * localSprite.maxShakeMs - localSprite.minShakeMs),
+			msUntilNextDirectionChangeY = localSprite.minShakeMs + (Math.random() * localSprite.maxShakeMs - localSprite.minShakeMs),
+			magnitudeOfCurrentShakeX = localSprite.minShakeMagnitude + (Math.random() * localSprite.maxShakeMagnitude - localSprite.minShakeMagnitude),
+			magnitudeOfCurrentShakeY = localSprite.minShakeMagnitude + (Math.random() * localSprite.maxShakeMagnitude - localSprite.minShakeMagnitude);
+		if (localSprite.noNewXShakeUntil <= now() || !localSprite.noNewXShakeUntil) {
+			if (Math.random() > 0.5) localSprite.vx += magnitudeOfCurrentShakeX;
+			else localSprite.vx -= magnitudeOfCurrentShakeX;
+			localSprite.noNewXShakeUntil = now() + msUntilNextDirectionChangeX;
+		}
+		if (localSprite.noNewYShakeUntil <= now() || !localSprite.noNewYShakeUntil) {
+			if (Math.random() > 0.5) localSprite.vy += magnitudeOfCurrentShakeY;
+			else localSprite.vy -= magnitudeOfCurrentShakeY;
+			localSprite.noNewYShakeUntil = now() + msUntilNextDirectionChangeY;
+		}
+	}*/
 
 function getDroneBomberRotor(x, y, parent, msBetweenFrames) {
     var xScale = yScale = 0.12;
