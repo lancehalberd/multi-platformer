@@ -1,4 +1,4 @@
-var StretchNine = require('../app/public/js/StretchNine.js');
+var StretchNine = require('../app/public/js/editor/StretchNine.js');
 var Rectangle = require('../app/public/js/Rectangle.js');
 var tiles = require('../app/public/js/tiles.js');
 

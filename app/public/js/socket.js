@@ -26,9 +26,10 @@ socket.addEventListener('message', event => {
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.map) {
-        selectedTrigger = null;
+        selectedEntity = null;
         mainCharacter.checkPoint = null;
         currentMap = data.map;
+        loadedZonesById[currentMap.id] = currentMap;
         if (currentMap.respawnPoint) {
             // This will only be used if a check point doesn't override it.
             mainCharacter.x = mainCharacter.originalX = currentMap.respawnPoint.x;
@@ -108,8 +109,8 @@ socket.addEventListener('message', event => {
         // Check if we need to update the graphic for this tile
         var newKey = hashObject(data.updatedTile);
         var index = currentMap.hash[newKey];
-        if (index && index < $('.js-localTiles').children().length) {
-            var canvas = $('.js-localTiles').children()[index];
+        if (index && index < mainPalette.$tileBrushes.children().length) {
+            var canvas = mainPalette.$tileBrushes.children()[index];
             updateBrushPreviewElement(canvas, currentBrush);
         }
     }
@@ -121,8 +122,8 @@ socket.addEventListener('message', event => {
             // The local tile brushes don't check for missing brushes on update,
             // so explicitly remove the element for the delete brush when a
             // brush is deleted.
-            $('.js-localTiles').children()[data.deletedUniqueTileIndex].remove();
-            updateSecondaryBrushes();
+            mainPalette.$tileBrushes.children()[data.deletedUniqueTileIndex].remove();
+            foreignPalette.updateBrushes(true);
         }
     }
     if (data.mapObject) {
@@ -135,8 +136,8 @@ socket.addEventListener('message', event => {
         localSprites.push(entity);
         // Change selected Trigger to the version we created from the server
         // rather than the locall created copy.
-        if (selectedTrigger && selectedTrigger.id === entity.id) {
-            selectedTrigger = entity;
+        if (selectedEntity && selectedEntity.id === entity.id) {
+            selectedEntity = entity;
         }
         currentMap.isDirty = true;
     }
@@ -148,8 +149,8 @@ socket.addEventListener('message', event => {
         } else {
             console.log(`Couldn't find entity to delete: ${data.deletedEntityId}`);
         }
-        if (selectedTrigger && selectedTrigger.id === data.deletedEntityId) {
-            selectedTrigger = null;
+        if (selectedEntity && selectedEntity.id === data.deletedEntityId) {
+            selectedEntity = null;
         }
         currentMap.isDirty = true;
     }
@@ -161,8 +162,8 @@ socket.addEventListener('message', event => {
         } else {
             console.log(`Couldn't find entity to update: ${data.updatedEntity.id}`);
         }
-        if (selectedTrigger && selectedTrigger.id === data.updatedEntity.id) {
-            selectedTrigger = localSprites[index];
+        if (selectedEntity && selectedEntity.id === data.updatedEntity.id) {
+            selectedEntity = localSprites[index];
         }
         currentMap.isDirty = true;
     }
@@ -177,8 +178,8 @@ socket.addEventListener('message', event => {
         if (data.zone.id === $('.js-zoneSelectField select').val()) {
             updateLocationSelect();
         }
-        if (data.zone.id === $('.js-foreignZoneSelect').val()) {
-            updateSecondaryBrushes();
+        if (data.zone.id === foreignPalette.zoneId) {
+            foreignPalette.updateBrushes(true);
         }
     }
     if (data.savedMap) {

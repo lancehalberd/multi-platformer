@@ -7,7 +7,7 @@ var mustache = require('mustache');
 var _ = require('lodash');
 var fs = require('fs');
 
-var {addTileToPalette, convertMapToTileSet, deleteTileFromPalette, updateTilePalette} = require('./app/public/js/convertMapToTileSet.js');
+var {addTileToPalette, convertMapToTileSet, deleteTileFromPalette, updateTilePalette} = require('./app/public/js/editor/convertMapToTileSet.js');
 
 var colors = ['red', 'blue', 'yellow', 'green', 'purple', 'white', 'grey', 'orange', 'brown'];
 

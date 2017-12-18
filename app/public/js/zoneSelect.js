@@ -1,4 +1,4 @@
-$('.js-zoneSelect').on('change', function () {
+$('.js-mainZoneSelect').on('change', function () {
     var $select = $(this);
     //console.log(document.activeElement);
     $select.blur();

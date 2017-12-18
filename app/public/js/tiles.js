@@ -320,8 +320,8 @@ var stone4Desert16 = {
 //////////////////////////////
 
 if (typeof(require) !== 'undefined') {
-    StretchNine = require('./StretchNine.js');
-    var {setMapTile} = require('./convertMapToTileSet.js');
+    StretchNine = require('./editor/StretchNine.js');
+    var {setMapTile} = require('./editor/convertMapToTileSet.js');
 }
 
 function applyObjectToMap(map, object, coordinates) {

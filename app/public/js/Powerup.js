@@ -46,7 +46,7 @@ class Powerup extends Trigger {
     renderPreview(target, startCoords, lastCoords) {
         var frame = getAnimationFrame(this.constructor.animation.frames, 5);
         draw.image(mainContext, frame.image, frame, target);
-        if (selectedTrigger === this) {
+        if (selectedEntity === this) {
             this.renderSelectedBox();
         }
     }

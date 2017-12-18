@@ -89,7 +89,7 @@ class Trigger extends Entity {
         } else {
             draw.fillRectangle(mainContext, target, this.color);
         }
-        if (selectedTrigger === this) {
+        if (selectedEntity === this) {
             this.renderSelectedBox();
         }
     }
@@ -155,7 +155,7 @@ class SpawnTrigger extends Trigger {
 
     renderPreview(target, startCoords, lastCoords) {
         super.renderPreview(target);
-        if (selectedTrigger === this) {
+        if (selectedEntity === this) {
             // We should update this to draw the spawned object eventually.
             var frame = getAnimationFrame(fireballAnimation.frames, 5);
             // Draw a fireball clip where the fireball will spawn.
@@ -205,7 +205,7 @@ class TeleporterTrigger extends Trigger {
 
     renderPreview(target, startCoords, lastCoords) {
         super.renderPreview(target);
-        if (selectedTrigger === this) {
+        if (selectedEntity === this) {
             // We should update this to draw the spawned object eventually.
             var frame = getAnimationFrame(portalAnimation.frames, 5);
             // Draw a fireball clip where the fireball will spawn.

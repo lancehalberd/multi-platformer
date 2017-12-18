@@ -18,7 +18,7 @@ class CheckPoint extends Entity {
         if (mainCharacter.checkPoint !== this) mainContext.globalAlpha = .5;
         this.renderToTarget(mainContext, this.getHitBox());
         mainContext.restore();
-        if (selectedTrigger === this) this.renderSelectedBox();
+        if (selectedEntity === this) this.renderSelectedBox();
     }
 
     renderToTarget(context, target) {

@@ -62,7 +62,7 @@
 <div class="link-bar">
     <a href="/zones">Zones</a>
     <a href="/credits.html" target="_blank" >Credits</a>
-    <select class="js-zoneSelect zoneSelect">
+    <select class="js-mainZoneSelect zoneSelect">
         {{#zones}}
         <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
         {{/zones}}
@@ -119,11 +119,12 @@
         </div>
     </div>
     <div class="js-brushSelectField editField brushField">
-        <div class="brushColumn">
+        <div class="brushColumn js-globalBrushes">
             <div class="js-specialBrushes"></div>
         </div>
-        <div class="brushColumn">
-            <div class="js-localTiles"></div>
+        <div class="brushColumn js-localBrushes">
+            <div class="js-tileBrushes"></div>
+            <div class="js-specialBrushes"></div>
             <div>
                 <button class="js-newTile">New Tile</button>
                 <button class="js-saveTile">Save Tile</button>
@@ -131,12 +132,13 @@
                 <button class="js-deleteTile">Delete Tile</button>
             </div>
         </div>
-        <div class="brushColumn">
-            <select class="js-foreignZoneSelect foreignZoneSelect">
+        <div class="brushColumn js-foreignBrushes">
+            <select class="js-zoneSelect foreignZoneSelect">
                 <option selected value="">Secondary Palette</option>
                 {{#zones}}<option value="{{id}}">{{name}}</option>{{/zones}}
             </select>
-            <div class="js-foreignBrushes"></div>
+            <div class="js-tileBrushes"></div>
+            <div class="js-specialBrushes"></div>
         </div>
     </div>
     <div class="js-reloadField editField">

@@ -47,7 +47,7 @@ class PointSpawner extends Entity {
         if (isEditing) {
             this.hitBox = this.hitBox.moveCenterTo(this.x, this.y);
             this.renderPreview(this.x, this.y);
-            if (selectedTrigger === this) this.renderSelectedBox();
+            if (selectedEntity === this) this.renderSelectedBox();
         }
     }
 
