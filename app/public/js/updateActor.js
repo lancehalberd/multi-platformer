@@ -104,7 +104,7 @@ function updateActor(actor) {
     // end disabled behavior
     
     if (actor === mainCharacter && !actor.deathTime && !isEditing && !actor.disabled) {
-        // Attack if the space key is down.
+        // attacking behavior part 1. Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
@@ -657,6 +657,7 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.attackAnimationMsPerFrame = 280;
     actor.scale = 1.75;
     actor.type = CHARACTER_VICTORIA;
 }
@@ -680,6 +681,7 @@ function changeCharacterToCowbot(actor) {
     actor.scale = 1.5;
     actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
     //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+    actor.knockBackInertiaScale = 0.6; // cowbot is heavy and doesn't get knocked back as easily as other characters
     actor.type = CHARACTER_COWBOT;
 }
 

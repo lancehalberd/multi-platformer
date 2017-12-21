@@ -46,8 +46,8 @@ var characterVictoriaUncontrolledFallAnimation = fireballAnimation;
 var characterVictoriaAttackAnimation = {frames: allCharacterVictoriaFrames.slice(14, 16)};
 
 // Victoria character attack animation hit boxes created
-characterVictoriaAttackAnimation.frames[1].damageHitBox = new Rectangle(-16, -48, 64, 48);
-characterVictoriaAttackAnimation.frames[1].damageHitBox.damage = 1;
+characterVictoriaAttackAnimation.frames[0].damageHitBox = new Rectangle(-16, -48, 64, 48);
+characterVictoriaAttackAnimation.frames[0].damageHitBox.damage = 1;
 
 // Cowbot character animations
 var allCharacterCowbotFrames = rectangleToFrames(new Rectangle(0, 0, 32, 44), requireImage('/gfx/person/characterCowbot.png'), 6);
@@ -90,12 +90,16 @@ var droneBombAnimation = {frames: allDroneBomberFrames.slice(8, 9)};
 var droneBombExplosionAnimation = {frames: allDroneBomberFrames.slice(9, 15)};
 
 // steam tank animations
-var allSteamTankFrames = rectangleToFrames(new Rectangle(0, 0, 256, 256), requireImage('/gfx/creatures/creatureSteamTank.png'), 1);
+var allSteamTankFrames = rectangleToFrames(new Rectangle(0, 0, 256, 256), requireImage('/gfx/creatures/creatureSteamTank.png'), 5);
 var steamTankMovingAnimation = {frames: allSteamTankFrames.slice(0, 1)};
 var steamTankIdlingAnimation = {frames: allSteamTankFrames.slice(0, 1)};
 var steamTankAttackAnimation = {frames: allSteamTankFrames.slice(0, 1)};
 var steamTankDefeatAnimation = {frames: allSteamTankFrames.slice(0, 1)};
-
+var steamTankBodyAnimation = {frames: allSteamTankFrames.slice(1, 2)};
+var steamTankFrameAnimation = {frames: allSteamTankFrames.slice(0, 1)};
+var steamTankTurretAnimation = {frames: allSteamTankFrames.slice(2, 3)};
+var steamTankWheelMovingAnimation = {frames: allSteamTankFrames.slice(3, 5)};
+var steamTankWheelIdlingAnimation = {frames: allSteamTankFrames.slice(3, 4)};
 
 // Get the current frame for a given set of frames assuming that it is looping at fps based on now().
 var getAnimationFrame = (frames, fps) => frames[Math.floor(now() * fps / 1000) % frames.length];

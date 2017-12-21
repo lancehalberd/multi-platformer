@@ -66,10 +66,10 @@ function addEffectTeleportation(x, y) {
     localSprites.push(sparklesAnimation);
 }
 
-function addEffectWinkOut(x, y) {
+function addEffectWinkOut(x, y, scale) {
     var sourceRectangle = new Rectangle(0, 0, 32, 32);
     var frames = rectangleToFrames(sourceRectangle, effectWinkOutImage, 8);
-    var target = sourceRectangle.scale(1.67);
+    var target = sourceRectangle.scale(scale || 1.67);
     target = target.moveTo(x - target.width / 2, y - target.height);
     var winkOutEffect = new SimpleAnimation({frames}, now(), 15, target);
     winkOutEffect.type = EFFECT_WINKOUT;

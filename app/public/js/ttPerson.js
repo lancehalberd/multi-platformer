@@ -173,10 +173,11 @@ class TTCharacter {
         this.cannotAirDashUntil = now();
         this.color = 'white';
         this.invulnerableOnDamageDurationInMs = 1000;
-        this.attackCooldownInMs = 350;
+        this.attackCooldownInMs = 0;// 350; // I should just set this in the animation, I think? Or will that make you not be able to move for too long if you can't move while attacking? Or will it look weird when you're attacking for a long time and *do* move?
         this.cannotAttackUntil = now();
         this.msOnGroundAfterKnockDownBase = 1000; // time before standing up upon being knocked down. "base" because it's scaled based on how fast you were traveling when landing from an unctronlled fall, and will be scaled based on how much damage you took when you were knocked down by a damage source.
         this.timeOnGroundAfterKnockDownScale = 1; // ... base is multiplied by this in the knock down update
+        this.knockBackInertiaScale = 1; // kncok back effect is scaled by this
     }
     
 	getCurrentFrame() {
