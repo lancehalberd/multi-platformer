@@ -1833,6 +1833,8 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
     particle.xScaleMin = 0;
     particle.yScaleMin = 0;
     particle.rotationPerFrame = 50;
+	particle.takesDamageFromTarget = false;
+	particle.damagesTargetOnContact = false;
     //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(particle);
     if (particle.type === PARTICLE_TYPE_FIREBALL_CONTRAIL) {
@@ -1872,6 +1874,8 @@ function addParticleAtLocation(x, y, decayFrames, parentPreScalingXSize, parentP
     particle.yScalePerFrame = particle.yScale / particle.framesToLive;
     particle.xScaleMin = 0;
     particle.yScaleMin = 0;
+	particle.damagesTargetOnContact = false;
+	particle.takesDamageFromTarget = false;
     particle.rotationPerFrame = 50;
     //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(particle);
