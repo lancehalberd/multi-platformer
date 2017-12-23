@@ -21,11 +21,11 @@ var CREATURE_TYPE_HAUNTED_MASK = 'hauntedMaskCreature';
 var CREATURE_TYPE_WRAITH_HOUND = 'wraithHoundCreature';
 var CREATURE_TYPE_SENTINEL_EYE = 'sentineEyeCreature';
 var CREATURE_TYPE_DRONE_BOMBER = 'droneBomberCreature';
-var CREATURE_TYPE_DRONE_BOMBER_ROTOR = 'droneBomberRotor';
+var CREATURE_TYPE_CHILD_DRONE_BOMBER_ROTOR = 'droneBomberRotor';
 var CREATURE_TYPE_STEAM_TANK = 'steamTankCreature';
-var CREATURE_TYPE_STEAM_TANK_TURRET = 'steamTankTurret';
-var CREATURE_TYPE_STEAM_TANK_BODY = 'steamTankBody';
-var CREATURE_TYPE_STEAM_TANK_WHEEL = 'steamTankWheel';
+var CREATURE_TYPE_CHILD_STEAM_TANK_TURRET = 'steamTankTurret';
+var CREATURE_TYPE_CHILD_STEAM_TANK_BODY = 'steamTankBody';
+var CREATURE_TYPE_CHILD_STEAM_TANK_WHEEL = 'steamTankWheel';
 
 var PARTICLE_TYPE_FIREBALL_COLLISION = 'fireballCollisionParticle';
 var PARTICLE_TYPE_FIREBALL_CONTRAIL = 'fireballContrailParticle';
@@ -80,6 +80,7 @@ class SimpleSprite {
         // which I can get by using yScale = -1
         this.xScale = xScale;
         this.yScale = yScale;
+		// for scale oscillation/pulsing
         this.xScaleMax = xScale;
         this.xScaleMin = xScale;
         this.yScaleMax = yScale;
@@ -374,6 +375,51 @@ function updateLocalSprite(localSprite) {
         localSprite.vx += localSprite.dx;
         localSprite.vy += localSprite.dy;
     }
+	// damage behavior
+		// damages its target when they touch
+	if (localSprite.damagesTargetOnContact) {
+		if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
+			var contactDamage;
+			// this is for projetiles that slow down and/or do more damage wehen the hit the player early in their range
+			if (localSprite.damageScalesWithRange) {
+				var parametricRange = getCurrentDistanceFromSpawnPoint(localSprite) / localSprite.range,
+					damageRange = localSprite.maxDamage - localSprite.minDamage;
+				localSprite.damage = Math.round(localSprite.minDamage + (parametricRange * damageRange));
+			}
+			// if the localSprite is a projectile and has its own .damage property, then that property is used for damage
+			if (localSprite.damage) contactDamage = localSprite.damage;
+			// otherwise the default .damageDealtOnContact property is used
+			else contactDamage = localSprite.damageDealtOnContact;
+			// knock back magnitude scale up with damage, but not linearly
+			var contactKnockBackScale = Math.max(1, contactDamage * 0.7);
+			damageSprite(localSprite.target, contactDamage);
+			knockBack(localSprite, localSprite.target, contactKnockBackScale);
+			// if damage dealt is more than 1, knock the target down
+			// WRONG this won't work for localSprites (only for the player), because they don't have knock down update logic
+			//		maybe do a check for if this is a TTPerson or whatever.
+			if (contactDamage > 1) knockDown(localSprite.target, contactDamage - 1);
+		}
+	}
+		// takes damage from its target
+	if (localSprite.takesDamageFromTarget) {
+		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(localSprite.target, localSprite)) {
+			var targetDamage = localSprite.target.animation.frames[localSprite.target.currentFrame].damageHitBox.damage;
+				targetDamageKnockBackScale = Math.max(1, targetDamage * 0.75);
+			damageSprite(localSprite, targetDamage);
+			knockBack(localSprite.target, localSprite, targetDamageKnockBackScale, 10, 10, 10);
+		}
+	}
+		// removed when it reaches 0 health
+	if (localSprite.removedOn0Health && localSprite.health <= 0) localSprite.shouldBeRemoved = true;
+	// child behavior
+	if (localSprite.isChild) {
+		if (localSprite.parent.shouldBeRemoved) localSprite.shouldBeRemoved = true;
+		localSprite.rotation = localSprite.parent.rotation;
+		localSprite.x = localSprite.parent.x + localSprite.childXOffset;
+		localSprite.y = localSprite.parent.y + localSprite.childYOffset;
+		// WRONG this is a hack to prevent some weird situations where children were colliding with the player even when their coordinates and visual hit box representations seemed to be very far away from the player
+		localSprite.vx = localSprite.vy = localSprite.dx = localSprite.vy = 0;
+	}
     // shaking behavior
 	if (localSprite.shaking) {
 		// x-axis component of shake
@@ -415,42 +461,6 @@ function updateLocalSprite(localSprite) {
 			}
 		}
 	}
-	// damage behavior
-		// damages its target when they touch
-	if (localSprite.damagesTargetOnContact) {
-		if (isObjectCollidingWithNonInvulnerableTarget(localSprite, localSprite.target)) {
-			var contactDamage;
-			// this is for projetiles that slow down and/or do more damage wehen the hit the player early in their range
-			if (localSprite.damageScalesWithRange) {
-				var parametricRange = getCurrentDistanceFromSpawnPoint(localSprite) / localSprite.range,
-					damageRange = localSprite.maxDamage - localSprite.minDamage;
-				localSprite.damage = Math.round(localSprite.minDamage + (parametricRange * damageRange));
-			}
-			// if the localSprite is a projectile and has its own .damage property, then that property is used for damage
-			if (localSprite.damage) contactDamage = localSprite.damage;
-			// otherwise the default .damageDealtOnContact property is used
-			else contactDamage = localSprite.damageDealtOnContact;
-			// knock back magnitude scale up with damage, but not linearly
-			var contactKnockBackScale = Math.max(1, contactDamage * 0.7);
-			damageSprite(localSprite.target, contactDamage);
-			knockBack(localSprite, localSprite.target, contactKnockBackScale);
-			// if damage dealt is more than 1, knock the target down
-			// WRONG this won't work for localSprites (only for the player), because they don't have knock down update logic
-			//		maybe do a check for if this is a TTPerson or whatever.
-			if (contactDamage > 1) knockDown(localSprite.target, contactDamage - 1);
-		}
-	}
-		// takes damage from its target
-	if (localSprite.takesDamageFromTarget) {
-		if (isDamageHitBoxCollidingWithNonInvulnerableTarget(localSprite.target, localSprite)) {
-			var targetDamage = localSprite.target.animation.frames[localSprite.target.currentFrame].damageHitBox.damage;
-				targetDamageKnockBackScale = Math.max(1, targetDamage * 0.75);
-			damageSprite(localSprite, targetDamage);
-			knockBack(localSprite.target, localSprite, targetDamageKnockBackScale, 10, 10, 10);
-		}
-	}
-		// removed when it reaches 0 health
-	if (localSprite.removedOn0Health && localSprite.health <= 0) localSprite.shouldBeRemoved = true;
 	// haunted mask update
     if (localSprite.type === CREATURE_TYPE_HAUNTED_MASK) {
         // if target is inside aggro radius
@@ -871,7 +881,12 @@ function updateLocalSprite(localSprite) {
 		// 		alternative (maybe better) to missiles: spherical, spidery drones that launch into the air, then parachute/glide down toward the player's last known location, at which point they scuttle toward the player and explode on contact or within range.
 		// belches steam
 		// very aggressive when cornered
-		
+		if (tank.justCreated) {
+			getCreatureSteamTankBody(tank.x, tank.y, tank);
+			getCreatureSteamTankWheel(tank.x, tank.y, tank, LEFT);
+			getCreatureSteamTankWheel(tank.x, tank.y, tank, RIGHT);
+			tank.justCreated = false;
+		}		
 		
 		// flees when player is close
 		if (isCharacterInsideRadius(tank.x, tank.y, tank.fleeingRadius, tank.target) && tank.hasLineOfSightToTargetInRange) {
@@ -882,9 +897,9 @@ function updateLocalSprite(localSprite) {
 	// end steam tank main update
 	
 	// steam tank turret update
-	if (localSprite.type === CREATURE_TYPE_STEAM_TANK_TURRET) {
+	if (localSprite.type === CREATURE_TYPE_CHILD_STEAM_TANK_TURRET) {
 		var turret = localSprite;
-		turret.projectileOriginX = turret.x;
+		turret.projectileOriginX = turret.x + 0.5 * turret.getHitBox().width * turret.xScalePolarity;
 		turret.projectileOriginY = turret.y - turret.getHitBox().height * 0.5;
 		// firesTargetingDummies sets the property sprite.hasLineOfSightToTargetInRange to true or false for each projectile.
 		firesTargetingDummies(turret.projectileOriginX, turret.projectileOriginY, 200, 400, turret.target, turret);
@@ -906,13 +921,21 @@ function updateLocalSprite(localSprite) {
 	}
 	// end steam tank turret update
 	// steam tank body update
-	if (localSprite.type === CREATURE_TYPE_STEAM_TANK_BODY) {
-		
+	if (localSprite.type === CREATURE_TYPE_CHILD_STEAM_TANK_BODY) {
+		var tankBody = localSprite;
+		if (tankBody.justCreated) {
+			getCreatureSteamTankTurret(tankBody.x, tankBody.y, tankBody, LEFT);
+			getCreatureSteamTankTurret(tankBody.x, tankBody.y, tankBody, RIGHT);
+			tankBody.justCreated = false;
+		}
 	}
 	// end steam tank body update
 	// steam tank wheel update
-	if (localSprite.type === CREATURE_TYPE_STEAM_TANK_WHEEL) {
-		
+	if (localSprite.type === CREATURE_TYPE_CHILD_STEAM_TANK_WHEEL) {
+		var wheel = localSprite;
+		if (Math.abs(wheel.parent.vx) > 0.1) wheel.animation = wheel.movingAnimation;
+		// BROKEN the idling animation is sort of working, but then generating an error
+		//else wheel.animation = wheel.idlingAnimation;		
 	}
 	// end steam tank wheel update
 	// end steam tank & components update
@@ -1014,13 +1037,6 @@ function updateLocalSprite(localSprite) {
 		} else if (localSprite.shouldBeRemoved) {
 			localSprite.parent.hasLineOfSightToTargetInRange = false;
 		}
-	}
-
-    if (localSprite.type === CREATURE_TYPE_DRONE_BOMBER_ROTOR) {
-		localSprite.x = localSprite.parent.x;
-		localSprite.y = localSprite.parent.y;
-		localSprite.xScale = localSprite.parent.xScale;
-		localSprite.rotation = localSprite.parent.rotation;
 	}
 
 	if (localSprite.type === PROJECTILE_TYPE_DRONE_BOMB){
@@ -1138,14 +1154,17 @@ function updateLocalSprite(localSprite) {
 	if (localSprite.type === DETONATION_TYPE_STEAM_TANK_FLAK_VOLLEY) {
 		var volley = localSprite;
 		if ((volley.noProjectileFiredUntil <= now() || !volley.noProjectileFiredUntil) && volley.currentNumberOfProjectilesReleased < volley.maxNumberOfProjectiles) {
-			volley.x = volley.parent.x;
-			volley.y = volley.parent.y - volley.parent.getHitBox().height * 0.5;
+			if (volley.justCreated) {
+				addEffectDroneBombExplosion(volley.x + 24 * volley.parent.xScalePolarity, volley.y + 24, 0, 0, 0.05, 10);
+				volley.justCreated = false;
+			}
+			volley.x = volley.parent.projectileOriginX;
+			volley.y = volley.parent.projectileOriginY;
 			// this line makes the volley track the moving player
 			volley.targetingVector = getNormalizedVector(volley.parent.projectileOriginX, volley.target.x, volley.parent.projectileOriginY, volley.parent.targetYCenter);
 			// recoil
 			volley.parent.vx += volley.targetingVector[0] * 10;
 			// smoke puff. WRONG Might later be muzzle flash.
-			addEffectSteamPlume(volley.x, volley.y, 0, -3, 0.5, 10);
 			var randomFlakVxAddition,
 				randomFlakVyAddition,
 				flakVx = volley.projectileInitialSpeed * volley.targetingVector[0],
@@ -1157,6 +1176,7 @@ function updateLocalSprite(localSprite) {
 			else randomFlakVyAddition = -Math.random() * (volley.projectileInitialSpeed * innaccuracyScale);
 			flakVx += randomFlakVxAddition;
 			flakVy += randomFlakVyAddition;
+			addEffectSteamPlume(volley.x, volley.y, flakVx / 2, flakVy / 2 - 2, 1.5, 5);
 			getProjectileDroneBombShrapnel(volley.x, volley.y, flakVx, flakVy, volley.target, volley, volley.projectileInitialSpeed, volley.projectileTerminalSpeed, volley.range);
 			volley.currentNumberOfProjectilesReleased++;
 			volley.noProjectileFiredUntil = now() + Math.random() * 200;
@@ -1452,11 +1472,11 @@ function getCreatureDroneBomber(x, y, movesLEFTorRIGHT) {
 function getCreatureSteamTank(x, y) {
     var xScale = yScale = 0.75;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(52, 78, 152, 178);
+    var hitBox = new Rectangle(52, 206, 152, 50);
     var tank = new SimpleSprite(steamTankMovingAnimation, x, y, 0, 0, xScale, yScale);
     tank.type = CREATURE_TYPE_STEAM_TANK;
 	tank.health = 7;
-	tank.animation = addHitBoxToAnimationFrames(steamTankFrameAnimation);
+	tank.animation = addHitBoxToAnimationFrames(steamTankFrameAnimation, hitBox);
 	tank.maxSpeed = 0.5;
 	tank.maxAcceleration = 0.011;
     tank.collides = true;
@@ -1476,48 +1496,87 @@ function getCreatureSteamTank(x, y) {
 function getCreatureSteamTankBody(x, y, parent) {
     var xScale = yScale = 0.75;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(52, 78, 152, 178);
+    var hitBox = new Rectangle(88, 80, 80, 160);
     var body = new SimpleSprite(steamTankBodyAnimation, x, y, 0, 0, xScale, yScale);
-    body.type = CREATURE_TYPE_STEAM_TANK_BODY;
+    body.type = CREATURE_TYPE_CHILD_STEAM_TANK_BODY;
 	body.parent = parent;
+	body.isChild = true;
+	body.flying = true; // children shouldn't really need to fly, should they? Shouldn't the child update override gravity?
+	body.childXOffset = 0;
+	body.childYOffset = -body.parent.getHitBox().height / 4;
+	body.x = x + body.childXOffset;
+	body.y = y + body.childYOffset;
 	body.target = body.parent.target;
+	body.xScale = body.yScale = body.parent.xScale;
 	body.animation = addHitBoxToAnimationFrames(steamTankBodyAnimation, hitBox);
 	body.shaking = true;
-	body.minShakeMs = 15;
-	body.maxShakeMs = 40;
+	body.minShakeMs = 100;
+	body.maxShakeMs = 250;
 	body.minShakeMagnitude = 1;
-	body.maxShakeMagnitude = 2.5;
+	body.maxShakeMagnitude = 4;
 	body.xShakeOscillationComplete = true;
 	body.yShakeOscillationComplete = true;
+	body.takesDamageFromTarget = false;
+	body.damagesTargetOnContact = false;
 	localSprites.push(body);
 }
 
-function getCreatureSteamTankTurret(x, y, parent) {
+function getCreatureSteamTankTurret(x, y, parent, side) {
     var xScale = yScale = 0.75;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(52, 78, 152, 178);
+    var hitBox = new Rectangle(100, 220, 56, 36);
     var turret = new SimpleSprite(steamTankMovingAnimation, x, y, 0, 0, xScale, yScale);
-    turret.type = CREATURE_TYPE_STEAM_TANK_TURRET;
+    turret.type = CREATURE_TYPE_CHILD_STEAM_TANK_TURRET;
+	turret.isChild = true;
 	turret.parent = parent;
+	turret.xScale = turret.yScale = turret.parent.xScale;
+	turret.childXOffsetBase = turret.parent.getHitBox().width / 2.2;
+	if (side === LEFT) {
+		turret.childXOffset = -turret.childXOffsetBase;
+		turret.xScalePolarity = -1; // used for projectile origin offsets
+	}
+	if (side === RIGHT) {
+		turret.childXOffset = turret.childXOffsetBase;
+		turret.xScale = -turret.xScale;
+		turret.xScalePolarity = 1;
+	}
+	turret.x = x + turret.childXOffset;
+	turret.childYOffset = -turret.parent.getHitBox().height / 3.5;
+	turret.y = y + turret.childYOffset;
+	turret.flying = true;
 	turret.target = turret.parent.target;
 	turret.animation = addHitBoxToAnimationFrames(steamTankTurretAnimation, hitBox);
 	turret.attackCooldownMaxMs = 4000;
 	turret.attackCooldownMinMs = 2000;
 	turret.spawnCooldownMaxMs = 50000;	// after being removed, max time before respawning
 	turret.spawnCooldownMinMs = 35000;
+	turret.takesDamageFromTarget = false;
+	turret.damagesTargetOnContact = false;
 	localSprites.push(turret);
 }
 
-function getCreatureSteamTankWheel(x, y, parent) {
+function getCreatureSteamTankWheel(x, y, parent, side) {
     var xScale = yScale = 0.75;
     // This defines the hitBox inside the frame from the top left corner of that frame.
-    var hitBox = new Rectangle(52, 78, 152, 178);
+    var hitBox = new Rectangle(103, 206, 50, 50);
     var wheel = new SimpleSprite(steamTankWheelIdlingAnimation, x, y, 0, 0, xScale, yScale);
-    wheel.type = CREATURE_TYPE_STEAM_TANK_WHEEL;
+    wheel.type = CREATURE_TYPE_CHILD_STEAM_TANK_WHEEL;
 	wheel.parent = parent;
+	wheel.isChild = true;
+	wheel.childXOffsetBase = wheel.parent.getHitBox().width / 3.33;
+	if (side === LEFT) wheel.childXOffset = -wheel.childXOffsetBase;
+	if (side === RIGHT) wheel.childXOffset = wheel.childXOffsetBase;
+	wheel.x = x + wheel.childXOffset;
+	wheel.childYOffset = 0;
+	wheel.y = y + wheel.childYOffset;
+	wheel.flying = true;
+	wheel.xScale = wheel.yScale = wheel.parent.xScale;
+	wheel.hitBox = wheel.parent.hitBox;
 	wheel.movingAnimation = addHitBoxToAnimationFrames(steamTankWheelMovingAnimation, hitBox);
 	wheel.idlingAnimation = addHitBoxToAnimationFrames(steamTankWheelIdlingAnimation, hitBox);
-	wheel.animation = steamTankWheelAnimation;
+	wheel.animation = wheel.idlingAnimation;
+	wheel.takesDamageFromTarget = false;
+	wheel.damagesTargetOnContact = false;
 	localSprites.push(wheel);
 }
 
@@ -1539,10 +1598,14 @@ function getCreatureSteamTankWheel(x, y, parent) {
 	}*/
 
 function getDroneBomberRotor(x, y, parent, msBetweenFrames) {
-    var xScale = yScale = 0.12;
+    var xScale = yScale = parent.xScale;
 		hitBox = new Rectangle(210, 245, 400, 390);
     var rotor = new SimpleSprite(sentinelEyeMovingAnimation, x, y, 0, 0, xScale, yScale);
-    rotor.type = CREATURE_TYPE_DRONE_BOMBER_ROTOR;
+    rotor.type = CREATURE_TYPE_CHILD_DRONE_BOMBER_ROTOR;
+	rotor.isChild = true;
+	rotor.childXOffset = 0;
+	rotor.childYOffset = 0;
+	rotor.flying = true;
     rotor.animation = addHitBoxToAnimationFrames(droneBomberRotorAnimation, hitBox);
 	rotor.animation.msBetweenFrames = msBetweenFrames;
 	rotor.parent = parent;
@@ -1835,6 +1898,8 @@ function addParticle(parent, decayFrames, parentPreScalingXSize, parentPreScalin
     particle.rotationPerFrame = 50;
 	particle.takesDamageFromTarget = false;
 	particle.damagesTargetOnContact = false;
+	particle.collides = true;
+	particle.removedOnCollision = true;
     //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(particle);
     if (particle.type === PARTICLE_TYPE_FIREBALL_CONTRAIL) {
@@ -1877,6 +1942,8 @@ function addParticleAtLocation(x, y, decayFrames, parentPreScalingXSize, parentP
 	particle.damagesTargetOnContact = false;
 	particle.takesDamageFromTarget = false;
     particle.rotationPerFrame = 50;
+	particle.collides = true;
+	particle.removedOnCollision = true;
     //particle.msBetweenFrames = Math.round((decayFrames * 50 /*or framerate*/) / frames.length) + 1; //'+1' hopefully keeps the animation from starting to loop just before the pariticle dies.  //would be better to also have a continuous alpha fade happen during this time. Could also scale down if that weren't build into the animation frames already.
     //parent.contrailParticles.push(particle);
     if (particle.type === PARTICLE_TYPE_FIREBALL_CONTRAIL) {
