@@ -126,6 +126,11 @@ socket.addEventListener('message', event => {
             foreignPalette.updateBrushes(true);
         }
     }
+    if (data.brushData) {
+        // If the palette is updated, it will automatically be added to the UI
+        // when the editor checks if the main palette has been updated.
+        addBrushToPalette(currentMap, data.brushData);
+    }
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);
         currentMap.isDirty = true;

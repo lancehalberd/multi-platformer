@@ -25,7 +25,7 @@ const updateEditor = () => {
             updatedTile.image = getSelectedTileSource();
             updatedTile.size = getSelectedTileSourceSize();
             // Update this tile on the server if it is a saved tile.
-            if (updatedTile !== newTile) {
+            if (updatedTile !== mainPalette.newTile) {
                 sendData({action: 'updateTilePalette', oldKey, updatedTile});
             }
         }
@@ -68,13 +68,14 @@ const updateEditor = () => {
                     }
                 }
                 selectBrush(new CloneBrush(cloneTileGrid, currentMap));
+            } else {
+                selectTileUnderMouse();
             }
         }
     }
     if (currentBrush) currentBrush.update();
 };
 
-var newTile = null;
 const toggleEditing = () => {
     isEditing = !isEditing;
     $('.pageBody').toggleClass('isEditing', isEditing);
@@ -160,7 +161,7 @@ var toggleTileProperty = (updatedTile, property) => {
     var oldKey = hashObject(updatedTile);
     updatedTile.properties ^= property;
     // Update this tile on the server if it is a saved tile.
-    if (updatedTile !== newTile) {
+    if (updatedTile !== mainPalette.newTile) {
         sendData({action: 'updateTilePalette', oldKey, updatedTile});
     } else {
         updateTilePropertiesPreview();

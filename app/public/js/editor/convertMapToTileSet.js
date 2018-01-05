@@ -6,6 +6,16 @@ var convertMapToTileSet = (map) => {
     // from scratch each time so that map.uniqueTiles is the single source of truth.
     // Otherwise errors may cause the two to get out of sync.
     map.hash = {0: 0};
+    // Older maps may still not have the brushes array set on them.
+    if (!map.brushes) {
+        map.brushes = [];
+        for (var brush of map.brushes) {
+            if (brush.type) {
+                brush.brushClass = brush.type;
+                delete brush.type;
+            }
+        }
+    }
     if (map.uniqueTiles) {
         for (var i = 1; i < map.uniqueTiles.length; i++) {
             var key = hashObject(map.uniqueTiles[i]);
@@ -52,11 +62,13 @@ var updateTilePalette = (map, oldKey, newTile) => {
     map.hash[newKey] = index;
 };
 
+// Add a tile to the palette if it is missing, and returns the current or new index of the tile.
 var addTileToPalette = (map, newTile) => {
     var newKey = hashObject(newTile);
-    if (map.hash[newKey]) return;
+    if (map.hash[newKey]) return map.hash[newKey];
     map.hash[newKey] = map.uniqueTiles.length;
     map.uniqueTiles.push(newTile);
+    return map.uniqueTiles.length - 1;
 };
 
 // Will return true only if the tile was actually found and deleted from the palette.
@@ -71,10 +83,21 @@ var deleteTileFromPalette = (map, uniqueTileIndex) => {
     }
     var key = hashObject(map.uniqueTiles[uniqueTileIndex]);
     delete map.hash[key];
+    // Update the unique indexes stored in the mapping of tile hash -> unique tile index
     for (var key in map.hash) {
         if (map.hash[key] >= uniqueTileIndex) map.hash[key]--;
     }
+    // Update any unique indexes used by brushes in this palette. (Just clone brushes for now.)
+    for (var brushData of (map.brushes || [])) {
+        switch (brushData.brushClass) {
+            case 'CloneBrush':
+                spliceUniqueTileFromGrid(brushData.tileGrid, uniqueTileIndex);
+        }
+    }
+    // Remove the unique tile from the array of unique tiles
     map.uniqueTiles.splice(uniqueTileIndex, 1);
+    // Update the unique indexes of the tile grid for the map itself.
+    spliceUniqueTileFromGrid(map.composite, uniqueTileIndex);
     for (var row = 0; row < map.height; row++) {
         var tileRow = map.composite[row] || [];
         for (var col = 0; col < map.width; col++) {
@@ -88,8 +111,45 @@ var deleteTileFromPalette = (map, uniqueTileIndex) => {
     return true;
 };
 
+// Update the unique tile indexes of a grid to account for the removal of a uniqueTileIndex from the palette.
+var spliceUniqueTileFromGrid = (grid, uniqueTileIndex) => {
+    for (var row = 0; row < grid.length; row++) {
+        var tileRow = grid[row] || [];
+        for (var col = 0; col < tileRow.length; col++) {
+            // Replace the deleted tile with the empty tile.
+            if (tileRow[col] === uniqueTileIndex) tileRow[col] = 0;
+            // The index of all tiles with index greater than the removed tile
+            // will be reduced by one.
+            else if (tileRow[col] > uniqueTileIndex) tileRow[col]--;
+        }
+    }
+};
+
+var addBrushToPalette = (map, brushData) => {
+    // Some brushes cannot be stored as they are originally defined, so we transform them to the format
+    // we need to store them in and then save that. We don't want to do this in place because we pass the
+    // original data back to other clients for performing the update.
+    var storedBrushData = {brushClass: brushData.brushClass};
+    switch (brushData.brushClass) {
+        case 'CloneBrush':
+            // Add any new tiles from this clone brush to the palette and convert them to
+            // the local indexes for this map.
+            var tileGrid = [];
+            for (var row = 0; row < brushData.tileGrid.length; row++) {
+                tileGrid[row] = [];
+                for (var column = 0; column < brushData.tileGrid[row].length; column++) {
+                    tileGrid[row][column] = addTileToPalette(map, brushData.tileGrid[row][column]);
+                }
+            }
+            storedBrushData.tileGrid = tileGrid;
+            break;
+    }
+    map.brushes.push(storedBrushData);
+};
+
 if (typeof(module) !== 'undefined') {
     module.exports = {
+        addBrushToPalette,
         addTileToPalette,
         convertMapToTileSet,
         deleteTileFromPalette,

@@ -42,6 +42,20 @@ class ZonePalette {
             this.$tileBrushes.append(createBrushPreviewElement(brush));
             didUpdate = true;
         }
+        for (var n = this.$specialBrushes.children().length; n < (zone.brushes || []).length; n++) {
+            var brushData = zone.brushes[n];
+            var brushClass = classes[brushData.brushClass];
+            try {
+                if (!brushClass) throw new Error(`Missing brush class: '${brushData.brushClass}'`);
+                if (!brushClass.loadBrush) throw new Error(`Brush '${brushData.brushClass}' is missing loadBrush method`);
+                var brush = brushClass.loadBrush(zone, brushData);
+                if (!this.showBrush(brush)) continue;
+                this.$specialBrushes.append(createBrushPreviewElement(brush));
+                didUpdate = true;
+            } catch (error) {
+                console.log (error);
+            }
+        }
         return didUpdate;
     }
 
@@ -54,8 +68,10 @@ class MainZonePalette extends ZonePalette {
         this.$saveTileButton = this.$container.find('.js-saveTile');
         this.$cancelButton = this.$container.find('.js-cancelTile');
         this.$deleteButton = this.$container.find('.js-deleteTile');
+        this.$saveBrushButton = this.$container.find('.js-saveBrush');
+        this.$deleteBrushButton = this.$container.find('.js-deleteBrush');
 
-        this.$cancelButton.on('click', this.cancelCreatingNewTile);
+        this.$cancelButton.on('click', () => this.cancelCreatingNewTile());
 
         this.$deleteButton.on('click', () => {
             if (!this.canDeleteCurrentBrush()) return;
@@ -91,12 +107,15 @@ class MainZonePalette extends ZonePalette {
             }
             sendData({action: 'addTileToPalette', newTile: this.newTile});
         });
+        this.$saveBrushButton.on('click', () => {
+            if (currentBrush.saveBrush) currentBrush.saveBrush();
+        });
 
         this.newTile = null;
     }
 
     cancelCreatingNewTile(revertBrush = false) {
-        newTile = null;
+        this.newTile = null;
         selectingTileGraphic = false;
         if (revertBrush && previousBrush) {
             selectBrush(previousBrush);
@@ -121,6 +140,10 @@ class MainZonePalette extends ZonePalette {
 
     onChangeBrush() {
         this.$deleteButton.toggle(this.canDeleteCurrentBrush());
+        // Show the save brush button if this brush has a saveBrush method.
+        this.$saveBrushButton.toggle(!!currentBrush.saveBrush);
+        // TODO: Show the delete brush button if it is saved to the main palette.
+        this.$deleteBrushButton.toggle(false)
     }
 }
 
@@ -141,7 +164,12 @@ class ForeignZonePalette extends ZonePalette {
             var tile = brush.getTile();
             return tile && !currentMap.hash[hashObject(tile)];
         }
-        // TODO: handle special brushes.
+        if (brush instanceof CloneBrush) {
+            // TODO: return false if this CloneBrush matches a CloneBrush
+            // from the primary palette.
+            return true;
+        }
+        // Handle other special brushes here as we add the ability to save them to.
         return true;
     }
 }
