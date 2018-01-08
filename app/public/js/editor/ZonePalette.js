@@ -49,6 +49,7 @@ class ZonePalette {
                 if (!brushClass) throw new Error(`Missing brush class: '${brushData.brushClass}'`);
                 if (!brushClass.loadBrush) throw new Error(`Brush '${brushData.brushClass}' is missing loadBrush method`);
                 var brush = brushClass.loadBrush(zone, brushData);
+                brush.brushIndex = n;
                 if (!this.showBrush(brush)) continue;
                 this.$specialBrushes.append(createBrushPreviewElement(brush));
                 didUpdate = true;
@@ -110,6 +111,11 @@ class MainZonePalette extends ZonePalette {
         this.$saveBrushButton.on('click', () => {
             if (currentBrush.saveBrush) currentBrush.saveBrush();
         });
+        this.$deleteBrushButton.on('click', () => {
+            if (currentBrush.brushIndex >= 0 && currentBrush.mapSource === currentMap) {
+                sendData({action: 'removeBrushFromPalette', brushIndex: currentBrush.brushIndex});
+            }
+        });
 
         this.newTile = null;
     }
@@ -142,8 +148,7 @@ class MainZonePalette extends ZonePalette {
         this.$deleteButton.toggle(this.canDeleteCurrentBrush());
         // Show the save brush button if this brush has a saveBrush method.
         this.$saveBrushButton.toggle(!!currentBrush.saveBrush);
-        // TODO: Show the delete brush button if it is saved to the main palette.
-        this.$deleteBrushButton.toggle(false)
+        this.$deleteBrushButton.toggle(currentBrush.brushIndex >= 0 && currentBrush.mapSource === currentMap)
     }
 }
 

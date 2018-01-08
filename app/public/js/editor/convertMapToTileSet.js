@@ -98,16 +98,6 @@ var deleteTileFromPalette = (map, uniqueTileIndex) => {
     map.uniqueTiles.splice(uniqueTileIndex, 1);
     // Update the unique indexes of the tile grid for the map itself.
     spliceUniqueTileFromGrid(map.composite, uniqueTileIndex);
-    for (var row = 0; row < map.height; row++) {
-        var tileRow = map.composite[row] || [];
-        for (var col = 0; col < map.width; col++) {
-            // Replace the deleted tile with the empty tile.
-            if (tileRow[col] === uniqueTileIndex) tileRow[col] = 0;
-            // The index of all tiles with index greater than the removed tile
-            // will be reduced by one.
-            else if (tileRow[col] > uniqueTileIndex) tileRow[col]--;
-        }
-    }
     return true;
 };
 
@@ -117,10 +107,13 @@ var spliceUniqueTileFromGrid = (grid, uniqueTileIndex) => {
         var tileRow = grid[row] || [];
         for (var col = 0; col < tileRow.length; col++) {
             // Replace the deleted tile with the empty tile.
-            if (tileRow[col] === uniqueTileIndex) tileRow[col] = 0;
-            // The index of all tiles with index greater than the removed tile
-            // will be reduced by one.
-            else if (tileRow[col] > uniqueTileIndex) tileRow[col]--;
+            if (tileRow[col] === uniqueTileIndex) {
+                tileRow[col] = 0;
+            } else if (tileRow[col] > uniqueTileIndex) {
+                // The index of all tiles with index greater than the removed tile
+                // will be reduced by one.
+                tileRow[col]--;
+            }
         }
     }
 };
@@ -147,12 +140,17 @@ var addBrushToPalette = (map, brushData) => {
     map.brushes.push(storedBrushData);
 };
 
+var removeBrushFromPalette = (map, brushIndex) => {
+    map.brushes.splice(brushIndex, 1);
+};
+
 if (typeof(module) !== 'undefined') {
     module.exports = {
         addBrushToPalette,
         addTileToPalette,
         convertMapToTileSet,
         deleteTileFromPalette,
+        removeBrushFromPalette,
         setMapTile,
         updateTilePalette,
     };

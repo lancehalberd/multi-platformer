@@ -7,7 +7,14 @@ var mustache = require('mustache');
 var _ = require('lodash');
 var fs = require('fs');
 
-var {addBrushToPalette, addTileToPalette, convertMapToTileSet, deleteTileFromPalette, updateTilePalette} = require('./app/public/js/editor/convertMapToTileSet.js');
+var {
+    addBrushToPalette,
+    addTileToPalette,
+    convertMapToTileSet,
+    deleteTileFromPalette,
+    removeBrushFromPalette,
+    updateTilePalette
+} = require('./app/public/js/editor/convertMapToTileSet.js');
 
 var colors = ['red', 'blue', 'yellow', 'green', 'purple', 'white', 'grey', 'orange', 'brown'];
 
@@ -304,18 +311,27 @@ wsServer.on('request', function(request) {
             if (data.action === 'updateTilePalette') {
                 updateTilePalette(map, data.oldKey, data.updatedTile);
                 broadcast(player.zoneId, {oldKey: data.oldKey, updatedTile: data.updatedTile});
+                map.isDirty = true;
             }
             if (data.action === 'addTileToPalette') {
                 addTileToPalette(map, data.newTile);
                 broadcast(player.zoneId, {newTile: data.newTile});
+                map.isDirty = true;
             }
             if (data.action === 'deleteTileFromPalette') {
                 deleteTileFromPalette(map, data.uniqueTileIndex);
                 broadcast(player.zoneId, {deletedUniqueTileIndex: data.uniqueTileIndex});
+                map.isDirty = true;
             }
             if (data.action === 'addBrushToPalette') {
                 addBrushToPalette(map, data.brushData);
                 broadcast(player.zoneId, {brushData: data.brushData});
+                map.isDirty = true;
+            }
+            if (data.action === 'removeBrushFromPalette') {
+                removeBrushFromPalette(map, data.brushIndex);
+                broadcast(player.zoneId, {deletedBrushIndex: data.brushIndex});
+                map.isDirty = true;
             }
             if (data.action === 'createMapObject') {
                 tiles.applyObjectToMap(map, data.mapObject, data.position);

@@ -71,6 +71,8 @@ socket.addEventListener('message', event => {
             mainCharacter.y = firstCheckPoint.y;
         }
         if (!isEditing) centerCameraOnPlayer();
+        mainPalette.updateBrushes(true);
+        foreignPalette.updateBrushes(true);
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.players) {
@@ -113,9 +115,11 @@ socket.addEventListener('message', event => {
             var canvas = mainPalette.$tileBrushes.children()[index];
             updateBrushPreviewElement(canvas, currentBrush);
         }
+        currentMap.isDirty = true;
     }
     if (data.newTile) {
         addTileToPalette(currentMap, data.newTile);
+        currentMap.isDirty = true;
     }
     if (data.deletedUniqueTileIndex) {
         if (deleteTileFromPalette(currentMap, data.deletedUniqueTileIndex)) {
@@ -124,12 +128,20 @@ socket.addEventListener('message', event => {
             // brush is deleted.
             mainPalette.$tileBrushes.children()[data.deletedUniqueTileIndex].remove();
             foreignPalette.updateBrushes(true);
+            currentMap.isDirty = true;
         }
     }
     if (data.brushData) {
         // If the palette is updated, it will automatically be added to the UI
         // when the editor checks if the main palette has been updated.
         addBrushToPalette(currentMap, data.brushData);
+        currentMap.isDirty = true;
+    }
+    if (data.deletedBrushIndex >= 0) {
+        removeBrushFromPalette(currentMap, data.deletedBrushIndex);
+        mainPalette.$specialBrushes.children()[data.deletedBrushIndex].remove();
+        foreignPalette.updateBrushes(true);
+        currentMap.isDirty = true;
     }
     if (data.mapObject) {
         applyObjectToMap(currentMap, data.mapObject, data.position);
