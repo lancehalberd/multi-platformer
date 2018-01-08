@@ -41,6 +41,24 @@ function updateActor(actor) {
     if (isCharacterSubjectToDisablingEffect(actor)) actor.disabled = true;
     else actor.disabled = false;
     if (actor.disabled) {
+        // uncontrolled fall behavior
+        //      NOTE: good to put this before knocked down behavior in the disabled behavior section so that
+        //          all the actor update behavior doesn't happen between the uncontrolled fall landing and the knock down.
+        if (actor.fallingUncontrolled) {
+            actor.invulnerable = true;
+            if (actor.vy !== 1) actor.uncontrolledFallVyBeforeLanding = actor.vy; // the if (actor.vy !== 1) thing is kludgy, but I think it works fine.
+        }
+        // falling damage
+        if (actor.fallingUncontrolled && actor.grounded) {
+                damageSprite(actor, 1);
+                actor.fallingUncontrolled = false;
+                //actor.invulnerable = false; // this would be worth leaving if there wasn't an immediate knock down
+                knockDown(actor, actor.uncontrolledFallVyBeforeLanding / 20);
+                // WRONG need to add a knockdown effect on landing from an uncontrolled fall, including an animation speed decrease on the downed state and the standing up
+                //      animation based on the player's speed at impact.
+        }
+        // end uncontrolled fall behavior
+        
         // knock down behavior
         if (actor.knockedDown) {
             actor.invulnerable = true;
@@ -54,7 +72,7 @@ function updateActor(actor) {
             if (actor.grounded) {
                 if (actor.wasAirborne || actor.wasJustKnockedDown) {
                     actor.vx *= 1.2; // makes player slide/skid after landing from a knockDown
-                    actor.notReadyToStandUpUntil = now() + 1000;
+                    actor.notReadyToStandUpUntil = now() + actor.msOnGroundAfterKnockDownBase * actor.timeOnGroundAfterKnockDownScale;
                     actor.wasAirborne = false;
                     actor.wasJustKnockedDown = false;
                     actor.justStartedStandingUp = true;
@@ -65,9 +83,10 @@ function updateActor(actor) {
                 if (actor.notReadyToStandUpUntil <= now() && actor.justStartedStandingUp) {
                     actor.justStartedStandingUp = false;
                     actor.justStoodUp = true;
-                    actor.standingUpUntil = now() + 250;
+                    actor.standingUpUntil = now() + 375 * actor.timeOnGroundAfterKnockDownScale;
                     actor.animation = actor.standingUpAnimation;
-                    actor.standingUpFrame =  Math.floor(now() / 200) % actor.animation.frames.length;
+                    // WRONG animation timing will probably have to change once these animations have mulitiple frames.
+                    actor.standingUpFrame =  Math.floor(now() / (200)) % actor.animation.frames.length;
                     actor.currentFrame = actor.standingUpFrame;
                     // WRONG: if you're not invulerable for a while *after* you regain control, you could get knocked down again immeeidately if a dog is hovering right on top of you, either because they're homing or just accidentally.
                     // I'll probably make it so that creatures that can disable you move away from you if you're disabled, but maybe I shouldn't rely on that exclusively?
@@ -76,20 +95,16 @@ function updateActor(actor) {
                     actor.justStoodUp = false;
                     actor.invulnerable = false;
                     actor.knockedDown = false;
+                    actor.timeOnGroundAfterKnockDownScale = 1;
                 }
             }
         }
         // end knock down behavior
-        if (actor.fallingUncontrolled) {
-            if (actor.grounded) {
-                // character subject to knockdown upon landing from an uncontrolled fall
-                actor.knockedDown = true;
-                actor.fallingUncontrolled = false;
-            }
-        }
     }
+    // end disabled behavior
+    
     if (actor === mainCharacter && !actor.deathTime && !isEditing && !actor.disabled) {
-        // Attack if the space key is down.
+        // attacking behavior part 1. Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
             actor.attacking = true;
             actor.attackTime = now();
@@ -99,13 +114,6 @@ function updateActor(actor) {
         // forcing them to crouch.
         actor.isCrouching = isPlayerUnderCeiling(actor);
         if (actor.grounded) {
-            // falling damage
-            if (actor.fallingUncontrolled) {
-                damageSprite(actor, 1);
-                actor.fallingUncontrolled = false;
-                // WRONG need to add a knockdown effect on landing from an uncontrolled fall, including an animation speed decrease on the downed state and the standing up
-                //      animation based on the player's speed at impact.
-            }
             //dust plume on landing
             if (actor.spawnDustOnGrounding) {
                 addEffectJumpDust(actor.x, actor.y, actor.dustScale, actor.dustFps, 0);
@@ -649,6 +657,7 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
+    actor.attackAnimationMsPerFrame = 280;
     actor.scale = 1.75;
     actor.type = CHARACTER_VICTORIA;
 }
@@ -672,6 +681,7 @@ function changeCharacterToCowbot(actor) {
     actor.scale = 1.5;
     actor.msBetweenSteamPlumesBase = 2000;   // modified by vx in udpates for Cowbot steam plume
     //actor.noSteamPlumeUntil = now();  //can't do this because changeCharacterTo... is getting called every frame, for now.
+    actor.knockBackInertiaScale = 0.6; // cowbot is heavy and doesn't get knocked back as easily as other characters
     actor.type = CHARACTER_COWBOT;
 }
 
