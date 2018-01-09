@@ -35,7 +35,10 @@ class SimpleAnimation {
     render() {
         var frame = this.animation.frames[this.getCurrentFrame()];
         if (!frame) return; // If somehow this gets rendered with current frame too high, just do nothing.
+        mainContext.save();
+        mainContext.globalAlpha *= ifdefor(this.alpha, 1);
         draw.image(mainContext, frame.image, frame, this.target);
+        mainContext.restore();
     }
 }
 
