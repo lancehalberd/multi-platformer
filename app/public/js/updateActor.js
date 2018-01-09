@@ -58,7 +58,7 @@ function updateActor(actor) {
                 //      animation based on the player's speed at impact.
         }
         // end uncontrolled fall behavior
-        
+
         // knock down behavior
         if (actor.knockedDown) {
             actor.invulnerable = true;

@@ -13,6 +13,8 @@ function drawSprite(context, sprite) {
         if (damageHitBox) draw.fillRectangle(mainContext, damageHitBox, 'red');
     }
     var scale = ifdefor(sprite.scale, 1);
+    context.save();
+    context.globalAlpha *= ifdefor(sprite.alpha, 1);
     drawFrameTo(context,
         sprite.animation.frames[sprite.currentFrame],
         sprite.x, sprite.y,
@@ -21,6 +23,7 @@ function drawSprite(context, sprite) {
         null,
         sprite
     );
+    context.restore();
 }
 function drawFrameTo(context, frame, x, y, xScale, yScale, rotation, tint, source) {
     context.save();
