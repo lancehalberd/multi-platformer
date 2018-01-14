@@ -28,6 +28,7 @@ socket.addEventListener('message', event => {
     if (data.map) {
         selectedEntity = null;
         mainCharacter.checkPoint = null;
+        mainCharacter.changingZones = false;
         currentMap = data.map;
         loadedZonesById[currentMap.id] = currentMap;
         if (currentMap.respawnPoint) {

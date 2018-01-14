@@ -7,7 +7,7 @@ var CHARACTER_ALIEN = 'alienCharacter';
 
 function updateActor(actor) {
     beaconsToMainCharacterArray();  // running this every loop isn't necessary right now, but if 'beacons' come to include things that can spawn and die (which they may well), then this is a good place for this function call.
-    if (actor.stuckUntil > now()) {
+    if (actor.stuckUntil > now() || actor.changingZones) {
         return;
     }
     // Friction. Air Friction is much lower than on the ground.
