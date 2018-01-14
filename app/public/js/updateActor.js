@@ -102,7 +102,7 @@ function updateActor(actor) {
         // end knock down behavior
     }
     // end disabled behavior
-    
+
     if (actor === mainCharacter && !actor.deathTime && !isEditing && !actor.disabled) {
         // attacking behavior part 1. Attack if the space key is down.
         if (isKeyDown(KEY_SPACE) && !actor.attacking) {
@@ -461,6 +461,23 @@ function moveSpriteInDirection(sprite, amount, direction) {
         var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
         var topRow = Math.floor(hitBox.top / currentMap.tileSize);
         var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
+        // Currently we only do collision checks against the edges of tiles, so skip checks if the character
+        // is only moving through the middle of a tile.
+        // The +/-1 is added because without it the player could slide through the wall when moving fractional
+        // pixel amounts while sliding on ice. It is possible we could fix this by requiring only whole pixel
+        // movement, but this solution seems to work for now.
+        if (direction === TILE_UP && (hitBox.top % currentMap.tileSize) < currentMap.tileSize + amount - 1) {
+            continue;
+        }
+        if (direction === TILE_DOWN && (hitBox.bottom % currentMap.tileSize) > amount + 1) {
+            continue;
+        }
+        if (direction === TILE_LEFT && (hitBox.left % currentMap.tileSize) < currentMap.tileSize + amount - 1) {
+            continue;
+        }
+        if (direction === TILE_RIGHT && (hitBox.right % currentMap.tileSize) > amount + 1) {
+            continue;
+        }
         // When moving vertically, we only care about the row we are moving into.
         if (direction === TILE_UP || direction === TILE_DOWN) {
             topRow = bottomRow = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
