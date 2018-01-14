@@ -291,23 +291,14 @@ function updateActor(actor) {
     }
     actor.stuck = false;
     if (actor.vx) {
-        if (actor.vx < 0) {
-            moveSpriteInDirection(actor, actor.vx, TILE_LEFT);
-        } else {
-            moveSpriteInDirection(actor, actor.vx, TILE_RIGHT);
-        }
         actor.walkFrame = Math.floor(now() / (actor.slipping ? actor.msBetweenWalkFramesWhileSlipping : actor.msBetweenWalkFrames)) % actor.walkingAnimation.frames.length;
     } else {
         actor.walkFrame = 0;
     }
     actor.slipping = false;
-    if (actor.vy < 0) {
-        actor.grounded = false;
-        moveSpriteInDirection(actor, actor.vy, TILE_UP);
-    } else if (actor.vy > 0) {
-        actor.grounded = false;
-        moveSpriteInDirection(actor, actor.vy, TILE_DOWN);
-    }
+    actor.grounded = actor.grounded && (actor.vy === 0);
+
+    moveSprite(actor, actor.vx, actor.vy);
 
     if (actor.grounded && !actor.vx && !actor.attacking && !actor.disabled) {
         actor.animation = actor.idlingAnimation;
@@ -451,6 +442,16 @@ function isPlayerUnderCeiling(player) {
     return false;
 }
 
+function moveSprite(sprite, dx, dy) {
+    var splits = Math.max(1, Math.ceil(4 * Math.max(Math.abs(dy), Math.abs(dx)) / currentMap.tileSize));
+    for (var i = 0; i < splits; i++) {
+        var moved = false;
+        if (dx) moved = moveSpriteInDirection(sprite, dx / splits, (dx < 0) ? TILE_LEFT : TILE_RIGHT) || moved;
+        if (dy) moved = moveSpriteInDirection(sprite, dy / splits, (dy < 0) ? TILE_UP : TILE_DOWN) || moved;
+        if (!moved) return false;
+    }
+    return true;
+}
 function moveSpriteInDirection(sprite, amount, direction) {
     var splits = Math.max(1, Math.ceil(2 * Math.abs(amount) / currentMap.tileSize));
     var amount = amount / splits;
@@ -458,9 +459,9 @@ function moveSpriteInDirection(sprite, amount, direction) {
         sprite[directionToCoordinate[direction]] += amount;
         var hitBox = getGlobalSpriteHitBox(sprite);
         var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
-        var rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
+        var rightColumn = Math.floor((hitBox.right - .1) / currentMap.tileSize);
         var topRow = Math.floor(hitBox.top / currentMap.tileSize);
-        var bottomRow = Math.floor((hitBox.bottom - 1) / currentMap.tileSize);
+        var bottomRow = Math.floor((hitBox.bottom - .1) / currentMap.tileSize);
         // Currently we only do collision checks against the edges of tiles, so skip checks if the character
         // is only moving through the middle of a tile.
         // The +/-1 is added because without it the player could slide through the wall when moving fractional
