@@ -1,7 +1,7 @@
 
 var frameMilliseconds = 20;
 var areaRectangle = new Rectangle(0, 0, 4000, 1000);
-var cameraX = areaRectangle.width / 2 - 400, cameraY = areaRectangle.height / 2 - 300;
+var cameraX = 0, cameraY = 0;
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
@@ -10,7 +10,6 @@ setInterval(() => {
         return;
     }
     if (!currentMap) return;
-    areaRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
 
     // Update all the sprites that the game keeps track of
     for (var sprite of
@@ -43,18 +42,7 @@ setInterval(() => {
         if (isKeyDown(KEY_RIGHT)) cameraX += cameraSpeed;
     }
 
-    // Normally we don't let the camera go past the edges of the map, but when the map is too
-    // short or narrow to do this, we center the map vertically/horizontally.
-    if (areaRectangle.width >= mainCanvas.width) {
-        cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
-    } else {
-        cameraX = -(mainCanvas.width - areaRectangle.width) / 2;
-    }
-    if (areaRectangle.height >= mainCanvas.height) {
-        cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
-    } else {
-        cameraY = -(mainCanvas.height - areaRectangle.height) / 2;
-    }
+    boundCameraToMap();
 
     // If the character is moving or was moving at last update, send an update to inform the server.
     if (mainCharacter.x !== mainCharacter.lastX || mainCharacter.y !== mainCharacter.lastY || mainCharacterWasMoving ||
@@ -75,4 +63,22 @@ setInterval(() => {
 var centerCameraOnPlayer = () => {
     cameraX = mainCharacter.x - 400;
     cameraY = mainCharacter.y - 300;
+    boundCameraToMap();
+};
+
+var boundCameraToMap = () => {
+    if (!currentMap) return;
+    areaRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
+    // Normally we don't let the camera go past the edges of the map, but when the map is too
+    // short or narrow to do this, we center the map vertically/horizontally.
+    if (areaRectangle.width >= mainCanvas.width) {
+        cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
+    } else {
+        cameraX = -(mainCanvas.width - areaRectangle.width) / 2;
+    }
+    if (areaRectangle.height >= mainCanvas.height) {
+        cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
+    } else {
+        cameraY = -(mainCanvas.height - areaRectangle.height) / 2;
+    }
 };

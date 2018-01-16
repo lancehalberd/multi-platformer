@@ -13,7 +13,7 @@ var render = () => {
     }
 
     //var bgSourceRectangle = new Rectangle(0, 0, 1920, 1080);
-    var bgSourceRectangle = new Rectangle(0, 0, 800, 608);    
+    var bgSourceRectangle = new Rectangle(0, 0, 800, 608);
     var target = bgSourceRectangle.scale(1.2); // used to be 0.6 when the background pic was yellowMountains.png
     var xPercent = (cameraX / (Math.max(areaRectangle.width, target.width) - mainCanvas.width)) || 0;
     if (areaRectangle.width < mainCanvas.width) xPercent = 0;
@@ -65,6 +65,13 @@ var render = () => {
         mainContext.translate(60, 0);
     }
     mainContext.restore();
+
+    if (mainCharacter.changingZones) {
+        mainContext.save();
+        mainContext.globalAlpha = (now() - mainCharacter.changingZones) / 500;
+        draw.fillRectangle(mainContext, new Rectangle(0, 0, mainCanvas.width, mainCanvas.height), 0);
+        mainContext.restore();
+    }
 
     TagGame.render();
 

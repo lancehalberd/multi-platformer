@@ -259,6 +259,7 @@ class DoorTrigger extends Trigger {
         mainCharacter.airDashed = false; // teleporting resets airDashing
         mainCharacter.currentAirDashDuration = 0; //teleporting resets airDashing
         mainCharacter.superJumped = false;
+        mainCharacter.changingZones = now(); // This time is used to control the fadeout animation.
         sendData({action: 'changeZone', zoneId: this.zoneId || zoneId, checkPointId: this.checkPointId, targetX: this.targetX, targetY: this.targetY});
         return true;
     }
