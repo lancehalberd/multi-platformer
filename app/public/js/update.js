@@ -11,7 +11,7 @@ setInterval(() => {
     }
     if (!currentMap) return;
     if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_G, true)) {
-        regenerateMap(50, 19);
+        regenerateMap(25, 19);
     }
     // Update all the sprites that the game keeps track of
     for (var sprite of
@@ -95,37 +95,65 @@ function regenerateMap(width, height) {
     //mainCharacter.originalY = currentMap.height - 2 - 3 * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
     mainCharacter.x = currentMap.respawnPoint.x;
     mainCharacter.y = currentMap.respawnPoint.y;
-    generateTerrain(width, height, 5, 1);
+    generateBorder(width, height, stretchNine);
+    clearInsideOfBorder(width, height);
+    generateTerrain(width, height, 5, 1, stretchNine);
 }
 
-function generateTerrain(mapWidth, mapHeight, terrainHeight, minStepWidth) {
+function generateBorder(mapWidth, mapHeight, tile) {
+    for (var col = 0; col < mapWidth; col++) {
+        applyTileToMap(currentMap, tile, [col, 0]);
+        applyTileToMap(currentMap, tile, [col, mapHeight - 1]);
+    }
+    for (var row = 0; row < mapHeight; row++) {
+        applyTileToMap(currentMap, tile, [0, row]);
+        applyTileToMap(currentMap, tile, [mapWidth - 1, row]);
+    }
+}
+
+function clearInsideOfBorder(mapWidth, mapHeight) {
+    for (var col = 1; col < mapWidth - 1; col++) {
+        for (var row = 1; row < mapHeight - 1; row++) {
+            applyTileToMap(currentMap, 0, [col, row]);
+        }
+    }
+}
+
+function generateTerrain(mapWidth, mapHeight, terrainHeight, minStepWidth, tile) {
     var width = mapWidth,
         height = mapHeight;
+    
+    // WRONG/BROKEN: Since I moved making the border and clearing the map to different functions, spaces are appearing underneath
+    // some tiles, and the bottommost row (excluding the border) is being completely filled in.
+    // UPDATE: possibly fixed the 'holes' problem.
+    
     // Putting the row on the outside of the nest of row/col for loops lets rows be built up all at once (and we're doing it from the bottom up)
     // making it possible to check the entire row below for meeting building conditions for the next row.
-    for (var row = height - 1; row >= 0; row--) { // row
-        // working from the bottom up so that terrain can be built up, checking for anything solid that's been built beneath
-         for (var col = 0; col < width; col++) { // column
-            // create border and clear any old tiles
-            if (col === 0 || col === width - 1 || row === 0 || row === height - 1) applyTileToMap(currentMap, stretchNine, [col, row]);
-            else applyTileToMap(currentMap, 0, [col, row]);
-            /////////////////////
-            // particulars of the level
+    for (var row = height - 2; row >= height - (terrainHeight + 2); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
+        // WRONG, eventulally/NOTE: things that are just !== 0 right now will need to be TILE_SOLID_ALL or something later,
+        //      unless this function is alway run on a blank map.
+        // working from the bottom up so that terrain can be built up, checking for anything solid  underneath
+         for (var col = 1; col < width - 2; col++) { // columns, excluding the border columns
             // making some height variations in the bottom four rows
             if (
-                row >= height - (terrainHeight + 1) && row < height - 1 && // if in the bottom four rows
                 currentMap.composite[row + 1][col] !== 0 && // if the tile beneath isn't empty
-                (
-                    currentMap.composite[row + minStepWidth][col + 1] !== 0 && // could put an || here, which is why these two are in parentheses
-                    currentMap.composite[row + minStepWidth][col - 1] !== 0
+                ( // the tiles below and to the left and right for <minStepWidth> aren't empty
+                    currentMap.composite[row + 1][col + minStepWidth] !== 0 && // could put an || here, which is why these two are in parentheses
+                    currentMap.composite[row + 1][col - minStepWidth] !== 0
                 ) // if both of the tiles below and to the sides aren't empty
             ) {
                 // if the tile to the left (added from left to right) isn't empty, then increased likelihood
                 // of drawing another one next to it. Trying to get smooth, larger-scale groups.
                 if (currentMap.composite[row][col - 1] !== 0 && col > 1) { // don't apply increased chance to column 1, because it will always have the left wall next to it.
-                    if (Math.random() < 0.85) applyTileToMap(currentMap, stretchNine, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
-                } else if (Math.random() < 0.4) applyTileToMap(currentMap, stretchNine, [col, row]); // else, smaller chance
+                    if (Math.random() < 0.85) applyTileToMap(currentMap, tile, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
+                } else if (Math.random() < 0.4) applyTileToMap(currentMap, tile, [col, row]); // else, smaller chance
             }
         }
+    }
+    // setting a spawn point above the generated terrain
+    // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
+    //      is run after the entire map has been generated.
+    if (currentMap.respawnPoint.y > terrainHeight * currentMap.tileSize * (height - 2 - terrainHeight)) {
+        currentMap.respawnPoint.y = (height - 2 - terrainHeight) * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
     }
 }
