@@ -6,6 +6,7 @@ var KEY_SPACE = 32;
 var KEY_SHIFT = 16;
 var KEY_BACK_SPACE = 8;
 var KEY_E = 'E'.charCodeAt(0);
+var KEY_G = 'G'.charCodeAt(0);
 
 var KEY_MAPPINGS = {
     ['A'.charCodeAt(0)]: KEY_LEFT,
