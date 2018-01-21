@@ -101,7 +101,7 @@ function regenerateMap(width, height) {
     clearMapRectangle(1, 1, width, height);
     // generate content
     //generateTerrain(width, height, 5, 1, stretchNine);
-    generateGhostTownBuilding(6, height - 2, 12, 2);
+    generateGhostTownBuilding(6, height - 2, 12, 2, 2);
 }
 
 function generateBorder(mapWidth, mapHeight, tile) {
@@ -157,23 +157,47 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, ti
     }
 }
 
-function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories) {
+function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, maxStoryHeightVariation) {
+    var randomNumberOfStories = 1 + Math.round(Math.random() * (maxStories - 1)),
+        width = 6 + Math.round(Math.random() * (maxWidth - 6)),
+        boardwalk = false, // WRONG should be true, when things are working
+        baseStoryHeight = 4, // minimum height for 3-tall door or 2-tall window with a space underneath plus a top border
+        lastStoryHeight = 0,
+        lastStoryWidth = 0,
+        newLeftColumn = leftColumn;
+        if (Math.random() < 0.5) boardWalk = false;
+    // generate a story for as many stories as we end up randomly selecting
+    for (var i = 0; i < randomNumberOfStories; i++) {
+        var storyHeightVariation = Math.round(Math.random() * (maxStoryHeightVariation - 1));
+            newWidth = width;
+            if (i > 0) { // any story above the first
+                newWidth = Math.max(4, width - i * 2 - Math.round(Math.random() * width));
+                newLeftColumn = newLeftColumn + Math.round((lastStoryWidth - newWidth) / 2);
+            }
+        generateGhostTownBuildingStory(newLeftColumn, bottomRow - lastStoryHeight, newWidth, storyHeightVariation, i + 1, boardwalk);
+        lastStoryWidth = newWidth;
+        lastStoryHeight = baseStoryHeight + storyHeightVariation;
+        lastLeftColumn = newLeftColumn;
+    }
+}
+
+function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, boardWalkTrueOrFalse) {
+    // WRONG: Should be a symmetry option, eventually
     // WARNING: generally, when generating things like houses, we're going to have to ensure that
     //      there is room on the map to the right and above them before we start building them.
-    var width = Math.max(6 + Math.round(Math.random() * (maxWidth - 6))), // can only use 3-wide doors if this is >= 7
-        boardwalkRowModifier = 0,
-        baseStoryHeight = 4,
-        storyHeightVariation = Math.round(Math.random() * 2);
-
+    var boardwalkRowModifier = 0,
+        baseStoryHeight = 4;
+    // build a boardwalk if the building has one
+    if (boardWalkTrueOrFalse && storyNumber === 1) {
+        boardwalkRowModifier = 1;
+        // build the boardwalk
+    }
     // NOTE: CLEAR AREA, THEN BUILD DOORS AND WINDOWS, THEN FILL IN THE REST IF IT'S BLANK AND INSIDE BUILDING BOUNDS.
 
     // clear terrain where building will be
     //clearInsideOfBorder()
-    // generate boardwalk as foundation, possibly
-    // if (Math.random() - 0.5) {
-    //     boardwalkRowModifier = 1;
-    //}
-    // building the four bottom rows of siding of the story, beneath the top edge
+    // outlining the building ()
+    // building the left and right edges
     for (var localRow = boardwalkRowModifier; localRow < baseStoryHeight - 1 + storyHeightVariation + boardwalkRowModifier; localRow++) { // first story if 5 tiles tall, the minus one takes off the top row
         for (var localCol = 0; localCol < width; localCol++) {
             // building from the bottom up
@@ -182,10 +206,10 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories) 
             // if the right edge, apply right edge tile
             else if (localCol === width - 1) applyTileToMap(currentMap, generateGTGreySidingRightEdge(), [leftColumn + localCol, bottomRow - localRow]);
             // otherwise apply normal siding
-            else applyTileToMap(currentMap, generateGTGreySiding(), [leftColumn + localCol, bottomRow - localRow]);
+            //else applyTileToMap(currentMap, generateGTGreySiding(), [leftColumn + localCol, bottomRow - localRow]);
         }
     }
-    // adding the top edge of the story
+    // building the top edge of the story
     for (var localColTop = 0; localColTop < width; localColTop++) {
         // left edge
         if (localColTop === 0) applyTileToMap(currentMap, gTGreySidingTopLeftEdge, [leftColumn + localColTop, bottomRow - baseStoryHeight + 1 - storyHeightVariation - boardwalkRowModifier]);
@@ -196,7 +220,61 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories) 
         // non-edge supports
         if ((localColTop + 1) % 2 !== 0 && localColTop !== 0 && localColTop !== width - 1) applyTileToMap(currentMap, generateGTGreySidingTopSupport(), [leftColumn + localColTop, bottomRow - baseStoryHeight + 1 - storyHeightVariation - boardwalkRowModifier]);
     }
-    //applyTileToMap(currentMap, gTGreySiding0, [leftColumn, bottomRow]);
+    // add a door if this is the first story
+    if (storyNumber === 1) {
+        var door = generateGTDoor(),
+            doorWidth,
+            doorHeight = 3,
+            doorLocalLeftCol,
+            doorTileIndex = 0;
+        if (door.length === 9) doorWidth = 3;
+        if (door.length === 6) doorWidth = 2;
+        doorLocalLeftCol = 1 + Math.round(Math.random() * (width - doorWidth - 2));
+        for (var localDoorRow = 0; localDoorRow < doorHeight; localDoorRow++) {
+            for (var localDoorCol = 0; localDoorCol < doorWidth; localDoorCol++) {
+                applyTileToMap(currentMap, door[doorTileIndex], [leftColumn + doorLocalLeftCol + localDoorCol, bottomRow - 2 + localDoorRow]);
+                doorTileIndex++;
+            }
+        }
+    }
+    // add windows
+    for (var windowCol = 1; windowCol < width - 2; windowCol++) {
+        var window = generateGTWindow(),
+            windowWidth,
+            windowHeight,
+            windowTileIndex = 0;
+        if (window.length === 9) {
+            windowWidth = 3;
+            windowHeight = 3;
+        }
+        if (window.length === 4) {
+            windowWidth = 2;
+            windowHeight = 2;
+        }
+        if ( // kludgy because it the second and third lines below here do the same thing for a 2x2 window,
+            //      and for anything larger than a 3-wide window, some tiles won't get checked for emptiness
+            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn] === 0 &&
+            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn + 1] === 0 &&
+            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn + windowWidth - 1] === 0 &&
+            Math.random() < 0.5
+        ) {
+            for (var localWindowRow = 0; localWindowRow < windowHeight; localWindowRow++) {
+                for (var localWindowCol = 0; localWindowCol < windowWidth; localWindowCol++) {
+                    applyTileToMap(currentMap, window[windowTileIndex], [leftColumn + windowCol + localWindowCol, bottomRow - 2 - boardwalkRowModifier + localWindowRow]);
+                    windowTileIndex++;
+                }
+            }
+        }
+    }
+    // fill in blank space with siding (and/or eventually barrels and/or crates, incl. explody ones)
+    
+    for (var blankCol = 1; blankCol < width - 1; blankCol++) {
+        for (var blankRow = 0; blankRow < storyHeightVariation + baseStoryHeight - 1; blankRow++) {
+            if (currentMap.composite[bottomRow - boardwalkRowModifier - blankRow][leftColumn + blankCol] === 0) {
+                applyTileToMap(currentMap, generateGTGreySiding(), [leftColumn + blankCol, bottomRow - boardwalkRowModifier - blankRow]);
+            }
+        }
+    }
     // build up terrain underneath building 
 }
 
@@ -211,6 +289,17 @@ function generateGT2x2Window() {
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
+}
+
+function generateGT3x3Window() {
+    
+}
+
+function generateGTWindow() {
+    var window;
+    if (Math.random() < 0.00) window = generateGT3x3Window(); // can be < 0.33 or something when there's a 3x3 window available
+    else window = generateGT2x2Window();
+    return window;
 }
 
 function generateGTGreySiding() {
@@ -258,4 +347,24 @@ function generateGTGreySidingTopSupport() {
             gTGreySidingTopSupport1
     ];
     return sidingTopSupportVariations[Math.round(Math.random() * (sidingTopSupportVariations.length - 1))];    
+}
+
+function generateGT2x2Door() {
+    var arrayOfDoors = [ // might add more doors later
+        [gTDoor2x3_0UL, gTDoor2x3_0UR, gTDoor2x3_0ML, gTDoor2x3_0MR, gTDoor2x3_0LL, gTDoor2x3_0LR]
+    ],
+    randomDoor = arrayOfDoors[Math.round(Math.random() * (arrayOfDoors.length - 1))];
+    return randomDoor;
+}
+
+function generateGT3x3Door() {
+    
+}
+
+
+function generateGTDoor() {
+    var door;
+    if (Math.random() < 0.00) door = generateGT3x3Door(); // can make this < 0.33 once we have some 3x3 door code in place
+    else door = generateGT2x2Door();
+    return door;
 }

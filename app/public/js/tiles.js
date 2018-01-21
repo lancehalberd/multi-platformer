@@ -301,6 +301,42 @@ var gTWindow2x2_3LR = {
     x: 7, y:1,
 };
 
+var gTDoor2x3_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:10,
+};
+
+var gTDoor2x3_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:10,
+};
+
+var gTDoor2x3_0ML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:11,
+};
+
+var gTDoor2x3_0MR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:11,
+};
+
+var gTDoor2x3_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:12,
+};
+
+var gTDoor2x3_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:12,
+};
+
 //////////////////////////////////////////////
 // end Lee's new Ghost Town tileset 2018 01 //
 //////////////////////////////////////////////
