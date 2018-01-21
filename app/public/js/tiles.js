@@ -21,6 +21,8 @@ var customTiles = '/gfx/customBlocksA.png';
 var mansionTiles = '/gfx/tiles/tilesMansion.png';
 var desertTiles32 = '/gfx/tiles/tilesDesert32.png';
 var desertTiles16 = '/gfx/tiles/tilesDesert16.png';
+var desertTiles = '/gfx/tiles/tilesDesert.png';
+var ghostTownTiles = '/gfx/tiles/tilesGhostTownBuildings.png';
 
 var stretchNine = {
     image: twilightTiles,
@@ -78,6 +80,238 @@ var iceBlock = {
     maxHeight: 1,
     properties: TILE_SOLID_ALL | TILE_SLIPPERY_ALL,
 };
+
+//////////////////////////////////////////
+// Lee's new Ghost Town tileset 2018 01 //
+//////////////////////////////////////////
+var gTGreySiding0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:2,
+};
+
+var gTGreySiding1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:3,
+};
+
+var gTGreySiding2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:4,
+};
+
+var gTGreySiding3 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:2,
+};
+
+var gTGreySiding4 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:3,
+};
+
+var gTGreySiding5 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:4,
+};
+
+var gTGreySidingLeftEdge0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:2,
+};
+
+var gTGreySidingLeftEdge1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:3,
+};
+
+var gTGreySidingLeftEdge2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:4,
+};
+
+var gTGreySidingRightEdge0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:2,
+};
+
+var gTGreySidingRightEdge1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:3,
+};
+
+var gTGreySidingRightEdge2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:4,
+};
+
+var gTGreySidingTopLeftEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopSupport0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopSupport1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopRightEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:5,
+    properties: TILE_DOWN
+};
+
+var gTWindow2x2_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:0,
+};
+
+var gTWindow2x2_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:0,
+};
+
+var gTWindow2x2_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:1,
+};
+
+var gTWindow2x2_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:1,
+};
+
+var gTWindow2x2_1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:0,
+};
+
+var gTWindow2x2_1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:0,
+};
+
+var gTWindow2x2_1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:1,
+};
+
+var gTWindow2x2_1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:1,
+};
+
+var gTWindow2x2_2UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:0,
+};
+
+var gTWindow2x2_2UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:0,
+};
+
+var gTWindow2x2_2LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:1,
+};
+
+var gTWindow2x2_2LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:1,
+};
+
+var gTWindow2x2_3UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:0,
+};
+
+var gTWindow2x2_3UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 7, y:0,
+};
+
+var gTWindow2x2_3LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:1,
+};
+
+var gTWindow2x2_3LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 7, y:1,
+};
+
+//////////////////////////////////////////////
+// end Lee's new Ghost Town tileset 2018 01 //
+//////////////////////////////////////////////
+
+//////////////////////////////////////////
+// Lee's new Desert tileset 2018 01 //
+//////////////////////////////////////////
+
+//////////////////////////////////////////
+// end Lee's new Desert tileset 2018 01 //
+//////////////////////////////////////////
 
 ///////////////////////////
 // MANSION TILESET 32x32 //

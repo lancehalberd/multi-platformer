@@ -86,18 +86,22 @@ var boundCameraToMap = () => {
 };
 
 function regenerateMap(width, height) {
-    // set size and spawn point, and move character to spawn point
+    // set map size
     currentMap.width = width;
     currentMap.height = height;
+    // set spawn point
     currentMap.respawnPoint.x = (1.5 + 2) * currentMap.tileSize; // the 1.5 puts this at the center of the first column beside the wall from the left
     currentMap.respawnPoint.y = (height - 2 - 3) * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
-    //mainCharacter.originalX = currentMap.tileSize * 1.5;
-    //mainCharacter.originalY = currentMap.height - 2 - 3 * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
+    // move player to spawn point
     mainCharacter.x = currentMap.respawnPoint.x;
     mainCharacter.y = currentMap.respawnPoint.y;
+    // generate border
     generateBorder(width, height, stretchNine);
-    clearInsideOfBorder(width, height);
-    generateTerrain(width, height, 5, 1, stretchNine);
+    // clear interior of border
+    clearMapRectangle(1, 1, width, height);
+    // generate content
+    //generateTerrain(width, height, 5, 1, stretchNine);
+    generateGhostTownBuilding(6, height - 2, 12, 2);
 }
 
 function generateBorder(mapWidth, mapHeight, tile) {
@@ -111,25 +115,20 @@ function generateBorder(mapWidth, mapHeight, tile) {
     }
 }
 
-function clearInsideOfBorder(mapWidth, mapHeight) {
-    for (var col = 1; col < mapWidth - 1; col++) {
-        for (var row = 1; row < mapHeight - 1; row++) {
+function clearMapRectangle(leftColumn, topRow, width, height) {
+    for (var col = 1; col < width - 1; col++) {
+        for (var row = 1; row < height - 1; row++) {
             applyTileToMap(currentMap, 0, [col, row]);
         }
     }
 }
 
-function generateTerrain(mapWidth, mapHeight, terrainHeight, minStepWidth, tile) {
+function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, tile) {
     var width = mapWidth,
         height = mapHeight;
-    
-    // WRONG/BROKEN: Since I moved making the border and clearing the map to different functions, spaces are appearing underneath
-    // some tiles, and the bottommost row (excluding the border) is being completely filled in.
-    // UPDATE: possibly fixed the 'holes' problem.
-    
     // Putting the row on the outside of the nest of row/col for loops lets rows be built up all at once (and we're doing it from the bottom up)
     // making it possible to check the entire row below for meeting building conditions for the next row.
-    for (var row = height - 2; row >= height - (terrainHeight + 2); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
+    for (var row = height - 2; row >= height - (terrainMaxHeight + 1); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
         // WRONG, eventulally/NOTE: things that are just !== 0 right now will need to be TILE_SOLID_ALL or something later,
         //      unless this function is alway run on a blank map.
         // working from the bottom up so that terrain can be built up, checking for anything solid  underneath
@@ -153,7 +152,110 @@ function generateTerrain(mapWidth, mapHeight, terrainHeight, minStepWidth, tile)
     // setting a spawn point above the generated terrain
     // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
     //      is run after the entire map has been generated.
-    if (currentMap.respawnPoint.y > terrainHeight * currentMap.tileSize * (height - 2 - terrainHeight)) {
-        currentMap.respawnPoint.y = (height - 2 - terrainHeight) * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
+    if (currentMap.respawnPoint.y > terrainMaxHeight * currentMap.tileSize * (height - 1 - terrainMaxHeight)) {
+        currentMap.respawnPoint.y = (height - 1 - terrainMaxHeight) * currentMap.tileSize;
     }
+}
+
+function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories) {
+    // WARNING: generally, when generating things like houses, we're going to have to ensure that
+    //      there is room on the map to the right and above them before we start building them.
+    var width = Math.max(6 + Math.round(Math.random() * (maxWidth - 6))), // can only use 3-wide doors if this is >= 7
+        boardwalkRowModifier = 0,
+        baseStoryHeight = 4,
+        storyHeightVariation = Math.round(Math.random() * 2);
+
+    // NOTE: CLEAR AREA, THEN BUILD DOORS AND WINDOWS, THEN FILL IN THE REST IF IT'S BLANK AND INSIDE BUILDING BOUNDS.
+
+    // clear terrain where building will be
+    //clearInsideOfBorder()
+    // generate boardwalk as foundation, possibly
+    // if (Math.random() - 0.5) {
+    //     boardwalkRowModifier = 1;
+    //}
+    // building the four bottom rows of siding of the story, beneath the top edge
+    for (var localRow = boardwalkRowModifier; localRow < baseStoryHeight - 1 + storyHeightVariation + boardwalkRowModifier; localRow++) { // first story if 5 tiles tall, the minus one takes off the top row
+        for (var localCol = 0; localCol < width; localCol++) {
+            // building from the bottom up
+            // if the left edge, apply left edge tile
+            if (localCol === 0) applyTileToMap(currentMap, generateGTGreySidingLeftEdge(), [leftColumn + localCol, bottomRow - localRow]);
+            // if the right edge, apply right edge tile
+            else if (localCol === width - 1) applyTileToMap(currentMap, generateGTGreySidingRightEdge(), [leftColumn + localCol, bottomRow - localRow]);
+            // otherwise apply normal siding
+            else applyTileToMap(currentMap, generateGTGreySiding(), [leftColumn + localCol, bottomRow - localRow]);
+        }
+    }
+    // adding the top edge of the story
+    for (var localColTop = 0; localColTop < width; localColTop++) {
+        // left edge
+        if (localColTop === 0) applyTileToMap(currentMap, gTGreySidingTopLeftEdge, [leftColumn + localColTop, bottomRow - baseStoryHeight + 1 - storyHeightVariation - boardwalkRowModifier]);
+        // right edge
+        if (localColTop === width - 1) applyTileToMap(currentMap, gTGreySidingTopRightEdge, [leftColumn + localColTop, bottomRow - baseStoryHeight + 1 - storyHeightVariation - boardwalkRowModifier]);
+        // blank, i.e. non-support-having tiles
+        if ((localColTop + 1) % 2 === 0 && localColTop !== 0 && localColTop !== width - 1) applyTileToMap(currentMap, generateGTGreySidingTopBlank(), [leftColumn + localColTop, bottomRow - baseStoryHeight + 1- storyHeightVariation - boardwalkRowModifier]);
+        // non-edge supports
+        if ((localColTop + 1) % 2 !== 0 && localColTop !== 0 && localColTop !== width - 1) applyTileToMap(currentMap, generateGTGreySidingTopSupport(), [leftColumn + localColTop, bottomRow - baseStoryHeight + 1 - storyHeightVariation - boardwalkRowModifier]);
+    }
+    //applyTileToMap(currentMap, gTGreySiding0, [leftColumn, bottomRow]);
+    // build up terrain underneath building 
+}
+
+// WRONG, MAYBE: This just return four tiles ordered: upper-left, upper-right, lower-left, lower right.
+//      Putting them in the right places will still be tricky, and require more code.
+function generateGT2x2Window() {
+    var arrayOfWindows = [
+        [gTWindow2x2_0UL, gTWindow2x2_0UR, gTWindow2x2_0LL, gTWindow2x2_0LR],
+        [gTWindow2x2_1UL, gTWindow2x2_1UR, gTWindow2x2_1LL, gTWindow2x2_1LR],
+        [gTWindow2x2_2UL, gTWindow2x2_2UR, gTWindow2x2_2LL, gTWindow2x2_2LR],
+        [gTWindow2x2_3UL, gTWindow2x2_3UR, gTWindow2x2_3LL, gTWindow2x2_3LR]
+    ],
+    randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
+    return randomWindow;
+}
+
+function generateGTGreySiding() {
+    var sidingVariations = [
+            gTGreySiding1,
+            gTGreySiding2,
+            gTGreySiding3
+    ];
+    for (var i = 0; i < 2; i++) sidingVariations.push(gTGreySiding0); // tiles with no board intersections are more common than others
+    for (var j = 0; j < 2; j++) sidingVariations.push(gTGreySiding4); // tiles with no board intersections are more common than others
+    for (var k = 0; k < 2; k++) sidingVariations.push(gTGreySiding5); // tiles with no board intersections are more common than others
+    return sidingVariations[Math.round(Math.random() * (sidingVariations.length - 1))];
+}
+
+function generateGTGreySidingLeftEdge() {
+    var sidingLeftEdgeVariations = [
+            gTGreySidingLeftEdge0,
+            gTGreySidingLeftEdge1,
+            gTGreySidingLeftEdge2
+    ];
+    return sidingLeftEdgeVariations[Math.round(Math.random() * (sidingLeftEdgeVariations.length - 1))];
+}
+
+function generateGTGreySidingRightEdge() {
+    var sidingRightEdgeVariations = [
+            gTGreySidingRightEdge0,
+            gTGreySidingRightEdge1,
+            gTGreySidingRightEdge2
+    ];
+    return sidingRightEdgeVariations[Math.round(Math.random() * (sidingRightEdgeVariations.length - 1))];
+}
+
+function generateGTGreySidingTopBlank() {
+    var sidingTopBlankVariations = [
+            gTGreySidingTopBlank0,
+            gTGreySidingTopBlank1,
+            gTGreySidingTopBlank2
+    ];
+    return sidingTopBlankVariations[Math.round(Math.random() * (sidingTopBlankVariations.length - 1))];
+}
+
+function generateGTGreySidingTopSupport() {
+    var sidingTopSupportVariations = [
+            gTGreySidingTopSupport0,
+            gTGreySidingTopSupport1
+    ];
+    return sidingTopSupportVariations[Math.round(Math.random() * (sidingTopSupportVariations.length - 1))];    
 }
