@@ -101,7 +101,7 @@ function regenerateMap(width, height) {
     clearMapRectangle(1, 1, width, height);
     // generate content
     //generateTerrain(width, height, 5, 1, stretchNine);
-    generateGhostTownBuilding(6, height - 2, 12, 2, 2);
+    generateGhostTownBuilding(4, height - 2, 18, 3, 2);
 }
 
 function generateBorder(mapWidth, mapHeight, tile) {
@@ -158,11 +158,13 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, ti
 }
 
 function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, maxStoryHeightVariation) {
+    // WRONG need protection from going up out of the map (and out the side)
     var randomNumberOfStories = 1 + Math.round(Math.random() * (maxStories - 1)),
         width = 6 + Math.round(Math.random() * (maxWidth - 6)),
         boardwalk = false, // WRONG should be true, when things are working
         baseStoryHeight = 4, // minimum height for 3-tall door or 2-tall window with a space underneath plus a top border
         lastStoryHeight = 0,
+        cumulativeStoryHeight = 0,
         lastStoryWidth = 0,
         newLeftColumn = leftColumn;
         if (Math.random() < 0.5) boardWalk = false;
@@ -171,13 +173,14 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
         var storyHeightVariation = Math.round(Math.random() * (maxStoryHeightVariation - 1));
             newWidth = width;
             if (i > 0) { // any story above the first
-                newWidth = Math.max(4, width - i * 2 - Math.round(Math.random() * width));
+                newWidth = Math.max(4, lastStoryWidth - i * 2 - Math.round(Math.random() * width));
                 newLeftColumn = newLeftColumn + Math.round((lastStoryWidth - newWidth) / 2);
             }
-        generateGhostTownBuildingStory(newLeftColumn, bottomRow - lastStoryHeight, newWidth, storyHeightVariation, i + 1, boardwalk);
+        generateGhostTownBuildingStory(newLeftColumn, bottomRow - cumulativeStoryHeight, newWidth, storyHeightVariation, i + 1, boardwalk);
         lastStoryWidth = newWidth;
         lastStoryHeight = baseStoryHeight + storyHeightVariation;
         lastLeftColumn = newLeftColumn;
+        cumulativeStoryHeight += lastStoryHeight;
     }
 }
 
