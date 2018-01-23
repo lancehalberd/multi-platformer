@@ -161,13 +161,13 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
     // WRONG need protection from going up out of the map (and out the side)
     var randomNumberOfStories = 1 + Math.round(Math.random() * (maxStories - 1)),
         width = 6 + Math.round(Math.random() * (maxWidth - 6)),
-        boardwalk = false, // WRONG should be true, when things are working
+        boardwalk = false,
         baseStoryHeight = 4, // minimum height for 3-tall door or 2-tall window with a space underneath plus a top border
         lastStoryHeight = 0,
         cumulativeStoryHeight = 0,
         lastStoryWidth = 0,
         newLeftColumn = leftColumn;
-        if (Math.random() < 0.5) boardWalk = false;
+        if (Math.random() >= 0.5) boardwalk = true;
     // generate a story for as many stories as we end up randomly selecting
     for (var i = 0; i < randomNumberOfStories; i++) {
         var storyHeightVariation = Math.round(Math.random() * (maxStoryHeightVariation - 1));
@@ -184,16 +184,23 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
     }
 }
 
-function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, boardWalkTrueOrFalse) {
+function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, boardwalkTrueOrFalse) {
     // WRONG: Should be a symmetry option, eventually
     // WARNING: generally, when generating things like houses, we're going to have to ensure that
     //      there is room on the map to the right and above them before we start building them.
+    //      Boardwalk extension of width will have to be taken into consideration, or width will have to include it.
     var boardwalkRowModifier = 0,
         baseStoryHeight = 4;
     // build a boardwalk if the building has one
-    if (boardWalkTrueOrFalse && storyNumber === 1) {
+    if (boardwalkTrueOrFalse) {
         boardwalkRowModifier = 1;
-        // build the boardwalk
+        var boardwalkExtension = 1 + Math.round(Math.random() * 2);
+        if (storyNumber === 1) {
+            var boardwalk = generateBoardwalk(width + boardwalkExtension * 2);
+            for (var boardwalkCol = 0; boardwalkCol < width + boardwalkExtension * 2; boardwalkCol++) {
+                applyTileToMap(currentMap, boardwalk[boardwalkCol], [leftColumn - boardwalkExtension + boardwalkCol, bottomRow]);
+            }
+        }
     }
     // NOTE: CLEAR AREA, THEN BUILD DOORS AND WINDOWS, THEN FILL IN THE REST IF IT'S BLANK AND INSIDE BUILDING BOUNDS.
 
@@ -235,12 +242,13 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
         doorLocalLeftCol = 1 + Math.round(Math.random() * (width - doorWidth - 2));
         for (var localDoorRow = 0; localDoorRow < doorHeight; localDoorRow++) {
             for (var localDoorCol = 0; localDoorCol < doorWidth; localDoorCol++) {
-                applyTileToMap(currentMap, door[doorTileIndex], [leftColumn + doorLocalLeftCol + localDoorCol, bottomRow - 2 + localDoorRow]);
+                applyTileToMap(currentMap, door[doorTileIndex], [leftColumn + doorLocalLeftCol + localDoorCol, bottomRow - 2 - boardwalkRowModifier + localDoorRow]);
                 doorTileIndex++;
             }
         }
     }
     // add windows
+    // WRONG maybe. Maybe find a way to keep two windows of the same kind from showing up next to each other.
     for (var windowCol = 1; windowCol < width - 2; windowCol++) {
         var window = generateGTWindow(),
             windowWidth,
@@ -281,8 +289,18 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     // build up terrain underneath building 
 }
 
-// WRONG, MAYBE: This just return four tiles ordered: upper-left, upper-right, lower-left, lower right.
-//      Putting them in the right places will still be tricky, and require more code.
+function generateBoardwalk(length) {
+    var boardwalk = [];
+    for (var i = 0; i < length; i++) {
+        if (i === 0) boardwalk.push(gTBoardwalkLeftEdge);
+        if (i === length - 1) boardwalk.push(gTBoardwalkRightEdge);
+        if ((i - 1) % 3 === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkBlank);
+        if ((i - 2) % 3 === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkSupportLeft);
+        if ((i % 3) === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkSupportRight);
+    }
+    return boardwalk;
+}
+
 function generateGT2x2Window() {
     var arrayOfWindows = [
         [gTWindow2x2_0UL, gTWindow2x2_0UR, gTWindow2x2_0LL, gTWindow2x2_0LR],
