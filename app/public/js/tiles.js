@@ -301,6 +301,156 @@ var gTWindow2x2_3LR = {
     x: 7, y:1,
 };
 
+var gTWindow2x2ShutteredUL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:0,
+};
+
+var gTWindow2x2ShutteredUR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:0,
+};
+
+var gTWindow2x2ShutteredLL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:1,
+};
+
+var gTWindow2x2ShutteredLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:1,
+};
+
+var gTWindow4x2ShuttersOpen0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 13, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 13, y: 1,
+};
+
+var gTWindow2x2ShutteredLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:1,
+};
+
+var gTWindow4x2ShuttersOpen1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 7,
+};
+
+var gTWindow2x2RoundUL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y:2,
+};
+
+var gTWindow2x2RoundUR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y:2,
+};
+
+var gTWindow2x2RoundLL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y:3,
+};
+
+var gTWindow2x2RoundLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y:3,
+};
+
 var gTDoor2x3_0UL = {
     image: ghostTownTiles,
     size: 16,

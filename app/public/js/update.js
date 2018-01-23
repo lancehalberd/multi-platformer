@@ -161,13 +161,13 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
     // WRONG need protection from going up out of the map (and out the side)
     var randomNumberOfStories = 1 + Math.round(Math.random() * (maxStories - 1)),
         width = 6 + Math.round(Math.random() * (maxWidth - 6)),
-        boardwalk = false,
+        hasBoardwalk = false,
         baseStoryHeight = 4, // minimum height for 3-tall door or 2-tall window with a space underneath plus a top border
         lastStoryHeight = 0,
         cumulativeStoryHeight = 0,
         lastStoryWidth = 0,
         newLeftColumn = leftColumn;
-        if (Math.random() >= 0.5) boardwalk = true;
+        if (Math.random() >= 0.5) hasBoardwalk = true;
     // generate a story for as many stories as we end up randomly selecting
     for (var i = 0; i < randomNumberOfStories; i++) {
         var storyHeightVariation = Math.round(Math.random() * (maxStoryHeightVariation - 1));
@@ -176,7 +176,7 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
                 newWidth = Math.max(4, lastStoryWidth - i * 2 - Math.round(Math.random() * width));
                 newLeftColumn = newLeftColumn + Math.round((lastStoryWidth - newWidth) / 2);
             }
-        generateGhostTownBuildingStory(newLeftColumn, bottomRow - cumulativeStoryHeight, newWidth, storyHeightVariation, i + 1, boardwalk);
+        generateGhostTownBuildingStory(newLeftColumn, bottomRow - cumulativeStoryHeight, newWidth, storyHeightVariation, i + 1, randomNumberOfStories, hasBoardwalk);
         lastStoryWidth = newWidth;
         lastStoryHeight = baseStoryHeight + storyHeightVariation;
         lastLeftColumn = newLeftColumn;
@@ -184,15 +184,22 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
     }
 }
 
-function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, boardwalkTrueOrFalse) {
+function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, numberOfStories, hasBoardwalk) {
+    // WRONG: Stories should probably be able to be the same width as each other, at least for the first two or  three stories.
     // WRONG: Should be a symmetry option, eventually
+    // WRONG: with even-numbered widths, higher stories are always biased one to the right of center
     // WARNING: generally, when generating things like houses, we're going to have to ensure that
     //      there is room on the map to the right and above them before we start building them.
     //      Boardwalk extension of width will have to be taken into consideration, or width will have to include it.
     var boardwalkRowModifier = 0,
         baseStoryHeight = 4;
+    // NOTE: CLEAR AREA
+
+    // clear terrain where building will be
+    //clearInsideOfBorder()
+    // WRONG need to include boardwalk for clearing area. Maybe have to clear area inside of'(if (hasBoardwalk)...'
     // build a boardwalk if the building has one
-    if (boardwalkTrueOrFalse) {
+    if (hasBoardwalk) {
         boardwalkRowModifier = 1;
         var boardwalkExtension = 1 + Math.round(Math.random() * 2);
         if (storyNumber === 1) {
@@ -202,10 +209,6 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
             }
         }
     }
-    // NOTE: CLEAR AREA, THEN BUILD DOORS AND WINDOWS, THEN FILL IN THE REST IF IT'S BLANK AND INSIDE BUILDING BOUNDS.
-
-    // clear terrain where building will be
-    //clearInsideOfBorder()
     // outlining the building ()
     // building the left and right edges
     for (var localRow = boardwalkRowModifier; localRow < baseStoryHeight - 1 + storyHeightVariation + boardwalkRowModifier; localRow++) { // first story if 5 tiles tall, the minus one takes off the top row
@@ -250,35 +253,48 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     // add windows
     // WRONG maybe. Maybe find a way to keep two windows of the same kind from showing up next to each other.
     for (var windowCol = 1; windowCol < width - 2; windowCol++) {
-        var window = generateGTWindow(),
+        // we check each column of the story, starting with the 2nd from the left
+        var window,
+            windowTileIndex = 0,
             windowWidth,
             windowHeight,
-            windowTileIndex = 0;
-        if (window.length === 9) {
-            windowWidth = 3;
-            windowHeight = 3;
-        }
-        if (window.length === 4) {
-            windowWidth = 2;
-            windowHeight = 2;
-        }
-        if ( // kludgy because it the second and third lines below here do the same thing for a 2x2 window,
-            //      and for anything larger than a 3-wide window, some tiles won't get checked for emptiness
-            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn] === 0 &&
-            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn + 1] === 0 &&
-            currentMap.composite[bottomRow - 1 - boardwalkRowModifier][windowCol + leftColumn + windowWidth - 1] === 0 &&
-            Math.random() < 0.5
-        ) {
-            for (var localWindowRow = 0; localWindowRow < windowHeight; localWindowRow++) {
-                for (var localWindowCol = 0; localWindowCol < windowWidth; localWindowCol++) {
-                    applyTileToMap(currentMap, window[windowTileIndex], [leftColumn + windowCol + localWindowCol, bottomRow - 2 - boardwalkRowModifier + localWindowRow]);
-                    windowTileIndex++;
+            maxWindowWidth = 4, // we only have 4-wide windows right now, at most
+            availableWidthForWindow = 1;
+        if (currentMap.composite[bottomRow - 1 - boardwalkRowModifier][leftColumn + windowCol] === 0) {
+            // if the column we're checking is empty, there's a chance we'll make a window here.
+            if (Math.random() >= 0.5) {
+                // if we decide to make a window, we check to see how many spaces to the right of it are empty,
+                //      so that we know how big a window could fit, theoretically.
+                for (var winPlacementCol = 1; winPlacementCol < maxWindowWidth; winPlacementCol++) {
+                    if (
+                        currentMap.composite[bottomRow - 1 - boardwalkRowModifier][leftColumn + windowCol + winPlacementCol] === 0 &&
+                        currentMap.composite[bottomRow - 1 - boardwalkRowModifier][leftColumn + windowCol + winPlacementCol] < leftColumn + width - 2
+                    ) availableWidthForWindow++;
+                    else break;
+                }
+                if (availableWidthForWindow > 1) { // WRONG eventually we can take this out, when we have some 1-wide windows.
+                    // from within the available amount of space, we select a random value, 1 or over
+                    var widthOfWindow = 1 + Math.round(Math.random() * (availableWidthForWindow - 1));
+                    // and build a window using it (round windows for top stories that are story 3 or above, square or arched, otherwise)
+                    if (storyNumber === numberOfStories && numberOfStories > 2) window = generateGTRoundWindow(widthOfWindow);
+                    else window = generateGTWindow(widthOfWindow);
+                    // get the window's dimensions from the newly-created window
+                    windowWidth = window[window.length - 2];
+                    windowHeight = window[window.length - 1];
+                    // build the window
+                    for (var localWindowRow = 0; localWindowRow < windowHeight; localWindowRow++) {
+                        for (var localWindowCol = 0; localWindowCol < windowWidth; localWindowCol++) {
+                            applyTileToMap(currentMap, window[windowTileIndex], [leftColumn + windowCol + localWindowCol, bottomRow - 2 - boardwalkRowModifier + localWindowRow]);
+                            windowTileIndex++;
+                        }
+                    }
                 }
             }
         }
     }
-    // fill in blank space with siding (and/or eventually barrels and/or crates, incl. explody ones)
-    
+    // add barrels and crates (including explody ones)
+    // BARRELS AND CRATES HERE!
+    // fill in blank space with siding
     for (var blankCol = 1; blankCol < width - 1; blankCol++) {
         for (var blankRow = 0; blankRow < storyHeightVariation + baseStoryHeight - 1; blankRow++) {
             if (currentMap.composite[bottomRow - boardwalkRowModifier - blankRow][leftColumn + blankCol] === 0) {
@@ -301,25 +317,61 @@ function generateBoardwalk(length) {
     return boardwalk;
 }
 
-function generateGT2x2Window() {
+function generateGT2WideWindow() {
     var arrayOfWindows = [
-        [gTWindow2x2_0UL, gTWindow2x2_0UR, gTWindow2x2_0LL, gTWindow2x2_0LR],
-        [gTWindow2x2_1UL, gTWindow2x2_1UR, gTWindow2x2_1LL, gTWindow2x2_1LR],
-        [gTWindow2x2_2UL, gTWindow2x2_2UR, gTWindow2x2_2LL, gTWindow2x2_2LR],
-        [gTWindow2x2_3UL, gTWindow2x2_3UR, gTWindow2x2_3LL, gTWindow2x2_3LR]
+        [gTWindow2x2_0UL, gTWindow2x2_0UR, gTWindow2x2_0LL, gTWindow2x2_0LR, 2, 2], // the width and height used to build the window are stored as the array's last two items
+        [gTWindow2x2_1UL, gTWindow2x2_1UR, gTWindow2x2_1LL, gTWindow2x2_1LR, 2, 2],
+        [gTWindow2x2_2UL, gTWindow2x2_2UR, gTWindow2x2_2LL, gTWindow2x2_2LR, 2, 2],
+        [gTWindow2x2_3UL, gTWindow2x2_3UR, gTWindow2x2_3LL, gTWindow2x2_3LR, 2, 2],
+        [gTWindow2x2ShutteredUL, gTWindow2x2ShutteredUR, gTWindow2x2ShutteredLL, gTWindow2x2ShutteredLR, 2, 2]
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
 }
 
-function generateGT3x3Window() {
+function generateGT4WideWindow() {
+    var arrayOfWindows = [
+        [gTWindow4x2ShuttersOpen0UL, gTWindow4x2ShuttersOpen0UML, gTWindow4x2ShuttersOpen0UMR, gTWindow4x2ShuttersOpen0UR, gTWindow4x2ShuttersOpen0LL, gTWindow4x2ShuttersOpen0LML, gTWindow4x2ShuttersOpen0LMR, gTWindow4x2ShuttersOpen0LR, 4, 2],
+        [gTWindow4x2ShuttersOpen1UL, gTWindow4x2ShuttersOpen1UML, gTWindow4x2ShuttersOpen1UMR, gTWindow4x2ShuttersOpen1UR, gTWindow4x2ShuttersOpen1LL, gTWindow4x2ShuttersOpen1LML, gTWindow4x2ShuttersOpen1LMR, gTWindow4x2ShuttersOpen1LR, 4, 2]
+    ],
+    randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
+    return randomWindow;
+}
+
+function generateGT2WideRoundWindow() {
+    var arrayOfWindows = [ // this is an array so that it's easy to add more windows, even though there's only one for now.
+        [gTWindow2x2RoundUL, gTWindow2x2RoundUR, gTWindow2x2RoundLL, gTWindow2x2RoundLR, 2, 2] // ordered all the way across the top row, then all the way across the top row -1 etc.
+    ],
+    randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
+    return randomWindow;
+}
+
+function generateGTRoundWindow(widthOfWindow) {
+    var window;
+    if (widthOfWindow === 1) window = generateGT2WideRoundWindow(); // later will be generate 1xN window
+    if (widthOfWindow >= 2) window = generateGT2WideRoundWindow();
+    // later will need a 3W window
+    return window;
+}
+
+function generateGT3WideWindow() {
     
 }
 
-function generateGTWindow() {
+function generateGTWindow(widthOfWindow) {
     var window;
-    if (Math.random() < 0.00) window = generateGT3x3Window(); // can be < 0.33 or something when there's a 3x3 window available
-    else window = generateGT2x2Window();
+    if (widthOfWindow === 1) {
+         if (Math.random() <= 1) window = generateGT2WideWindow(); // WRONG needs to be 1xN
+    }    
+    if (widthOfWindow === 2) {
+        if (Math.random() <= 1) window = generateGT2WideWindow(); // later could use the random element to select 2x1 or 2x3 windows
+    }
+    if (widthOfWindow === 3) {
+        if (Math.random() <= 1) window = generateGT2WideWindow(); // WRONG NEEDS to be 3x3
+    }
+    if (widthOfWindow >= 4) { // could make this === 4 if we have bigger windows available
+        if (Math.random() <= 1) window = generateGT4WideWindow(); // later could use the random element to select 4x1 or 3x3 windows
+    }
     return window;
 }
 
