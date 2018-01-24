@@ -650,6 +650,9 @@ function changeCharacterToAlien(actor) {
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
     actor.scale = 1.75;
     actor.type = CHARACTER_ALIEN;
+    actor.knockDownAnimationHitBox = new Rectangle(-24, -20, 48, 20);
+    actor.walkingAnimationHitBox = new Rectangle(-20, -60, 40, 60);
+    actor.crouchingAnimationHitBox = new Rectangle(-20, -32, 40, 32);
 }
 
 function changeCharacterToVictoria(actor) {
