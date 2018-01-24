@@ -185,7 +185,7 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
 }
 
 function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeightVariation, storyNumber, numberOfStories, hasBoardwalk) {
-    // WRONG: Stories should probably be able to be the same width as each other, at least for the first two or  three stories.
+    // WRONG: Stories should probably be able to be the same width as each other, at least for the first two or three stories.
     // WRONG: Should be a symmetry option, eventually
     // WRONG: with even-numbered widths, higher stories are always biased one to the right of center
     // WARNING: generally, when generating things like houses, we're going to have to ensure that
@@ -276,7 +276,10 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
                     // from within the available amount of space, we select a random value, 1 or over
                     var widthOfWindow = 1 + Math.round(Math.random() * (availableWidthForWindow - 1));
                     // and build a window using it (round windows for top stories that are story 3 or above, square or arched, otherwise)
-                    if (storyNumber === numberOfStories && numberOfStories > 2) window = generateGTRoundWindow(widthOfWindow);
+                    if (
+                        (storyNumber === numberOfStories && numberOfStories > 2) || // if it's the top story of a building three or more stories tall
+                        (storyNumber === 2 && numberOfStories === 2 && Math.random() < 0.2) // or a 20% chance if it's the top floor and only the second story
+                    ) window = generateGTRoundWindow(widthOfWindow); // then make a round window
                     else window = generateGTWindow(widthOfWindow);
                     // get the window's dimensions from the newly-created window
                     windowWidth = window[window.length - 2];
@@ -306,13 +309,14 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
 }
 
 function generateBoardwalk(length) {
+    // WRONG, a little bit: If there's a longer-than-usual section with no supports so that they don't crowd the ends, it's always on the right side.
     var boardwalk = [];
     for (var i = 0; i < length; i++) {
         if (i === 0) boardwalk.push(gTBoardwalkLeftEdge);
         if (i === length - 1) boardwalk.push(gTBoardwalkRightEdge);
-        if ((i - 1) % 3 === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkBlank);
-        if ((i - 2) % 3 === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkSupportLeft);
-        if ((i % 3) === 0 && i > 0 && i !== length - 1) boardwalk.push(gTBoardwalkSupportRight);
+        if ((((i - 1) % 3 === 0 && i > 0) || (i > length - 3)) && i !== length - 1) boardwalk.push(gTBoardwalkBlank);
+        if ((i - 2) % 3 === 0 && i > 0 && i < length - 3) boardwalk.push(gTBoardwalkSupportLeft);
+        if ((i % 3) === 0 && i > 0 && i < length - 2) boardwalk.push(gTBoardwalkSupportRight);
     }
     return boardwalk;
 }
