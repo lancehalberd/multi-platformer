@@ -179,7 +179,7 @@ class TTCharacter {
         this.timeOnGroundAfterKnockDownScale = 1; // ... base is multiplied by this in the knock down update
         this.knockBackInertiaScale = 1; // kncok back effect is scaled by this
     }
-    
+
 	getCurrentFrame() {
 		var currentFrame = this.animation.frames[this.currentFrame];
 	    return currentFrame;
@@ -192,6 +192,20 @@ class TTCharacter {
             // jumping resets vertical velocity.
             this.vy = 0;
             this.applyJumpVelocity();
+            return true;
+        }
+        return false;
+    }
+
+    jumpDown() {
+        if (this.currentNumberOfJumps === 0) {
+            this.currentNumberOfJumps++;
+            this.currentJumpDuration = this.maxJumpDuration;
+            // jumping resets vertical velocity.
+            this.vy = 0;
+            // Immediately move the player 2 pixels down to bypass
+            // the top of the tile they are standing on.
+            this.y += 2;
             return true;
         }
         return false;

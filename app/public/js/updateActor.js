@@ -148,7 +148,14 @@ function updateActor(actor) {
             actor.superJumped = false;
             // The player can crouch by pressing down while standing on solid ground.
             if (isKeyDown(KEY_DOWN)) {
-                actor.isCrouching = true;
+                if (actor.jumpKeyReleased && isKeyDown(KEY_UP) && isPlayerOnOneWayGround(actor)) {
+                    // The player will attempt to jump down through a one way tile.
+                    if (actor.jumpDown()) {
+                        // No animations during jumpDown action currently.
+                    }
+                } else {
+                    actor.isCrouching = true;
+                }
             } else if (actor.jumpKeyReleased && isKeyDown(KEY_UP)) {
                 // The player will attempt to jump if they press the
                 // jump key while on the ground and not crouching.
@@ -435,11 +442,30 @@ function isPlayerUnderCeiling(player) {
     var hitBox = getGlobalSpriteHitBox(player),
         topRow = Math.floor(hitBox.top / currentMap.tileSize),
         leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
-        rightColumn = Math.floor((hitBox.right - 1) / currentMap.tileSize);
+        rightColumn = Math.floor((hitBox.right - 0.1) / currentMap.tileSize);
     for (var column = leftColumn; column <= rightColumn; column++) {
         if (isTileX(topRow, column, TILE_SOLID * TILE_UP)) return true;
     }
     return false;
+}
+
+function isPlayerOnOneWayGround(player) {
+    var hitBox = getGlobalSpriteHitBox(player),
+        bottomwRow = Math.floor((hitBox.bottom + 0.1) / currentMap.tileSize),
+        leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
+        rightColumn = Math.floor((hitBox.right - 0.1) / currentMap.tileSize);
+    for (var column = leftColumn; column <= rightColumn; column++) {
+        // The player can jump down through ground as long as it is only
+        // solid in one vertical direction.
+        if (
+            isTileX(bottomwRow, column, TILE_SOLID * TILE_DOWN) &&
+            isTileX(bottomwRow, column, TILE_SOLID * TILE_UP)
+        ) {
+            return false;
+        }
+    }
+    return true;
+
 }
 
 function moveSprite(sprite, dx, dy) {
