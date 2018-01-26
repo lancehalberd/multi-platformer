@@ -235,18 +235,34 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     }
     // add a door if this is the first story
     if (storyNumber === 1) {
-        var door = generateGTDoor(),
-            doorWidth,
-            doorHeight = 3,
-            doorLocalLeftCol,
-            doorTileIndex = 0;
-        if (door.length === 9) doorWidth = 3;
-        if (door.length === 6) doorWidth = 2;
-        doorLocalLeftCol = 1 + Math.round(Math.random() * (width - doorWidth - 2));
-        for (var localDoorRow = 0; localDoorRow < doorHeight; localDoorRow++) {
-            for (var localDoorCol = 0; localDoorCol < doorWidth; localDoorCol++) {
-                applyTileToMap(currentMap, door[doorTileIndex], [leftColumn + doorLocalLeftCol + localDoorCol, bottomRow - 2 - boardwalkRowModifier + localDoorRow]);
-                doorTileIndex++;
+        var door,
+            numberOfDoors = 1 + Math.round(Math.random());
+        if (width < 14) numberOfDoors = 1;
+        for (var doorNumber = 0; doorNumber < numberOfDoors; doorNumber++) {
+            // 3-wide door if it's a wide, multi-story building with a boardwalk
+            if (width >= 13 && numberOfStories > 1 && hasBoardwalk && doorNumber === 0) door = generateGT3x3Door();
+            // otherwise make a 2x3 door
+            else door = generateGT2x2Door();
+            var doorWidth = door[0].length,
+                doorHeight = door.length,
+                doorLocalLeftCol;
+            // big doors go in the center
+            if (doorWidth === 3) doorLocalLeftCol = Math.round((width / 2) - (doorWidth / 2)) - Math.round(Math.random()); // Seems like a should have to have two Math.round()s in here, but when I put the Math.random() inside the big Math.round(), I was always getting a placement bias to the same side.
+            else {
+                doorLocalLeftCol = 1 + Math.round(Math.random() * (width - doorWidth - 2));
+                var doorLoopAtMostUntil = Date.now() + 2000; // if this while loop doesn't finish after 2 seconds, it's gone on way too long.
+                while ( // for as long as the newly selected space for a second door and the tile to its right aren't blank, we keep selecting a random positon
+                       (currentMap.composite[bottomRow - 2 - boardwalkRowModifier][leftColumn + doorLocalLeftCol] !== 0 ||
+                       currentMap.composite[bottomRow - 2 - boardwalkRowModifier][leftColumn + doorLocalLeftCol + 1] !== 0) &&
+                       Date.now() <= doorLoopAtMostUntil
+                ) {
+                    doorLocalLeftCol = 1 + Math.round(Math.random() * (width - doorWidth - 2));
+                }
+            }
+            for (var localDoorRow = 0; localDoorRow < doorHeight; localDoorRow++) {
+                for (var localDoorCol = 0; localDoorCol < doorWidth; localDoorCol++) {
+                    applyTileToMap(currentMap, door[localDoorRow][localDoorCol], [leftColumn + doorLocalLeftCol + localDoorCol, bottomRow - 2 - boardwalkRowModifier + localDoorRow]);
+                }
             }
         }
     }
@@ -352,7 +368,7 @@ function generateGT4WideWindow() {
 
 function generateGT2WideRoundWindow() {
     var arrayOfWindows = [ // this is an array so that it's easy to add more windows, even though there's only one for now.
-        [gTWindow2x2RoundUL, gTWindow2x2RoundUR], [gTWindow2x2RoundLL, gTWindow2x2RoundLR] // ordered all the way across the top row, then all the way across the top row -1 etc.
+        [[gTWindow2x2RoundUL, gTWindow2x2RoundUR], [gTWindow2x2RoundLL, gTWindow2x2RoundLR]] // ordered all the way across the top row, then all the way across the top row -1 etc.
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
@@ -432,20 +448,16 @@ function generateGTGreySidingTopSupport() {
 
 function generateGT2x2Door() {
     var arrayOfDoors = [ // might add more doors later
-        [gTDoor2x3_0UL, gTDoor2x3_0UR, gTDoor2x3_0ML, gTDoor2x3_0MR, gTDoor2x3_0LL, gTDoor2x3_0LR]
+        [[gTDoor2x3_0UL, gTDoor2x3_0UR], [gTDoor2x3_0ML, gTDoor2x3_0MR], [gTDoor2x3_0LL, gTDoor2x3_0LR]]
     ],
     randomDoor = arrayOfDoors[Math.round(Math.random() * (arrayOfDoors.length - 1))];
     return randomDoor;
 }
 
 function generateGT3x3Door() {
-    
-}
-
-
-function generateGTDoor() {
-    var door;
-    if (Math.random() < 0.00) door = generateGT3x3Door(); // can make this < 0.33 once we have some 3x3 door code in place
-    else door = generateGT2x2Door();
-    return door;
+    var arrayOfDoors = [ // might add more doors later
+        [[gTSaloonDoor3x3_0UL, gTSaloonDoor3x3_0UM, gTSaloonDoor3x3_0UR], [gTSaloonDoor3x3_0ML, gTSaloonDoor3x3_0MM, gTSaloonDoor3x3_0MR], [gTSaloonDoor3x3_0LL, gTSaloonDoor3x3_0LM, gTSaloonDoor3x3_0LR]]
+    ],
+    randomDoor = arrayOfDoors[Math.round(Math.random() * (arrayOfDoors.length - 1))];
+    return randomDoor;
 }

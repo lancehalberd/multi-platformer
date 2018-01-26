@@ -613,6 +613,60 @@ var gTDoor2x3_0LR = {
     x: 1, y:12,
 };
 
+var gTSaloonDoor3x3_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:7,
+};
+
+var gTSaloonDoor3x3_0UM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:7,
+};
+
+var gTSaloonDoor3x3_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:7,
+};
+
+var gTSaloonDoor3x3_0ML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:8,
+};
+
+var gTSaloonDoor3x3_0MM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:8,
+};
+
+var gTSaloonDoor3x3_0MR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:8,
+};
+
+var gTSaloonDoor3x3_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:9,
+};
+
+var gTSaloonDoor3x3_0LM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:9,
+};
+
+var gTSaloonDoor3x3_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:9,
+};
+
 var gTBoardwalkLeftEdge = {
     image: ghostTownTiles,
     size: 16,
