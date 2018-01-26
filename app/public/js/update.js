@@ -172,8 +172,15 @@ function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, 
     for (var i = 0; i < randomNumberOfStories; i++) {
         var storyHeightVariation = Math.round(Math.random() * (maxStoryHeightVariation - 1));
             newWidth = width;
-            if (i > 0) { // any story above the first
-                newWidth = Math.max(4, lastStoryWidth - i * 2 - Math.round(Math.random() * width));
+            if (i === 1) { // second story
+                // second stories can be up to as wide as the first
+                newWidth = Math.max(4, lastStoryWidth - Math.round(Math.random() * width));
+                if (newWidth === width) newLeftColumn = leftColumn;
+                else newLeftColumn = newLeftColumn + Math.round((lastStoryWidth - newWidth) / 2) - Math.round(Math.random());
+            }
+            if (i > 1) { // any story above the second
+                // upper stories are narrower
+                newWidth = Math.max(4, lastStoryWidth - ((i - 1) * 2) - Math.round(Math.random() * width));
                 newLeftColumn = newLeftColumn + Math.round((lastStoryWidth - newWidth) / 2);
             }
         generateGhostTownBuildingStory(newLeftColumn, bottomRow - cumulativeStoryHeight, newWidth, storyHeightVariation, i + 1, randomNumberOfStories, hasBoardwalk);
