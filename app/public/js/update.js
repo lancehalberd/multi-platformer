@@ -255,7 +255,6 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     for (var windowCol = 1; windowCol < width - 2; windowCol++) {
         // we check each column of the story, starting with the 2nd from the left
         var window,
-            windowTileIndex = 0,
             windowWidth,
             windowHeight,
             maxWindowWidth = 4, // we only have 4-wide windows right now, at most
@@ -282,13 +281,12 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
                     ) window = generateGTRoundWindow(widthOfWindow); // then make a round window
                     else window = generateGTWindow(widthOfWindow);
                     // get the window's dimensions from the newly-created window
-                    windowWidth = window[window.length - 2];
-                    windowHeight = window[window.length - 1];
+                    windowWidth = window[0].length;
+                    windowHeight = window.length;
                     // build the window
                     for (var localWindowRow = 0; localWindowRow < windowHeight; localWindowRow++) {
                         for (var localWindowCol = 0; localWindowCol < windowWidth; localWindowCol++) {
-                            applyTileToMap(currentMap, window[windowTileIndex], [leftColumn + windowCol + localWindowCol, bottomRow - 2 - boardwalkRowModifier + localWindowRow]);
-                            windowTileIndex++;
+                            applyTileToMap(currentMap, window[localWindowRow][localWindowCol], [leftColumn + windowCol + localWindowCol, bottomRow - 2 - boardwalkRowModifier + localWindowRow]);
                         }
                     }
                 }
@@ -323,11 +321,21 @@ function generateBoardwalk(length) {
 
 function generateGT2WideWindow() {
     var arrayOfWindows = [
-        [gTWindow2x2_0UL, gTWindow2x2_0UR, gTWindow2x2_0LL, gTWindow2x2_0LR, 2, 2], // the width and height used to build the window are stored as the array's last two items
-        [gTWindow2x2_1UL, gTWindow2x2_1UR, gTWindow2x2_1LL, gTWindow2x2_1LR, 2, 2],
-        [gTWindow2x2_2UL, gTWindow2x2_2UR, gTWindow2x2_2LL, gTWindow2x2_2LR, 2, 2],
-        [gTWindow2x2_3UL, gTWindow2x2_3UR, gTWindow2x2_3LL, gTWindow2x2_3LR, 2, 2],
-        [gTWindow2x2ShutteredUL, gTWindow2x2ShutteredUR, gTWindow2x2ShutteredLL, gTWindow2x2ShutteredLR, 2, 2]
+        [[gTWindow2x2_0UL, gTWindow2x2_0UR], [gTWindow2x2_0LL, gTWindow2x2_0LR]], // the width and height used to build the window are stored as the array's last two items
+        [[gTWindow2x2_1UL, gTWindow2x2_1UR], [gTWindow2x2_1LL, gTWindow2x2_1LR]],
+        [[gTWindow2x2_2UL, gTWindow2x2_2UR], [gTWindow2x2_2LL, gTWindow2x2_2LR]],
+        [[gTWindow2x2_3UL, gTWindow2x2_3UR], [gTWindow2x2_3LL, gTWindow2x2_3LR]],
+        [[gTWindow2x2ShutteredUL, gTWindow2x2ShutteredUR], [gTWindow2x2ShutteredLL, gTWindow2x2ShutteredLR]]
+    ],
+    randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
+    return randomWindow;
+}
+
+function generateGT3WideWindow() {
+    var arrayOfWindows = [
+        [[gTWindow3x2HalfShuttered0UL, gTWindow3x2HalfShuttered0UM, gTWindow3x2HalfShuttered0UR], [gTWindow3x2HalfShuttered0LL, gTWindow3x2HalfShuttered0LM, gTWindow3x2HalfShuttered0LR]],
+        [[gTWindow3x2HalfShuttered1UL, gTWindow3x2HalfShuttered1UM, gTWindow3x2HalfShuttered1UR], [gTWindow3x2HalfShuttered1LL, gTWindow3x2HalfShuttered1LM, gTWindow3x2HalfShuttered1LR]],
+        [[gTWindow3x3Arched0UL, gTWindow3x3Arched0UM, gTWindow3x3Arched0UR], [gTWindow3x3Arched0ML, gTWindow3x3Arched0MM, gTWindow3x3Arched0MR], [gTWindow3x3Arched0LL, gTWindow3x3Arched0LM, gTWindow3x3Arched0LR]]
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
@@ -335,8 +343,8 @@ function generateGT2WideWindow() {
 
 function generateGT4WideWindow() {
     var arrayOfWindows = [
-        [gTWindow4x2ShuttersOpen0UL, gTWindow4x2ShuttersOpen0UML, gTWindow4x2ShuttersOpen0UMR, gTWindow4x2ShuttersOpen0UR, gTWindow4x2ShuttersOpen0LL, gTWindow4x2ShuttersOpen0LML, gTWindow4x2ShuttersOpen0LMR, gTWindow4x2ShuttersOpen0LR, 4, 2],
-        [gTWindow4x2ShuttersOpen1UL, gTWindow4x2ShuttersOpen1UML, gTWindow4x2ShuttersOpen1UMR, gTWindow4x2ShuttersOpen1UR, gTWindow4x2ShuttersOpen1LL, gTWindow4x2ShuttersOpen1LML, gTWindow4x2ShuttersOpen1LMR, gTWindow4x2ShuttersOpen1LR, 4, 2]
+        [[gTWindow4x2ShuttersOpen0UL, gTWindow4x2ShuttersOpen0UML, gTWindow4x2ShuttersOpen0UMR, gTWindow4x2ShuttersOpen0UR], [gTWindow4x2ShuttersOpen0LL, gTWindow4x2ShuttersOpen0LML, gTWindow4x2ShuttersOpen0LMR, gTWindow4x2ShuttersOpen0LR]],
+        [[gTWindow4x2ShuttersOpen1UL, gTWindow4x2ShuttersOpen1UML, gTWindow4x2ShuttersOpen1UMR, gTWindow4x2ShuttersOpen1UR], [gTWindow4x2ShuttersOpen1LL, gTWindow4x2ShuttersOpen1LML, gTWindow4x2ShuttersOpen1LMR, gTWindow4x2ShuttersOpen1LR]]
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
@@ -344,7 +352,7 @@ function generateGT4WideWindow() {
 
 function generateGT2WideRoundWindow() {
     var arrayOfWindows = [ // this is an array so that it's easy to add more windows, even though there's only one for now.
-        [gTWindow2x2RoundUL, gTWindow2x2RoundUR, gTWindow2x2RoundLL, gTWindow2x2RoundLR, 2, 2] // ordered all the way across the top row, then all the way across the top row -1 etc.
+        [gTWindow2x2RoundUL, gTWindow2x2RoundUR], [gTWindow2x2RoundLL, gTWindow2x2RoundLR] // ordered all the way across the top row, then all the way across the top row -1 etc.
     ],
     randomWindow = arrayOfWindows[Math.round(Math.random() * (arrayOfWindows.length - 1))];
     return randomWindow;
@@ -358,23 +366,19 @@ function generateGTRoundWindow(widthOfWindow) {
     return window;
 }
 
-function generateGT3WideWindow() {
-    
-}
-
 function generateGTWindow(widthOfWindow) {
     var window;
     if (widthOfWindow === 1) {
          if (Math.random() <= 1) window = generateGT2WideWindow(); // WRONG needs to be 1xN
     }    
     if (widthOfWindow === 2) {
-        if (Math.random() <= 1) window = generateGT2WideWindow(); // later could use the random element to select 2x1 or 2x3 windows
+        if (Math.random() <= 1) window = generateGT2WideWindow();
     }
     if (widthOfWindow === 3) {
-        if (Math.random() <= 1) window = generateGT2WideWindow(); // WRONG NEEDS to be 3x3
+        if (Math.random() <= 1) window = generateGT3WideWindow();
     }
     if (widthOfWindow >= 4) { // could make this === 4 if we have bigger windows available
-        if (Math.random() <= 1) window = generateGT4WideWindow(); // later could use the random element to select 4x1 or 3x3 windows
+        if (Math.random() <= 1) window = generateGT4WideWindow(); // later could use the random element to select 4x1 or 4x3 windows
     }
     return window;
 }
