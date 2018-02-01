@@ -702,6 +702,48 @@ var gTBoardwalkRightEdge = {
     properties: TILE_SOLID_ALL
 };
 
+var gTBarrel0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:8,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBarrel1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:9,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
 //////////////////////////////////////////////
 // end Lee's new Ghost Town tileset 2018 01 //
 //////////////////////////////////////////////
@@ -709,6 +751,104 @@ var gTBoardwalkRightEdge = {
 //////////////////////////////////////////
 // Lee's new Desert tileset 2018 01 //
 //////////////////////////////////////////
+
+var desGroundSurfaceL = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundSurfaceM = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundSurfaceR = {
+    image: desertTiles,
+    size: 16,
+    x: 8, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUL = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockML = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockMM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockMR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLL = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedLeft = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedRight = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 3,
+    properties: TILE_SOLID_ALL
+};
 
 //////////////////////////////////////////
 // end Lee's new Desert tileset 2018 01 //

@@ -199,7 +199,8 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     //      there is room on the map to the right and above them before we start building them.
     //      Boardwalk extension of width will have to be taken into consideration, or width will have to include it.
     var boardwalkRowModifier = 0,
-        baseStoryHeight = 4;
+        baseStoryHeight = 4,
+        boardwalkExtension = 0; // this is here so that it's in scope for a reference in the barrel-and-crate-adding section of this function
     // NOTE: CLEAR AREA
 
     // clear terrain where building will be
@@ -208,7 +209,7 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     // build a boardwalk if the building has one
     if (hasBoardwalk) {
         boardwalkRowModifier = 1;
-        var boardwalkExtension = 1 + Math.round(Math.random() * 2);
+        boardwalkExtension = 1 + Math.round(Math.random() * 2);
         if (storyNumber === 1) {
             var boardwalk = generateBoardwalk(width + boardwalkExtension * 2);
             for (var boardwalkCol = 0; boardwalkCol < width + boardwalkExtension * 2; boardwalkCol++) {
@@ -316,8 +317,27 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
             }
         }
     }
-    // add barrels and crates (including explody ones)
-    // BARRELS AND CRATES HERE!
+    // end windows
+    // TEMPORARILY REMOVED until the barrels can work as decals
+    // add barrels (including explody ones)
+    /*for (var barrelCol = 0; barrelCol < width + boardwalkExtension * 2; barrelCol++) {
+        if (Math.random() < 0.15) applyTileToMap(currentMap, generateGTBarrel(), [leftColumn - boardwalkExtension + barrelCol, bottomRow - boardwalkRowModifier]);
+    }*/
+    // WRONG not taking boardwalk into account, but should
+    // WRONG Crates spawning on left lower corner all the time
+    /*for (var crateCol = 0; crateCol < width; crateCol++) {
+        if (
+            Math.random() < 0.33 && currentMap.composite[bottomRow - boardwalkRowModifier][leftColumn + crateCol] === 0 &&
+            currentMap.composite[bottomRow - boardwalkRowModifier - 1][leftColumn + crateCol + 1] === 0
+        ) {
+            var crate = generateGT2x2Crate();
+            for (var crateLocalCol = 0; crateLocalCol < crate.length; crateLocalCol++) {
+                for (var crateLocalRow = 0; crateLocalRow < crate[0].length; crateLocalRow++) {
+                    applyTileToMap(currentMap, crate[crateLocalRow][crateLocalCol], [leftColumn + crateLocalCol, bottomRow - boardwalkRowModifier - 1 + crateLocalRow]);
+                }
+            }
+        }
+    }*/
     // fill in blank space with siding
     for (var blankCol = 1; blankCol < width - 1; blankCol++) {
         for (var blankRow = 0; blankRow < storyHeightVariation + baseStoryHeight - 1; blankRow++) {
@@ -456,7 +476,7 @@ function generateGTGreySidingTopSupport() {
 function generateGT2x2Door() {
     var arrayOfDoors = [ // might add more doors later
         [[gTDoor2x3_0UL, gTDoor2x3_0UR], [gTDoor2x3_0ML, gTDoor2x3_0MR], [gTDoor2x3_0LL, gTDoor2x3_0LR]]
-    ],
+    ];
     randomDoor = arrayOfDoors[Math.round(Math.random() * (arrayOfDoors.length - 1))];
     return randomDoor;
 }
@@ -464,7 +484,21 @@ function generateGT2x2Door() {
 function generateGT3x3Door() {
     var arrayOfDoors = [ // might add more doors later
         [[gTSaloonDoor3x3_0UL, gTSaloonDoor3x3_0UM, gTSaloonDoor3x3_0UR], [gTSaloonDoor3x3_0ML, gTSaloonDoor3x3_0MM, gTSaloonDoor3x3_0MR], [gTSaloonDoor3x3_0LL, gTSaloonDoor3x3_0LM, gTSaloonDoor3x3_0LR]]
-    ],
+    ];
     randomDoor = arrayOfDoors[Math.round(Math.random() * (arrayOfDoors.length - 1))];
     return randomDoor;
+}
+
+function generateGT2x2Crate() {
+    var arrayOfCrates = [ // might add more doors later
+        [[gTCrate2x2_0UL, gTCrate2x2_0UR], [gTCrate2x2_0LL, gTCrate2x2_0LR]]
+    ];
+    randomCrate = arrayOfCrates[Math.round(Math.random() * (arrayOfCrates.length - 1))];
+    return randomCrate;
+}
+
+function generateGTBarrel() {
+    var arrayOfBarrels = [gTBarrel0, gTBarrel1];
+    randomBarrel = arrayOfBarrels[Math.round(Math.random() * (arrayOfBarrels.length - 1))];
+    return randomBarrel;
 }

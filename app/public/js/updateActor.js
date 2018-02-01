@@ -705,7 +705,8 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
     actor.attackAnimationMsPerFrame = 280;
-    actor.scale = 1.75;
+    //actor.scale = 1.75; // original scale, matches original hit bot
+    actor.scale = 2;
     //actor.scale = 2.125; // maybe this scale is better with Lee's ghost town tiles?
     actor.type = CHARACTER_VICTORIA;
 }

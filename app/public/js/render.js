@@ -5,6 +5,38 @@ mainContext.imageSmoothingEnabled = false;
 var bufferCanvas = createCanvas(mainCanvas.width, mainCanvas.height);
 var bufferContext = bufferCanvas.getContext('2d');
 
+
+/////////////////
+// lighting
+var $lightingCanvas = $(`<canvas width="${mainCanvas.width}" height="${mainCanvas.height}" />`);
+$('body').append($lightingCanvas);
+
+var canvasPosition = $(mainCanvas).offset();
+$lightingCanvas.css({
+  position: 'absolute',
+  left: `${canvasPosition.left + 1}px`,
+  top: `${canvasPosition.top + 2}px`
+});
+
+var lightingContext = $lightingCanvas[0].getContext('2d');
+
+// experiment using code copied from w3schools.com:
+
+lightingContext.fillStyle = 'red';
+lightingContext.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+/*
+// Create gradient
+var grd = lightingContext.createLinearGradient(0,0,200,0);
+grd.addColorStop(0,"red");
+grd.addColorStop(1,"white");
+
+// Fill with gradient
+lightingContext.fillStyle = grd;
+lightingContext.fillRect(10,10,150,80);
+*/
+// end lighting
+///////////////////
+
 var render = () => {
     try {
     if (!gameHasBeenInitialized || !currentMap) {
