@@ -137,7 +137,7 @@ function softPoint(currentIndex, xCoord, yCoord) {
 ///////////////////
 
 var render = () => {
-    countFps(5, 30, 'render()');
+    countFps(5, 30, FPSRENDER); // just comment this in for an FPS display in the console.
     try {
     if (!gameHasBeenInitialized || !currentMap) {
         window.requestAnimationFrame(render);

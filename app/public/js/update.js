@@ -5,7 +5,7 @@ var cameraX = 0, cameraY = 0;
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
-    countFps(5, 30, 'update()');
+    countFps(5, 30, FPSUPDATE); // just comment this in for an FPS display in the console.
     if (!gameHasBeenInitialized) {
         if (!numberOfImagesLeftToLoad && connected)initializeGame();
         return;
@@ -505,31 +505,64 @@ function generateGTBarrel() {
 }
 
 var fpsDisplay = {
-		'frameCounter': 0,
-		'framesSinceLastDisplay': 0,
-		'framesSinceLastDisplayLongTerm': 0
-	};
+		'updateFrameCounter': 0,
+		'updateFramesSinceLastDisplay': 0,
+		'updateFramesSinceLastDisplayLongTerm': 0,
+        'renderFrameCounter': 0,
+		'renderFramesSinceLastDisplay': 0,
+		'renderFramesSinceLastDisplayLongTerm': 0,
+	},
+    FPSUPDATE =  'trackUpdateFunctionFPS',
+    FPSRENDER = 'trackRenderFunctionFPS';
 
-function countFps(displayIntervalInSeconds, displayIntervalLongTermInSeconds, loopName) {
-    fpsDisplay.frameCounter++;
-    fpsDisplay.framesSinceLastDisplay++;
-    fpsDisplay.framesSinceLastDisplayLongTerm++;
-    // short-term average
-    if (fpsDisplay.noFpsDisplayUntil <= Date.now() || !fpsDisplay.noFpsDisplayUntil) {
-        var averageFpsSinceLastDisplay,
-            recentFrames = fpsDisplay.framesSinceLastDisplay;
-        averageFpsSinceLastDisplay = Math.round(recentFrames / displayIntervalInSeconds);
-        if (averageFpsSinceLastDisplay) console.log(loopName + ' FPS average over ' + displayIntervalInSeconds + ' seconds: ' + averageFpsSinceLastDisplay);
-        fpsDisplay.framesSinceLastDisplay = 0;
-        fpsDisplay.noFpsDisplayUntil = Date.now() + displayIntervalInSeconds * 1000;
+function countFps(displayIntervalInSeconds, displayIntervalLongTermInSeconds, FPSUPDATE_or_FPSRENDER) {
+    // NOTE: sending this FPSUPDATE if it's run in the update() loop, or FPSRENDER if run in the render() loop.
+    //      Just sending it one vs. the other won't tell it what to track--it just lets two things be
+    //      tracked simultaneously.
+    if (FPSUPDATE_or_FPSRENDER === FPSUPDATE) {
+        fpsDisplay.updateFrameCounter++;
+        fpsDisplay.updateFramesSinceLastDisplay++;
+        fpsDisplay.updateFramesSinceLastDisplayLongTerm++;
+        // short-term average
+        if (fpsDisplay.noUpdateFpsDisplayUntil <= Date.now() || !fpsDisplay.noUpdateFpsDisplayUntil) {
+            var averageUpdateFpsSinceLastDisplay,
+                recentUpdateFrames = fpsDisplay.updateFramesSinceLastDisplay;
+            averageUpdateFpsSinceLastDisplay = Math.round(recentUpdateFrames / displayIntervalInSeconds);
+            if (averageUpdateFpsSinceLastDisplay) console.log('update() FPS average over ' + displayIntervalInSeconds + ' seconds: ' + averageUpdateFpsSinceLastDisplay);
+            fpsDisplay.updateFramesSinceLastDisplay = 0;
+            fpsDisplay.noUpdateFpsDisplayUntil = Date.now() + displayIntervalInSeconds * 1000;
+        }
+        // long-term average
+        if (fpsDisplay.noUpdateFpsDisplayLongTermUntil <= Date.now() || !fpsDisplay.noUpdateFpsDisplayLongTermUntil) {
+            var averageUpdateFpsSinceLastDisplayLongTerm,
+                recentUpdateFramesLongTerm = fpsDisplay.updateFramesSinceLastDisplayLongTerm;
+            averageUpdateFpsSinceLastDisplayLongTerm = Math.round(recentUpdateFramesLongTerm / displayIntervalLongTermInSeconds);
+            if (averageUpdateFpsSinceLastDisplayLongTerm) console.log('update() FPS average over ' + displayIntervalLongTermInSeconds + ' seconds: ' + averageUpdateFpsSinceLastDisplayLongTerm);
+            fpsDisplay.updateFramesSinceLastDisplayLongTerm = 0;
+            fpsDisplay.noUpdateFpsDisplayLongTermUntil = Date.now() + displayIntervalLongTermInSeconds * 1000;
+        }
     }
-    // long-term average
-    if (fpsDisplay.noFpsDisplayLongTermUntil <= Date.now() || !fpsDisplay.noFpsDisplayLongTermUntil) {
-        var averageFpsSinceLastDisplayLongTerm,
-            recentFramesLongTerm = fpsDisplay.framesSinceLastDisplayLongTerm;
-        averageFpsSinceLastDisplayLongTerm = Math.round(recentFramesLongTerm / displayIntervalLongTermInSeconds);
-        if (averageFpsSinceLastDisplayLongTerm) console.log(loopName + 'FPS average over ' + displayIntervalLongTermInSeconds + ' seconds: ' + averageFpsSinceLastDisplayLongTerm);
-        fpsDisplay.framesSinceLastDisplayLongTerm = 0;
-        fpsDisplay.noFpsDisplayLongTermUntil = Date.now() + displayIntervalLongTermInSeconds * 1000;
+    if (FPSUPDATE_or_FPSRENDER === FPSRENDER) {
+        fpsDisplay.renderFrameCounter++;
+        fpsDisplay.renderFramesSinceLastDisplay++;
+        fpsDisplay.renderFramesSinceLastDisplayLongTerm++;
+        // short-term average
+        if (fpsDisplay.noRenderFpsDisplayUntil <= Date.now() || !fpsDisplay.noRenderFpsDisplayUntil) {
+            var averageRenderFpsLastDisplay,
+                recentRenderFrames = fpsDisplay.renderFramesSinceLastDisplay;
+            averageRenderFpsLastDisplay = Math.round(recentRenderFrames / displayIntervalInSeconds);
+            if (averageRenderFpsLastDisplay) console.log('render() FPS average over ' + displayIntervalInSeconds + ' seconds: ' + averageRenderFpsLastDisplay);
+            fpsDisplay.renderFramesSinceLastDisplay = 0;
+            fpsDisplay.noRenderFpsDisplayUntil = Date.now() + displayIntervalInSeconds * 1000;
+        }
+        // long-term average
+        if (fpsDisplay.noRenderFpsDisplayLongTermUntil <= Date.now() || !fpsDisplay.noRenderFpsDisplayLongTermUntil) {
+            var averageRenderFpsLastDisplayLongTerm,
+                recentRenderFramesLongTerm = fpsDisplay.renderFramesSinceLastDisplayLongTerm;
+            averageRenderFpsLastDisplayLongTerm = Math.round(recentRenderFramesLongTerm / displayIntervalLongTermInSeconds);
+            if (averageRenderFpsLastDisplayLongTerm) console.log('render() FPS average over ' + displayIntervalLongTermInSeconds + ' seconds: ' + averageRenderFpsLastDisplayLongTerm);
+            fpsDisplay.renderFramesSinceLastDisplayLongTerm = 0;
+            fpsDisplay.noRenderFpsDisplayLongTermUntil = Date.now() + displayIntervalLongTermInSeconds * 1000;
+        }
     }
 }
