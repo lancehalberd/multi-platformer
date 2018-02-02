@@ -11,29 +11,122 @@ var bufferContext = bufferCanvas.getContext('2d');
 var $lightingCanvas = $(`<canvas width="${mainCanvas.width}" height="${mainCanvas.height}" />`);
 $('body').append($lightingCanvas);
 
+var lightingCanvas = $lightingCanvas[0];
+
 var canvasPosition = $(mainCanvas).offset();
 $lightingCanvas.css({
   position: 'absolute',
-  left: `${canvasPosition.left + 1}px`,
-  top: `${canvasPosition.top + 2}px`
+  left: `${canvasPosition.left}px`,
+  top: `${canvasPosition.top}px`
 });
 
 var lightingContext = $lightingCanvas[0].getContext('2d');
 
-// experiment using code copied from w3schools.com:
+var lightingPixelsPerRow = 80,
+	lightingPixelsPerColumn = lightingCanvas.height / lightingCanvas.width * lightingPixelsPerRow, 
+	lightingPixelsPerGrid = lightingPixelsPerRow * lightingPixelsPerColumn,
+    lightingData = lightingContext.createImageData(lightingPixelsPerRow, lightingPixelsPerColumn),
+	lightingPixelArray = lightingData.data;
+    
+// distance lookup tables
+// access distances like: lightingDistanceFromIndexToIndex[indexA][indexB], or,
+//		for distance between coordinates, with accuracy at a resolution equal to that of the lighting array, like:
+// 		lightingDistanceFromIndexToIndex[lightingIndexOfCoordinates[xA][yA]][lightingIndexOfCoordinates[xB][yB]],
+//      in which case MAKE SURE TO SEND POSITIVE INTEGERS--you are just sending, in the end, array indicies.
+var lightingDistanceFromIndexToIndex = [],
+	lightingXDistanceFromIndexToIndex = [],
+	lightingYDistanceFromIndexToIndex = [],
+	lightingIndexOfCoordinates = [];
 
-lightingContext.fillStyle = 'red';
-lightingContext.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-/*
-// Create gradient
-var grd = lightingContext.createLinearGradient(0,0,200,0);
-grd.addColorStop(0,"red");
-grd.addColorStop(1,"white");
+// fills out distance lookup tables,
+// 		and a lookup table to convert integer coordinates into lighting array indices
+function initializeLighting() {
+	lightingInitializeXDistancesFromIndexToIndex();
+	lightingInitializeYDistancesFromIndexToIndex();
+	lightingInitializeDistancesFromIndexToIndex();
+	lightingInitializeIndexOfCoordinates();
+}
+	
+function lightingInitializeIndexOfCoordinates() {
+	for (var i = 0; i < lightingCanvas.width; i++) {
+		lightingIndexOfCoordinates.push([]);
+		for (var j = 0; j < lightingCanvas.height; j++) {
+			lightingIndexOfCoordinates[i].push(
+				Math.round(
+					i / lightingCanvas.height * (lightingPixelsPerRow - 1) +
+					Math.floor(j / lightingCanvas.height * lightingPixelsPerColumn) * lightingPixelsPerRow
+				)
+			);
+		}
+	}
+}
 
-// Fill with gradient
-lightingContext.fillStyle = grd;
-lightingContext.fillRect(10,10,150,80);
-*/
+function lightingInitializeXDistancesFromIndexToIndex() {
+	for (var i = 0; i < lightingPixelsPerGrid; i++) {
+		lightingXDistanceFromIndexToIndex.push([]);
+		for (var j = 0; j < lightingPixelsPerGrid; j++) {
+			lightingXDistanceFromIndexToIndex[i].push(
+				j % lightingPixelsPerRow - i % lightingPixelsPerRow
+			);
+		}
+	}
+}
+
+function lightingInitializeYDistancesFromIndexToIndex() {
+	for (var i = 0; i < lightingPixelsPerGrid; i++) {
+		lightingYDistanceFromIndexToIndex.push([]);
+		for (var j = 0; j < lightingPixelsPerGrid; j++) {
+			lightingYDistanceFromIndexToIndex[i].push(
+				(j - j % lightingPixelsPerRow) / lightingPixelsPerRow - (i - i % lightingPixelsPerRow) / lightingPixelsPerRow
+			);
+		}
+	}
+}
+
+function lightingInitializeDistancesFromIndexToIndex() {
+	for (var i = 0; i < lightingPixelsPerGrid; i++) {
+		lightingDistanceFromIndexToIndex.push([]);
+		for (var j = 0; j < lightingPixelsPerGrid; j++) {
+			lightingDistanceFromIndexToIndex[i].push(
+				Math.sqrt(
+				    lightingXDistanceFromIndexToIndex[i][j] * lightingXDistanceFromIndexToIndex[i][j] +
+					lightingYDistanceFromIndexToIndex[i][j] * lightingYDistanceFromIndexToIndex[i][j]
+				)
+			);
+		}
+	}
+}
+
+initializeLighting();
+
+function renderLighting() {
+    lightingContext.clearRect(0, 0, lightingCanvas.width, lightingCanvas.height); // Is this necessary?
+	for (var i = 0; i < lightingPixelsPerGrid; i++) {
+        lightingPixelArray[i * 4 + 0] = 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[400][300]];
+		//softPoint(i, 400, 300);
+		// brightness decay
+		// WRONG, MAYBE: Is this taking values to below 0?
+		//lightingPixelArray[i * 4 + 0] -= 2;
+		//lightingPixelArray[i * 4 + 1] -= 2;
+		//lightingPixelArray[i * 4 + 2] -= 2;
+        //lightingPixelArray[i * 4 + 3] -= 2;
+        lightingPixelArray[i * 4 + 3] = 64;
+	}
+	// draw pixelArray
+    lightingContext.putImageData(lightingData, 0, 0);
+    // scale pixelArray up to canvas size
+    lightingContext.drawImage(lightingCanvas, 0, 0, lightingPixelsPerRow, lightingPixelsPerColumn, 0, 0, lightingCanvas.width, lightingCanvas.height); // 800 and 600 should be $lightingCanvas.width and .height, respectively, but those are giving weird values. And why is there a white $ in front of lightingCanvas?
+}
+
+function softPoint(currentIndex, xCoord, yCoord) {
+	var brightness = 0;
+		brightness += 768 / lightingDistanceFromIndexToIndex[currentIndex][lightingIndexOfCoordinates[xCoord][yCoord]]; // '768' should be lightPoint.brightness or whatever
+		if (lightingPixelArray[currentIndex * 4 + 0] < brightness) {
+			lightingPixelArray[currentIndex * 4 + 0] += brightness / 20;
+			lightingPixelArray[currentIndex * 4 + 4] += brightness;
+		}
+}
+
 // end lighting
 ///////////////////
 
@@ -122,6 +215,7 @@ var render = () => {
         console.log(e);
         debugger;
     }
+    renderLighting();
 };
 var drawMap = () => {
     var topRow = Math.floor(cameraY / currentMap.tileSize);
