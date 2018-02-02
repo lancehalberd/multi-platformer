@@ -102,17 +102,23 @@ initializeLighting();
 function renderLighting() {
     lightingContext.clearRect(0, 0, lightingCanvas.width, lightingCanvas.height); // Is this necessary?
 	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-        lightingPixelArray[i * 4 + 0] = 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[400][300]];
-		//softPoint(i, 400, 300);
+        lightingPixelArray[i * 4 + 0] = 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+        lightingPixelArray[i * 4 + 1] = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+		lightingPixelArray[i * 4 + 3] = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+        
+        //lightingPixelArray[i * 4 + 2] = 127;
+        //softPoint(i, 400, 300);
 		// brightness decay
 		// WRONG, MAYBE: Is this taking values to below 0?
 		//lightingPixelArray[i * 4 + 0] -= 2;
 		//lightingPixelArray[i * 4 + 1] -= 2;
 		//lightingPixelArray[i * 4 + 2] -= 2;
         //lightingPixelArray[i * 4 + 3] -= 2;
-        lightingPixelArray[i * 4 + 3] = 64;
+        lightingPixelArray[i * 4 + 3] = 80;
+        lightingPixelArray[i * 4 + 2] += lightingYDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[0][600]];
 	}
 	// draw pixelArray
+    // WRONG: this tiny version in the upper left is actually drawing.
     lightingContext.putImageData(lightingData, 0, 0);
     // scale pixelArray up to canvas size
     lightingContext.drawImage(lightingCanvas, 0, 0, lightingPixelsPerRow, lightingPixelsPerColumn, 0, 0, lightingCanvas.width, lightingCanvas.height); // 800 and 600 should be $lightingCanvas.width and .height, respectively, but those are giving weird values. And why is there a white $ in front of lightingCanvas?
@@ -131,6 +137,7 @@ function softPoint(currentIndex, xCoord, yCoord) {
 ///////////////////
 
 var render = () => {
+    countFps(5, 30, 'render()');
     try {
     if (!gameHasBeenInitialized || !currentMap) {
         window.requestAnimationFrame(render);
@@ -251,4 +258,5 @@ var drawMap = () => {
     }
     mainContext.restore();
 }
+
 render();

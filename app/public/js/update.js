@@ -5,6 +5,7 @@ var cameraX = 0, cameraY = 0;
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
+    countFps(5, 30, 'update()');
     if (!gameHasBeenInitialized) {
         if (!numberOfImagesLeftToLoad && connected)initializeGame();
         return;
@@ -501,4 +502,34 @@ function generateGTBarrel() {
     var arrayOfBarrels = [gTBarrel0, gTBarrel1];
     randomBarrel = arrayOfBarrels[Math.round(Math.random() * (arrayOfBarrels.length - 1))];
     return randomBarrel;
+}
+
+var fpsDisplay = {
+		'frameCounter': 0,
+		'framesSinceLastDisplay': 0,
+		'framesSinceLastDisplayLongTerm': 0
+	};
+
+function countFps(displayIntervalInSeconds, displayIntervalLongTermInSeconds, loopName) {
+    fpsDisplay.frameCounter++;
+    fpsDisplay.framesSinceLastDisplay++;
+    fpsDisplay.framesSinceLastDisplayLongTerm++;
+    // short-term average
+    if (fpsDisplay.noFpsDisplayUntil <= Date.now() || !fpsDisplay.noFpsDisplayUntil) {
+        var averageFpsSinceLastDisplay,
+            recentFrames = fpsDisplay.framesSinceLastDisplay;
+        averageFpsSinceLastDisplay = Math.round(recentFrames / displayIntervalInSeconds);
+        if (averageFpsSinceLastDisplay) console.log(loopName + ' FPS average over ' + displayIntervalInSeconds + ' seconds: ' + averageFpsSinceLastDisplay);
+        fpsDisplay.framesSinceLastDisplay = 0;
+        fpsDisplay.noFpsDisplayUntil = Date.now() + displayIntervalInSeconds * 1000;
+    }
+    // long-term average
+    if (fpsDisplay.noFpsDisplayLongTermUntil <= Date.now() || !fpsDisplay.noFpsDisplayLongTermUntil) {
+        var averageFpsSinceLastDisplayLongTerm,
+            recentFramesLongTerm = fpsDisplay.framesSinceLastDisplayLongTerm;
+        averageFpsSinceLastDisplayLongTerm = Math.round(recentFramesLongTerm / displayIntervalLongTermInSeconds);
+        if (averageFpsSinceLastDisplayLongTerm) console.log(loopName + 'FPS average over ' + displayIntervalLongTermInSeconds + ' seconds: ' + averageFpsSinceLastDisplayLongTerm);
+        fpsDisplay.framesSinceLastDisplayLongTerm = 0;
+        fpsDisplay.noFpsDisplayLongTermUntil = Date.now() + displayIntervalLongTermInSeconds * 1000;
+    }
 }
