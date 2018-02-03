@@ -698,21 +698,28 @@ var gTBoardwalkSupportRight = {
 var gTBoardwalkRightEdge = {
     image: ghostTownTiles,
     size: 16,
-    x: 6, y:10,
+    x: 6, y: 10,
     properties: TILE_SOLID_ALL
 };
 
 var gTBarrel0 = {
     image: ghostTownTiles,
     size: 16,
-    x: 6, y:8,
+    x: 6, y: 8,
     properties: TILE_SOLID_ALL
 };
 
 var gTBarrel1 = {
     image: ghostTownTiles,
     size: 16,
-    x: 6, y:9,
+    x: 6, y: 9,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBarrel2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y: 7,
     properties: TILE_SOLID_ALL
 };
 

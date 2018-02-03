@@ -319,13 +319,21 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     // end windows
     // TEMPORARILY REMOVED until the barrels can work as decals
     // add barrels (non-explody ones)
-    /*for (var barrelCol = 0; barrelCol < width + boardwalkExtension * 2; barrelCol++) {
-        if (Math.random() < 0.15) applyTileToMap(currentMap, generateGTBarrel(), [leftColumn - boardwalkExtension + barrelCol, bottomRow - boardwalkRowModifier]);
-    }*/
+    if (storyNumber === 1) {
+        // first story includes boardwalk extension for considering valid barrel locations
+        for (var barrelCol1stStory = 0; barrelCol1stStory < width + boardwalkExtension * 2 - 1; barrelCol1stStory++) {
+            if (Math.random() < 0.08 && storyNumber === 1) applyTileToMap(currentMap, generateGTBarrel(), [leftColumn - boardwalkExtension + barrelCol1stStory, bottomRow - boardwalkRowModifier]);
+        }
+    } else {
+        // any floor but the first doesn't include the boardwalk extension in considering valid barrel locations.
+        for (var barrelCol = 0; barrelCol < width - 1; barrelCol++) {
+            if (Math.random() < 0.08 && storyNumber > 1) applyTileToMap(currentMap, generateGTBarrel(), [leftColumn + barrelCol, bottomRow - boardwalkRowModifier]);
+        }
+    }
     // add crates (non-explody ones)
     // WRONG not taking boardwalk into account, but should
     // WRONG Crates spawning on left lower corner all the time
-    for (var crateCol = 0; crateCol < width; crateCol++) {
+    for (var crateCol = 0; crateCol < width - 1; crateCol++) {
         if (Math.random() < 0.08) { // a chance that a crate will be built if...
             var crate = generateGT2x2Crate();
             // construct the crate
@@ -498,7 +506,7 @@ function generateGT2x2Crate() {
 }
 
 function generateGTBarrel() {
-    var arrayOfBarrels = [gTBarrel0, gTBarrel1];
+    var arrayOfBarrels = [gTBarrel0, gTBarrel1, gTBarrel2];
     randomBarrel = arrayOfBarrels[Math.round(Math.random() * (arrayOfBarrels.length - 1))];
     return randomBarrel;
 }
