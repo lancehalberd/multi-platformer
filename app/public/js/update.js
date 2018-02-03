@@ -101,8 +101,8 @@ function regenerateMap(width, height) {
     // clear interior of border
     clearMapRectangle(1, 1, width, height);
     // generate content
-    //generateTerrain(width, height, 5, 1);
-    generateGhostTownBuilding(4, height - 2, 18, 3, 2);
+    generateTerrain(width, height, 5, 1);
+    //generateGhostTownBuilding(4, height - 2, 18, 3, 2);
 }
 
 function generateBorder(mapWidth, mapHeight, tile) {
@@ -160,25 +160,28 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
 }
 
 function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight) {
-    for (var row = height - 2; row >= height - (terrainMaxHeight + 1); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
+    for (var row = mapHeight - 1; row >= mapHeight - (terrainMaxHeight + 1); row--) { // row, including the bottom row, up to the terrain height above the bottom row
         // working from the bottom up
-         for (var col = 1; col < width - 2; col++) { // columns, excluding the border columns
-            if (currentMap.composite[row][col] === 0) { // if this tile is in the top row, with nothing over it // QUESTION: should we apply grass right now?
+         for (var col = 1; col < mapWidth - 1; col++) { // columns, including the border columns
+            if (currentMap.composite[row][col] !== 0 && currentMap.composite[row - 1][col] === 0) { // if this tile is in the top row, with nothing over it // QUESTION: should we apply grass right now?
                 //checking the top layer of ground for needing rounded corners or not
                 if (currentMap.composite[row][col - 1] === 0) { // if this tile needs to be rounded on the left
                     if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right as well, i.e. a single tile projecting up by itself
-                    
+                        applyTileToMap(currentMap, desGroundRoundedLR, [col, row]);
                     } else { // rounded only on the left
-                        
+                        applyTileToMap(currentMap, desGroundRoundedLeft, [col, row]);
                     }
                 } else { // this tile does not need to be rounded on the left
                     if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right
-                        
+                        applyTileToMap(currentMap, desGroundRoundedRight, [col, row]);
                     } else { // this tile is on the top row, but does NOT need to be rounded on either the left nor the right
-                        
+                        if (col % 3 === 0) applyTileToMap(currentMap, desGroundSurfaceL,[col, row]);
+                        if (col % 3 === 1) applyTileToMap(currentMap, desGroundSurfaceM,[col, row]);
+                        if (col % 3 === 2) applyTileToMap(currentMap, desGroundSurfaceR,[col, row]);
                     }
                 }
-            } else { // this tile is underground // NOTE: someday we might want to further distinguish between totally buried tiles and those exposed on an edge
+            } else if (currentMap.composite[row][col] !== 0) { // this tile is underground
+                // NOTE: someday we might want to further distinguish between totally buried tiles and those exposed on an edge. We might want round lower edges to smoothly meet adjacent flat terrain.
                 // distributing blocks of nine distinct tiles that blend with variety and good tiling throughout underground areas
                 if (row % 3 === 0) {
                     if (col % 3 === 0) applyTileToMap(currentMap, desGround9BlockLL,[col, row]);

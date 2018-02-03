@@ -808,6 +808,27 @@ var desGroundSurfaceR = {
     properties: TILE_SOLID_ALL
 };
 
+var desGroundRoundedL = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedR = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedLR = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
 var desGround9BlockUL = {
     image: desertTiles,
     size: 16,
