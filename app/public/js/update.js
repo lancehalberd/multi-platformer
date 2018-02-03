@@ -101,7 +101,7 @@ function regenerateMap(width, height) {
     // clear interior of border
     clearMapRectangle(1, 1, width, height);
     // generate content
-    //generateTerrain(width, height, 5, 1, stretchNine);
+    //generateTerrain(width, height, 5, 1);
     generateGhostTownBuilding(4, height - 2, 18, 3, 2);
 }
 
@@ -124,14 +124,14 @@ function clearMapRectangle(leftColumn, topRow, width, height) {
     }
 }
 
-function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, tile) {
+function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
     var width = mapWidth,
         height = mapHeight;
     // Putting the row on the outside of the nest of row/col for loops lets rows be built up all at once (and we're doing it from the bottom up)
     // making it possible to check the entire row below for meeting building conditions for the next row.
     for (var row = height - 2; row >= height - (terrainMaxHeight + 1); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
         // WRONG, eventulally/NOTE: things that are just !== 0 right now will need to be TILE_SOLID_ALL or something later,
-        //      unless this function is alway run on a blank map.
+        //      unless this function is always run on a blank map.
         // working from the bottom up so that terrain can be built up, checking for anything solid  underneath
          for (var col = 1; col < width - 2; col++) { // columns, excluding the border columns
             // making some height variations in the bottom four rows
@@ -150,11 +150,53 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, ti
             }
         }
     }
+    makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight);
     // setting a spawn point above the generated terrain
     // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
     //      is run after the entire map has been generated.
     if (currentMap.respawnPoint.y > terrainMaxHeight * currentMap.tileSize * (height - 1 - terrainMaxHeight)) {
         currentMap.respawnPoint.y = (height - 1 - terrainMaxHeight) * currentMap.tileSize;
+    }
+}
+
+function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight) {
+    for (var row = height - 2; row >= height - (terrainMaxHeight + 1); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
+        // working from the bottom up
+         for (var col = 1; col < width - 2; col++) { // columns, excluding the border columns
+            if (currentMap.composite[row][col] === 0) { // if this tile is in the top row, with nothing over it // QUESTION: should we apply grass right now?
+                //checking the top layer of ground for needing rounded corners or not
+                if (currentMap.composite[row][col - 1] === 0) { // if this tile needs to be rounded on the left
+                    if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right as well, i.e. a single tile projecting up by itself
+                    
+                    } else { // rounded only on the left
+                        
+                    }
+                } else { // this tile does not need to be rounded on the left
+                    if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right
+                        
+                    } else { // this tile is on the top row, but does NOT need to be rounded on either the left nor the right
+                        
+                    }
+                }
+            } else { // this tile is underground // NOTE: someday we might want to further distinguish between totally buried tiles and those exposed on an edge
+                // distributing blocks of nine distinct tiles that blend with variety and good tiling throughout underground areas
+                if (row % 3 === 0) {
+                    if (col % 3 === 0) applyTileToMap(currentMap, desGround9BlockLL,[col, row]);
+                    if (col % 3 === 1) applyTileToMap(currentMap, desGround9BlockLM,[col, row]);
+                    if (col % 3 === 2) applyTileToMap(currentMap, desGround9BlockLR,[col, row]);
+                }
+                if (row % 3 === 1) {
+                    if (col % 3 === 0) applyTileToMap(currentMap, desGround9BlockML,[col, row]);
+                    if (col % 3 === 1) applyTileToMap(currentMap, desGround9BlockMM,[col, row]);
+                    if (col % 3 === 2) applyTileToMap(currentMap, desGround9BlockMR,[col, row]);
+                }
+                if (row % 3 === 2) {
+                    if (col % 3 === 0) applyTileToMap(currentMap, desGround9BlockUL,[col, row]);
+                    if (col % 3 === 1) applyTileToMap(currentMap, desGround9BlockUM,[col, row]);
+                    if (col % 3 === 2) applyTileToMap(currentMap, desGround9BlockUR,[col, row]);
+                }
+            }
+         }
     }
 }
 
@@ -511,6 +553,9 @@ function generateGTBarrel() {
     return randomBarrel;
 }
 
+/////////////////////
+// FPS-counting display
+
 var fpsDisplay = {
 		'updateFrameCounter': 0,
 		'updateFramesSinceLastDisplay': 0,
@@ -523,7 +568,7 @@ var fpsDisplay = {
     FPSRENDER = 'trackRenderFunctionFPS';
 
 function countFps(displayIntervalInSeconds, displayIntervalLongTermInSeconds, FPSUPDATE_or_FPSRENDER) {
-    // NOTE: sending this FPSUPDATE if it's run in the update() loop, or FPSRENDER if run in the render() loop.
+    // NOTE: send this FPSUPDATE if it's run in the update() loop, or FPSRENDER if run in the render() loop.
     //      Just sending it one vs. the other won't tell it what to track--it just lets two things be
     //      tracked simultaneously.
     if (FPSUPDATE_or_FPSRENDER === FPSUPDATE) {
