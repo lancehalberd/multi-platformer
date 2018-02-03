@@ -8,25 +8,19 @@ var bufferContext = bufferCanvas.getContext('2d');
 
 /////////////////
 // lighting
-var $lightingCanvas = $(`<canvas width="${mainCanvas.width}" height="${mainCanvas.height}" />`);
-$('body').append($lightingCanvas);
-
-var lightingCanvas = $lightingCanvas[0];
-
-var canvasPosition = $(mainCanvas).offset();
-$lightingCanvas.css({
-  position: 'absolute',
-  left: `${canvasPosition.left}px`,
-  top: `${canvasPosition.top}px`
-});
-
-var lightingContext = $lightingCanvas[0].getContext('2d');
-
 var lightingPixelsPerRow = 80,
-	lightingPixelsPerColumn = lightingCanvas.height / lightingCanvas.width * lightingPixelsPerRow, 
+	lightingPixelsPerColumn = 60,
 	lightingPixelsPerGrid = lightingPixelsPerRow * lightingPixelsPerColumn,
+    lightingCanvas = $(`<canvas width="${lightingPixelsPerRow}" height="${lightingPixelsPerColumn}" />`)[0],
+    lightingContext = lightingCanvas.getContext('2d'),
     lightingData = lightingContext.createImageData(lightingPixelsPerRow, lightingPixelsPerColumn),
-	lightingPixelArray = lightingData.data;
+	lightingPixelArray = lightingData.data,
+    lightingCanvas = document.createElement('canvas'),
+    lightingContext = lightingCanvas.getContext('2d'),
+    pointLights = [];
+
+lightingCanvas.width = lightingPixelsPerRow;
+lightingCanvas.height = lightingPixelsPerColumn;
     
 // distance lookup tables
 // access distances like: lightingDistanceFromIndexToIndex[indexA][indexB], or,
@@ -48,13 +42,13 @@ function initializeLighting() {
 }
 	
 function lightingInitializeIndexOfCoordinates() {
-	for (var i = 0; i < lightingCanvas.width; i++) {
+	for (var i = 0; i < mainCanvas.width; i++) {
 		lightingIndexOfCoordinates.push([]);
-		for (var j = 0; j < lightingCanvas.height; j++) {
+		for (var j = 0; j < mainCanvas.height; j++) {
 			lightingIndexOfCoordinates[i].push(
 				Math.round(
-					i / lightingCanvas.height * (lightingPixelsPerRow - 1) +
-					Math.floor(j / lightingCanvas.height * lightingPixelsPerColumn) * lightingPixelsPerRow
+					i / mainCanvas.height * (lightingPixelsPerRow - 1) +
+					Math.floor(j / mainCanvas.height * lightingPixelsPerColumn) * lightingPixelsPerRow
 				)
 			);
 		}
@@ -98,41 +92,64 @@ function lightingInitializeDistancesFromIndexToIndex() {
 }
 
 initializeLighting();
+function removeFinishedPointLights() {
+    // This just gets rid of all the point lights that have shouldBeRemoved set to true on them.
+    // For now, this will work with point lights that are localSprites.
+    pointLights = pointLights.filter(pointLight => !pointLight.shouldBeRemoved);
+}
 
 function renderLighting() {
-    lightingContext.clearRect(0, 0, lightingCanvas.width, lightingCanvas.height); // Is this necessary?
-	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-        lightingPixelArray[i * 4 + 0] = 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
-        lightingPixelArray[i * 4 + 1] = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
-		lightingPixelArray[i * 4 + 3] = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+    removeFinishedPointLights();
+    lightingContext.clearRect(0, 0, lightingCanvas.width, lightingCanvas.height); // Is this necessary? If we used a fadeout/decay effect and '+=' at the end (when the actual pixel values are affected) instead of '=' like I do in my "pure sim," we might get more interesting effects, like afterimages and flickering.
+	var r = 0,
+        g = 0,
+        b = 0,
+        a = 0;
+    for (var i = 0; i < lightingPixelsPerGrid; i++) {
+        if (pointLights.length > 0) {
+            for (var j = 0; j < pointLights.length; j++) {
+                var lightX = pointLights[j].x,
+                    lightY = pointLights[j].y;
+                r = 0;
+                g = 0;
+                b = 0;
+                a = 0;
+                // in-line rounding to avoid function call overhead
+                // lightingDistanceFromIndexToIndex needs positive integers.
+                if (lightX % 1 >= 0.5) lightX += 1 - lightX % 1;
+                if (lightX % 1 < 0.5 && lightX !== 0 && lightX % 1 !== 0) lightX -= lightX % 1;
+                if (lightY % 1 >= 0.5) lightY += 1 - lightY % 1;
+                if (lightY % 1 < 0.5 && lightY !== 0 && lightY % 1 !== 0) lightY -= lightY % 1;
+                // WRONG: Should express these values as proportions of the first so that all this calculation doesn't have to happen repeatedly.
+                //      The speed gain might not be worth it, but it's really important that the lighting be efficient, so maybe it really is worth it.
+                r += 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+                g += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+                b += 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
+                a += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+            }
+        }
+        // TEMP just testing
+        /*r = 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+        g = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];
+        b = 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
+        a = 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[200][400]];*/
         
-        //lightingPixelArray[i * 4 + 2] = 127;
-        //softPoint(i, 400, 300);
-		// brightness decay
-		// WRONG, MAYBE: Is this taking values to below 0?
-		//lightingPixelArray[i * 4 + 0] -= 2;
-		//lightingPixelArray[i * 4 + 1] -= 2;
-		//lightingPixelArray[i * 4 + 2] -= 2;
-        //lightingPixelArray[i * 4 + 3] -= 2;
-        lightingPixelArray[i * 4 + 3] = 80;
-        lightingPixelArray[i * 4 + 2] += lightingYDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[0][600]];
+        // adding sum influence of lights to lighting pixel channels
+        lightingPixelArray[i * 4 + 0] = r;
+        lightingPixelArray[i * 4 + 1] = g;
+        lightingPixelArray[i * 4 + 2] = b;
+        lightingPixelArray[i * 4 + 3] = a;
 	}
 	// draw pixelArray
     // WRONG: this tiny version in the upper left is actually drawing.
     lightingContext.putImageData(lightingData, 0, 0);
+    // turn on antialiasing just for the lighting grid
+    mainContext.imageSmoothingEnabled = true;
     // scale pixelArray up to canvas size
-    lightingContext.drawImage(lightingCanvas, 0, 0, lightingPixelsPerRow, lightingPixelsPerColumn, 0, 0, lightingCanvas.width, lightingCanvas.height); // 800 and 600 should be $lightingCanvas.width and .height, respectively, but those are giving weird values. And why is there a white $ in front of lightingCanvas?
+    mainContext.drawImage(lightingCanvas, 0, 0, lightingCanvas.width, lightingCanvas.height, 0, 0, mainCanvas.width, mainCanvas.height);
+    // turning off antialiasing for everything else
+    mainContext.imageSmoothingEnabled = false; // working?
 }
-
-function softPoint(currentIndex, xCoord, yCoord) {
-	var brightness = 0;
-		brightness += 768 / lightingDistanceFromIndexToIndex[currentIndex][lightingIndexOfCoordinates[xCoord][yCoord]]; // '768' should be lightPoint.brightness or whatever
-		if (lightingPixelArray[currentIndex * 4 + 0] < brightness) {
-			lightingPixelArray[currentIndex * 4 + 0] += brightness / 20;
-			lightingPixelArray[currentIndex * 4 + 4] += brightness;
-		}
-}
-
 // end lighting
 ///////////////////
 

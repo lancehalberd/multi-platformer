@@ -31,7 +31,7 @@ setInterval(() => {
         addCreature(250, 350, mainCharacter, CREATURE_TYPE_HAUNTED_MASK);
     }
     removeFinishedLocalSprites();
-
+    removeFinishedPointLights();
     if (!isEditing) {
         if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
         if (cameraX > mainCharacter.x - 300) cameraX = (cameraX + (mainCharacter.x - 300)) / 2;
@@ -145,8 +145,8 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth, ti
                 // if the tile to the left (added from left to right) isn't empty, then increased likelihood
                 // of drawing another one next to it. Trying to get smooth, larger-scale groups.
                 if (currentMap.composite[row][col - 1] !== 0 && col > 1) { // don't apply increased chance to column 1, because it will always have the left wall next to it.
-                    if (Math.random() < 0.85) applyTileToMap(currentMap, tile, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
-                } else if (Math.random() < 0.4) applyTileToMap(currentMap, tile, [col, row]); // else, smaller chance
+                    if (Math.random() < 0.85) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
+                } else if (Math.random() < 0.4) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // else, smaller chance
             }
         }
     }
@@ -227,8 +227,6 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
             if (localCol === 0) applyTileToMap(currentMap, generateGTGreySidingLeftEdge(), [leftColumn + localCol, bottomRow - localRow]);
             // if the right edge, apply right edge tile
             else if (localCol === width - 1) applyTileToMap(currentMap, generateGTGreySidingRightEdge(), [leftColumn + localCol, bottomRow - localRow]);
-            // otherwise apply normal siding
-            //else applyTileToMap(currentMap, generateGTGreySiding(), [leftColumn + localCol, bottomRow - localRow]);
         }
     }
     // building the top edge of the story
@@ -320,25 +318,25 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     }
     // end windows
     // TEMPORARILY REMOVED until the barrels can work as decals
-    // add barrels (including explody ones)
+    // add barrels (non-explody ones)
     /*for (var barrelCol = 0; barrelCol < width + boardwalkExtension * 2; barrelCol++) {
         if (Math.random() < 0.15) applyTileToMap(currentMap, generateGTBarrel(), [leftColumn - boardwalkExtension + barrelCol, bottomRow - boardwalkRowModifier]);
     }*/
+    // add crates (non-explody ones)
     // WRONG not taking boardwalk into account, but should
     // WRONG Crates spawning on left lower corner all the time
-    /*for (var crateCol = 0; crateCol < width; crateCol++) {
-        if (
-            Math.random() < 0.33 && currentMap.composite[bottomRow - boardwalkRowModifier][leftColumn + crateCol] === 0 &&
-            currentMap.composite[bottomRow - boardwalkRowModifier - 1][leftColumn + crateCol + 1] === 0
-        ) {
+    for (var crateCol = 0; crateCol < width; crateCol++) {
+        if (Math.random() < 0.08) { // a chance that a crate will be built if...
             var crate = generateGT2x2Crate();
+            // construct the crate
             for (var crateLocalCol = 0; crateLocalCol < crate.length; crateLocalCol++) {
                 for (var crateLocalRow = 0; crateLocalRow < crate[0].length; crateLocalRow++) {
-                    applyTileToMap(currentMap, crate[crateLocalRow][crateLocalCol], [leftColumn + crateLocalCol, bottomRow - boardwalkRowModifier - 1 + crateLocalRow]);
+                    applyTileToMap(currentMap, crate[crateLocalRow][crateLocalCol], [leftColumn + crateLocalCol + crateCol, bottomRow - boardwalkRowModifier - 1 + crateLocalRow]);
                 }
             }
+            crateCol++; // don't consider placing another crate right next to the last starting place, as then the crates would overlap
         }
-    }*/
+    }
     // fill in blank space with siding
     for (var blankCol = 1; blankCol < width - 1; blankCol++) {
         for (var blankRow = 0; blankRow < storyHeightVariation + baseStoryHeight - 1; blankRow++) {
@@ -492,7 +490,8 @@ function generateGT3x3Door() {
 
 function generateGT2x2Crate() {
     var arrayOfCrates = [ // might add more doors later
-        [[gTCrate2x2_0UL, gTCrate2x2_0UR], [gTCrate2x2_0LL, gTCrate2x2_0LR]]
+        [[gTCrate2x2_0UL, gTCrate2x2_0UR], [gTCrate2x2_0LL, gTCrate2x2_0LR]],
+        [[gTCrate2x2_1UL, gTCrate2x2_1UR], [gTCrate2x2_1LL, gTCrate2x2_1LR]]
     ];
     randomCrate = arrayOfCrates[Math.round(Math.random() * (arrayOfCrates.length - 1))];
     return randomCrate;

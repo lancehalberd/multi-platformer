@@ -238,7 +238,7 @@ function updateLocalSprite(localSprite) {
         localSprite.y += localSprite.vy;
     }
     // max speed
-    localSprite.currentSpeed = Math.sqrt(localSprite.vx * localSprite.vx + localSprite.vy * localSprite.vy);
+    localSprite.currentSpeed = Math.sqrt(localSprite.vx * localSprite.vx + localSprite.vy * localSprite.vy); // WRONG: probably don't want to be calling a Math.sqrt() function each frame for each localSprite. Should be some more efficient maxSpeed limiting approach
 	if (localSprite.flying ) {
 		if (localSprite.currentSpeed > localSprite.maxSpeed) {
 			var normalizedVector = getNormalizedVector(0, localSprite.vx, 0, localSprite.vy);
@@ -1225,6 +1225,7 @@ function addHomingFireballSprite(xPosition, yPosition, target) {
     homingFireballSprite.yScalePerFrame = 0.01;
     homingFireballSprite.hasContrail = true;
     homingFireballSprite.framesBetweenContrailParticles = 3;
+	pointLights.push(homingFireballSprite);
     localSprites.push(homingFireballSprite);
 }
 
@@ -1368,6 +1369,7 @@ function getCreaturePacingFireball(creatureType) {
     pacingFireballSprite.yScalePerFrame = 0.01;
     pacingFireballSprite.hasContrail = true;
     pacingFireballSprite.framesBetweenContrailParticles = 3;
+	pointLights.push(pacingFireballSprite);
     return pacingFireballSprite;
 }
 

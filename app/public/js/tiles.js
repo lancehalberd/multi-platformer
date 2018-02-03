@@ -744,6 +744,34 @@ var gTCrate2x2_0LR = {
     properties: TILE_SOLID_ALL
 };
 
+var gTCrate2x2_1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
 //////////////////////////////////////////////
 // end Lee's new Ghost Town tileset 2018 01 //
 //////////////////////////////////////////////
@@ -847,6 +875,13 @@ var desGroundRoundedRight = {
     image: desertTiles,
     size: 16,
     x: 6, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedSingle = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 3,
     properties: TILE_SOLID_ALL
 };
 
