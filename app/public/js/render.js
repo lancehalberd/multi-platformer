@@ -108,18 +108,21 @@ function renderLighting() {
     for (var i = 0; i < lightingPixelsPerGrid; i++) {
         if (pointLights.length > 0) {
             for (var j = 0; j < pointLights.length; j++) {
-                var lightX = pointLights[j].x,
-                    lightY = pointLights[j].y;
+                var lightX,
+                    lightY;
+				// rounding light coordinates, which is necessary for using the distance lookup tables
+				// avoiding Math.round() function calls:
+				// maybe there's a more elegant way to do this.
+				if (lightX % 1 >= 0.5) lightX += 1 - lightX % 1;
+				if (lightX % 1 < 0.5 && lightX % 1 > -0.5) lightX -= lightX % 1;
+				if (lightX % 1 <= -0.5) lightX -= 1 + lightX % 1;
+				if (lightY % 1 >= 0.5) lightY += 1 - lightY % 1;
+				if (lightY % 1 < 0.5 && lightY % 1 > -0.5) lightY -= lightY % 1;
+				if (lightY % 1 <= -0.5) lightY -= 1 + lightY % 1;
                 r = 0;
                 g = 0;
                 b = 0;
                 a = 0;
-                // in-line rounding to avoid function call overhead
-                // lightingDistanceFromIndexToIndex needs positive integers.
-                if (lightX % 1 >= 0.5) lightX += 1 - lightX % 1;
-                if (lightX % 1 < 0.5 && lightX !== 0 && lightX % 1 !== 0) lightX -= lightX % 1;
-                if (lightY % 1 >= 0.5) lightY += 1 - lightY % 1;
-                if (lightY % 1 < 0.5 && lightY !== 0 && lightY % 1 !== 0) lightY -= lightY % 1;
                 // WRONG: Should express these values as proportions of the first so that all this calculation doesn't have to happen repeatedly.
                 //      The speed gain might not be worth it, but it's really important that the lighting be efficient, so maybe it really is worth it.
                 r += 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
@@ -239,7 +242,7 @@ var render = () => {
         console.log(e);
         debugger;
     }
-    renderLighting();
+    //renderLighting();
 };
 var drawMap = () => {
     var topRow = Math.floor(cameraY / currentMap.tileSize);

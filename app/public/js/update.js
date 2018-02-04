@@ -150,7 +150,8 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
             }
         }
     }
-    makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight);
+    // add deatils, like adding roots, dirt, and grass to top layers, rounding corners, and creating naturally-tiling groups of variations of a basic tile type
+    makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight, 0.115);
     // setting a spawn point above the generated terrain
     // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
     //      is run after the entire map has been generated.
@@ -159,25 +160,44 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
     }
 }
 
-function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight) {
+/////////////////
+// DESERT TERRAIN CONSTRUCTION
+
+function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight, cactusFrequency) {
+    // storing tile spaces for filling in later with details
+    var details = {
+        'desGrass': [],
+        'desGrassRoundedLeft': [],
+        'desGrassRoundedRight': [],
+        'desGrassRoundedLR': [],
+        'cacti': []
+    };
     for (var row = mapHeight - 1; row >= mapHeight - (terrainMaxHeight + 1); row--) { // row, including the bottom row, up to the terrain height above the bottom row
         // working from the bottom up
-         for (var col = 1; col < mapWidth - 1; col++) { // columns, including the border columns
+         for (var col = 1; col < mapWidth - 1; col++) { // columns, excluding the border columns
             if (currentMap.composite[row][col] !== 0 && currentMap.composite[row - 1][col] === 0) { // if this tile is in the top row, with nothing over it // QUESTION: should we apply grass right now?
                 //checking the top layer of ground for needing rounded corners or not
                 if (currentMap.composite[row][col - 1] === 0) { // if this tile needs to be rounded on the left
                     if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right as well, i.e. a single tile projecting up by itself
                         applyTileToMap(currentMap, desGroundRoundedLR, [col, row]);
+                        if (Math.random() < cactusFrequency) details.cacti.push([col, row - 1]);
+                        else details.desGrassRoundedLR.push([col, row - 1]);
                     } else { // rounded only on the left
                         applyTileToMap(currentMap, desGroundRoundedLeft, [col, row]);
+                        if (Math.random() < cactusFrequency) details.cacti.push([col, row - 1]);
+                        else details.desGrassRoundedLeft.push([col, row - 1]);
                     }
                 } else { // this tile does not need to be rounded on the left
                     if (currentMap.composite[row][col + 1] === 0) { // if this tile needs to be rounded on the right
                         applyTileToMap(currentMap, desGroundRoundedRight, [col, row]);
+                        if (Math.random() < cactusFrequency) details.cacti.push([col, row - 1]);
+                        else details.desGrassRoundedRight.push([col, row - 1]);
                     } else { // this tile is on the top row, but does NOT need to be rounded on either the left nor the right
-                        if (col % 3 === 0) applyTileToMap(currentMap, desGroundSurfaceL,[col, row]);
-                        if (col % 3 === 1) applyTileToMap(currentMap, desGroundSurfaceM,[col, row]);
-                        if (col % 3 === 2) applyTileToMap(currentMap, desGroundSurfaceR,[col, row]);
+                        if (col % 3 === 0) applyTileToMap(currentMap, desGroundSurfaceL, [col, row]);
+                        if (col % 3 === 1) applyTileToMap(currentMap, desGroundSurfaceM, [col, row]);
+                        if (col % 3 === 2) applyTileToMap(currentMap, desGroundSurfaceR, [col, row]);
+                        if (Math.random() < cactusFrequency) details.cacti.push([col, row - 1]);
+                        else details.desGrass.push([col, row - 1]);
                     }
                 }
             } else if (currentMap.composite[row][col] !== 0) { // this tile is underground
@@ -201,7 +221,30 @@ function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight) {
             }
          }
     }
+    addGrassAndCactiToDesertTerrain(details);
 }
+
+function addGrassAndCactiToDesertTerrain(detailsObject) {
+    // NOTE: not using generateDesGrass...() for rounded corners at all.
+    for (var i = 0; i < detailsObject.desGrass.length; i++) applyTileToMap(currentMap, generateDesGrass(), detailsObject.desGrass[i]);
+    for (var j = 0; j < detailsObject.desGrassRoundedLeft.length; j++) applyTileToMap(currentMap, generateDesGrass(), detailsObject.desGrassRoundedLeft[j]);
+    for (var k = 0; k < detailsObject.desGrassRoundedRight.length; k++) applyTileToMap(currentMap, generateDesGrass(), detailsObject.desGrassRoundedRight[k]);
+    for (var m = 0; m < detailsObject.desGrassRoundedLR.length; m++) applyTileToMap(currentMap, generateDesGrass(), detailsObject.desGrassRoundedLR[m]);
+    for (var n = 0; n < detailsObject.cacti.length; n++) constructCactus(detailsObject.cacti[n]);
+}
+
+function constructCactus(tilePosition) {
+    var randomCactus = generateDesCactus();
+    for (var i = 0; i < randomCactus.length; i++) {
+        applyTileToMap(currentMap, randomCactus[i], [tilePosition[0], tilePosition[1] - i]);
+    }
+}
+
+// END DESERT TERRAIN CONSTRUCTION
+/////////////////
+
+/////////////////
+// GHOST TOWN BUILDING CONSTRUCTION
 
 function generateGhostTownBuilding(leftColumn, bottomRow, maxWidth, maxStories, maxStoryHeightVariation) {
     // WRONG need protection from going up out of the map (and out the side)
@@ -401,6 +444,12 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
     // build up terrain underneath building 
 }
 
+// END GHOST TOWN BUILDING CONSTRUCTION
+////////////////
+
+/////////
+// GHOST TOWN BUILDING COMPONENTS
+
 function generateBoardwalk(length) {
     // WRONG, a little bit: If there's a longer-than-usual section with no supports so that they don't crowd the ends, it's always on the right side.
     var boardwalk = [];
@@ -555,6 +604,51 @@ function generateGTBarrel() {
     randomBarrel = arrayOfBarrels[Math.round(Math.random() * (arrayOfBarrels.length - 1))];
     return randomBarrel;
 }
+
+// END GHOST TOWN BUILDING COMPONENTS
+///////////
+
+//////////
+// DESERT TERRAIN COMPONENTS
+
+function generateDesGrass() {
+    var arrayOfGrassTufts = [desGrass0, desGrass1, desGrass2, desGrass3, desGrass4, desGrass5, desGrass6, desGrass7, desGrass8];
+    randomGrassTuft = arrayOfGrassTufts[Math.round(Math.random() * (arrayOfGrassTufts.length - 1))];
+    return randomGrassTuft;
+}
+
+function generateDesGrassRoundedLeft() {
+    var arrayOfGrassRoundedLeft = [desGrassRoundedLeft0, desGrassRoundedLeft0];
+    randomGrassTuftRoundedLeft = arrayOfGrassRoundedLeft[Math.round(Math.random() * (arrayOfGrassRoundedLeft.length - 1))];
+    return randomGrassTuftRoundedLeft;
+}
+
+
+function generateDesGrassRoundedRight() {
+    var arrayOfGrassRoundedRight = [desGrassRoundedRight0, desGrassRoundedRight0];
+    randomGrassTuftRoundedRight = arrayOfGrassRoundedRight[Math.round(Math.random() * (arrayOfGrassRoundedRight.length - 1))];
+    return randomGrassTuftRoundedRight;
+}
+
+function generateDesGrassRoundedLR() {
+    var arrayOfGrassRoundedLR = [desGrassRoundedLR0, desGrassRoundedLR1];
+    randomGrassTuftRoundedLR = arrayOfGrassRoundedLR[Math.round(Math.random() * (arrayOfGrassRoundedLR.length - 1))];
+    return randomGrassTuftRoundedLR;
+}
+
+
+function generateDesCactus() {
+    var arrayOfCacti = [
+        [desCactus1x1_0],
+        [desCactus1x3_0L, desCactus1x3_0M, desCactus1x3_0U], // listed from the bottom up
+        [desCactus3x5_0_TrunkL, desCactus3x5_0_TrunkLM, desCactus3x5_0_TrunkM, desCactus3x5_0_TrunkUM, desCactus3x5_0_TrunkU]
+    ];
+    randomCactus = arrayOfCacti[Math.round(Math.random() * (arrayOfCacti.length - 1))];
+    return randomCactus;
+}
+
+// END DESERT TERRAIN COMPONENTS
+//////////
 
 /////////////////////
 // FPS-counting display

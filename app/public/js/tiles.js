@@ -913,6 +913,166 @@ var desGroundRoundedSingle = {
     properties: TILE_SOLID_ALL
 };
 
+var desGrass0 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 3
+};
+
+var desGrass1 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 3
+};
+
+var desGrass2 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 3
+};
+
+var desGrass3 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 4
+};
+
+var desGrass4 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 4
+};
+
+var desGrass5 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 4
+};
+
+var desGrass6 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 5
+};
+
+var desGrass7 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 5
+};
+
+var desGrass8 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 5
+};
+
+var desGrassRoundedLeft0 = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 5
+};
+
+var desGrassRoundedLeft1 = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 6
+};
+
+var desGrassRoundedRight0 = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 5
+};
+
+var desGrassRoundedRight1 = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 6
+};
+
+var desGrassRoundedLR0 = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 4
+};
+
+var desGrassRoundedLR1 = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 5
+};
+
+var desCactus1x1_0 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 2,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0L = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 5,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0M = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 4,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0U = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0U = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkL = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 4,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkLM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 2,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkUM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 1,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkU = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 0,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
 //////////////////////////////////////////
 // end Lee's new Desert tileset 2018 01 //
 //////////////////////////////////////////
