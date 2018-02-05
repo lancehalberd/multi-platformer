@@ -1,7 +1,6 @@
 
 var frameMilliseconds = 20;
 var areaRectangle = new Rectangle(0, 0, 4000, 1000);
-var cameraX = 0, cameraY = 0;
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
@@ -33,10 +32,7 @@ setInterval(() => {
     removeFinishedLocalSprites();
     removeFinishedPointLights();
     if (!isEditing) {
-        if (cameraX + 800 < mainCharacter.x + 300) cameraX = (cameraX + mainCharacter.x - 500) / 2;
-        if (cameraX > mainCharacter.x - 300) cameraX = (cameraX + (mainCharacter.x - 300)) / 2;
-        if (cameraY + 600 < mainCharacter.y + 300) cameraY = (cameraY + mainCharacter.y - 300) / 2;
-        if (cameraY > mainCharacter.y - 300) cameraY = (cameraY + (mainCharacter.y - 300)) / 2;
+        updateCamera();
     } else {
         var cameraSpeed =  16;
         if (isKeyDown(KEY_UP)) cameraY -= cameraSpeed;
@@ -44,8 +40,6 @@ setInterval(() => {
         if (isKeyDown(KEY_LEFT)) cameraX -= cameraSpeed;
         if (isKeyDown(KEY_RIGHT)) cameraX += cameraSpeed;
     }
-
-    boundCameraToMap();
 
     // If the character is moving or was moving at last update, send an update to inform the server.
     if (mainCharacter.x !== mainCharacter.lastX || mainCharacter.y !== mainCharacter.lastY || mainCharacterWasMoving ||
@@ -62,29 +56,6 @@ setInterval(() => {
     updateEditor();
     TagGame.update();
 }, frameMilliseconds);
-
-var centerCameraOnPlayer = () => {
-    cameraX = mainCharacter.x - 400;
-    cameraY = mainCharacter.y - 300;
-    boundCameraToMap();
-};
-
-var boundCameraToMap = () => {
-    if (!currentMap) return;
-    areaRectangle = new Rectangle(0, 0, currentMap.width, currentMap.height).scale(currentMap.tileSize);
-    // Normally we don't let the camera go past the edges of the map, but when the map is too
-    // short or narrow to do this, we center the map vertically/horizontally.
-    if (areaRectangle.width >= mainCanvas.width) {
-        cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
-    } else {
-        cameraX = -(mainCanvas.width - areaRectangle.width) / 2;
-    }
-    if (areaRectangle.height >= mainCanvas.height) {
-        cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
-    } else {
-        cameraY = -(mainCanvas.height - areaRectangle.height) / 2;
-    }
-};
 
 function regenerateMap(width, height) {
     // set map size
@@ -441,7 +412,7 @@ function generateGhostTownBuildingStory(leftColumn, bottomRow, width, storyHeigh
             }
         }
     }
-    // build up terrain underneath building 
+    // build up terrain underneath building
 }
 
 // END GHOST TOWN BUILDING CONSTRUCTION
@@ -514,7 +485,7 @@ function generateGTWindow(widthOfWindow) {
     var window;
     if (widthOfWindow === 1) {
          if (Math.random() <= 1) window = generateGT2WideWindow(); // WRONG needs to be 1xN
-    }    
+    }
     if (widthOfWindow === 2) {
         if (Math.random() <= 1) window = generateGT2WideWindow();
     }
@@ -571,7 +542,7 @@ function generateGTGreySidingTopSupport() {
             gTGreySidingTopSupport0,
             gTGreySidingTopSupport1
     ];
-    return sidingTopSupportVariations[Math.round(Math.random() * (sidingTopSupportVariations.length - 1))];    
+    return sidingTopSupportVariations[Math.round(Math.random() * (sidingTopSupportVariations.length - 1))];
 }
 
 function generateGT2x2Door() {
