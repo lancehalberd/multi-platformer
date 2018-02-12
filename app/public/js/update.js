@@ -1,10 +1,11 @@
 
 var frameMilliseconds = 20;
+var frameCounter = 1;
 var areaRectangle = new Rectangle(0, 0, 4000, 1000);
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
-    countFps(5, 30, FPSUPDATE); // just comment this in for an FPS display in the console.
+    //countFps(5, 30, FPSUPDATE); // just comment this in for an FPS display in the console.
     if (!gameHasBeenInitialized) {
         if (!numberOfImagesLeftToLoad && connected)initializeGame();
         return;
@@ -55,6 +56,7 @@ setInterval(() => {
     }
     updateEditor();
     TagGame.update();
+    frameCounter++;
 }, frameMilliseconds);
 
 function regenerateMap(width, height) {
@@ -135,7 +137,7 @@ function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
 // DESERT TERRAIN CONSTRUCTION
 
 function makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight, cactusFrequency) {
-    // storing tile spaces for filling in later with details
+    // storing map coords ([col, row]) for filling in later with details elements
     var details = {
         'desGrass': [],
         'desGrassRoundedLeft': [],
@@ -632,7 +634,7 @@ var fpsDisplay = {
 		'renderFramesSinceLastDisplay': 0,
 		'renderFramesSinceLastDisplayLongTerm': 0,
 	},
-    FPSUPDATE =  'trackUpdateFunctionFPS',
+    FPSUPDATE = 'trackUpdateFunctionFPS',
     FPSRENDER = 'trackRenderFunctionFPS';
 
 function countFps(displayIntervalInSeconds, displayIntervalLongTermInSeconds, FPSUPDATE_or_FPSRENDER) {

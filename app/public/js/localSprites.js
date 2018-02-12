@@ -1369,7 +1369,6 @@ function getCreaturePacingFireball(creatureType) {
     pacingFireballSprite.yScalePerFrame = 0.01;
     pacingFireballSprite.hasContrail = true;
     pacingFireballSprite.framesBetweenContrailParticles = 3;
-	pointLights.push(pacingFireballSprite);
     return pacingFireballSprite;
 }
 

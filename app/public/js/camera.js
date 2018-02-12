@@ -18,6 +18,8 @@ var clearCameraTarget = () => {
 };
 
 var queueCameraTarget = (target) => {
+    // Chris says to use this like:
+    //       queueCameraTarget({x: 200, y: 200, maxSpeed: 5});
     if (!cameraTarget) {
         setCameraTarget(target);
     } else {
