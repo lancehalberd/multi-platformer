@@ -30,6 +30,7 @@ class ZonePalette {
             this.$tileBrushes.empty();
             this.$specialBrushes.empty();
         }
+        if (!this.zoneId) return true;
         var zone = loadedZonesById[this.zoneId];
         if (!zone) {
             requestZoneData(this.zoneId);

@@ -72,8 +72,10 @@ socket.addEventListener('message', event => {
             mainCharacter.y = firstCheckPoint.y;
         }
         if (!isEditing) centerCameraOnPlayer();
-        mainPalette.updateBrushes(true);
-        foreignPalette.updateBrushes(true);
+        else {
+            mainPalette.updateBrushes(true);
+            foreignPalette.updateBrushes(true);
+        }
     }
     // This will be returned when a player enters a zone, either on first connecting or changing zones.
     if (data.players) {

@@ -78,6 +78,10 @@ const updateEditor = () => {
 
 const toggleEditing = () => {
     isEditing = !isEditing;
+    if (isEditing) {
+        mainPalette.updateBrushes(true);
+        foreignPalette.updateBrushes(true);
+    }
     $('.pageBody').toggleClass('isEditing', isEditing);
     // This makes sure the palette buttons are in the correct state initially.
     mainPalette.cancelCreatingNewTile(true);
