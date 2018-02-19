@@ -64,11 +64,9 @@ function regenerateMap(width, height) {
     currentMap.width = width;
     currentMap.height = height;
     // set spawn point
+    currentMap.respawnPoint = {};
     currentMap.respawnPoint.x = (1.5 + 2) * currentMap.tileSize; // the 1.5 puts this at the center of the first column beside the wall from the left
     currentMap.respawnPoint.y = (height - 2 - 3) * currentMap.tileSize; // the -2 gives the first empty row above the bottom border
-    // move player to spawn point
-    mainCharacter.x = currentMap.respawnPoint.x;
-    mainCharacter.y = currentMap.respawnPoint.y;
     // generate border
     generateBorder(width, height, stretchNine);
     // clear interior of border
@@ -76,6 +74,10 @@ function regenerateMap(width, height) {
     // generate content
     generateTerrain(width, height, 5, 1);
     //generateGhostTownBuilding(4, height - 2, 18, 3, 2);
+    // move player to spawn point
+    mainCharacter.checkPoint = currentMap.respawnPoint;
+    mainCharacter.x = currentMap.respawnPoint.x;
+    mainCharacter.y = currentMap.respawnPoint.y;
 }
 
 function generateBorder(mapWidth, mapHeight, tile) {
