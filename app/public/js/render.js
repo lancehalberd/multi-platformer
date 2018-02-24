@@ -290,10 +290,10 @@ var render = () => {
     renderLighting();
 };
 var drawMap = () => {
-    var topRow = Math.floor(cameraY / currentMap.tileSize);
-    var bottomRow = Math.ceil((cameraY + mainCanvas.height) / currentMap.tileSize);
-    var leftColumn = Math.floor(cameraX / currentMap.tileSize);
-    var rightColumn = Math.ceil((cameraX + mainCanvas.width) / currentMap.tileSize);
+    var topRow = Math.floor((cameraY - mapTop) / currentMap.tileSize);
+    var bottomRow = Math.ceil((cameraY - mapTop + mainCanvas.height) / currentMap.tileSize);
+    var leftColumn = Math.floor((cameraX - mapLeft) / currentMap.tileSize);
+    var rightColumn = Math.ceil((cameraX - mapLeft + mainCanvas.width) / currentMap.tileSize);
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
     mainContext.translate(0, currentMap.tileSize * topRow + currentMap.tileSize / 2);

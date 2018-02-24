@@ -2,6 +2,13 @@
 var frameMilliseconds = 20;
 var frameCounter = 1;
 var areaRectangle = new Rectangle(0, 0, 4000, 1000);
+
+// these four vars are for use in realtime generation of map content, and the shifting of the portion existing map content occupied by the player (and seen by the camera) to a different region of currentMap.composite
+var scrollShiftTiles = 25, // procedural generation will happen in chunks this big
+    scrollShiftPixels = scrollShiftTiles * 32, // I'd like the '32' to be currentMap.tileSize, but I don't know if currentMap will be defined when this is
+    mapLeft = 0, // These are the world coordinates the define the upper left corner of currentMap.composite
+    mapTop = 0;
+    
 // Store the last time we sent a playerMoved update so we don't hit the server too often with updates.
 var lastUpdate = 0, mainCharacterWasMoving = false;
 setInterval(() => {
@@ -12,7 +19,7 @@ setInterval(() => {
     }
     if (!currentMap) return;
     if (isKeyDown(KEY_SHIFT) && isKeyDown(KEY_G, true)) {
-        regenerateMap(25, 19);
+        regenerateMap(scrollShiftTiles * 2, 19);
     }
     // Update all the sprites that the game keeps track of
     for (var sprite of
@@ -58,6 +65,22 @@ setInterval(() => {
     TagGame.update();
     frameCounter++;
 }, frameMilliseconds);
+
+function shiftAndGenerateMap() {
+    // NOTE: temporarily only working with scrolling to the right
+    var shiftMargin = 4 * currentMap.tileSize;
+    if (cameraX + 0.5 * mainCanvas.width + shiftMargin) { // if camera gets close to the right edge of the screen becoming visible
+        // shift the content of currentMap.composite
+        mapLeft += scrollShiftPixels;
+        for (let row = 0; row < scrollShiftTiles; row++) {
+            currentMap.composite[row] = currentMap.composite[row].slice(scrollShiftTiles);
+        }
+        // fill in empty row arrays with the same number of tiles that's been cut from them (scrollShiftTiles), so that they're full up the to map's width in tiles
+        // WRONG: 'regenerateMap' will need to be reworked in order to be appropriate. Should make
+        //      a new function called "generateMapArea()" or something
+        //regenerateMap(width, height);
+    }
+}
 
 function regenerateMap(width, height) {
     // set map size
