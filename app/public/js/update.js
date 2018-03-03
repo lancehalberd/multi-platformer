@@ -61,24 +61,79 @@ setInterval(() => {
             mainCharacter.lastY = mainCharacter.y;
         }
     }
+    shiftAndGenerateMap();
     updateEditor();
     TagGame.update();
     frameCounter++;
 }, frameMilliseconds);
 
 function shiftAndGenerateMap() {
+    // WRONG good lord, why does it think that shiftMargin is undefined, even when it is just = 4 * 32?
+    //var shiftMargin = 4 * 32;//currentMap.tileSize; // i.e. when we're this far from the edge of the screen
     // NOTE: temporarily only working with scrolling to the right
-    var shiftMargin = 4 * currentMap.tileSize;
-    if (cameraX + 0.5 * mainCanvas.width + shiftMargin) { // if camera gets close to the right edge of the screen becoming visible
+    // NOTE: Right now, cameraX is the left edge of the camera's field. That will probably change,
+    //      at which point this 'mainCanvas.width' will need to be '0.5 * mainCanvas.width'
+    if (cameraX - mapLeft + mainCanvas.width + 128 >= currentMap.width * currentMap.tileSize) { // if camera gets close to the right edge of the screen becoming visible
+        console.log('bam!');
         // shift the content of currentMap.composite
         mapLeft += scrollShiftPixels;
-        for (let row = 0; row < scrollShiftTiles; row++) {
-            currentMap.composite[row] = currentMap.composite[row].slice(scrollShiftTiles);
+        console.log('scrollShiftPixels:', scrollShiftPixels);
+        for (let row = 0; row < currentMap.height; row++) {
+            // delete
+            currentMap.composite[row] = currentMap.composite[row].slice(0, scrollShiftTiles);
+            for (let col = 0; col < scrollShiftTiles; col++) {
+                currentMap.composite[row].push(0); // adding blank tiles because the current generation functions work with blank tiles.
+                if (row === currentMap.height - 1) applyTileToMap(currentMap, desGround9BlockUL, [col, row]);
+            }
+            //  Might want to make the generation functions be ok with increasing the size of the composite so that we can just .slice() here.)
         }
+        //generateDesertTerrain(scrollShiftTiles, currentMap.height, 5, 1);
         // fill in empty row arrays with the same number of tiles that's been cut from them (scrollShiftTiles), so that they're full up the to map's width in tiles
-        // WRONG: 'regenerateMap' will need to be reworked in order to be appropriate. Should make
-        //      a new function called "generateMapArea()" or something
-        //regenerateMap(width, height);
+    }
+}
+
+///////////
+// map generation
+
+// This function should be located lower down, in the 'desert terrain construction' area,
+//      just for organization's sake. It's here for now because it's easier to work on it and
+//      shiftAndGenerateMap() at the same time.
+function generateDesertTerrain(width, height, terrainMaxHeight, minStepWidth) {
+    //console.log('generating desert terrain at frame', frameCounter);
+    // Putting the row on the outside of the nest of row/col for loops lets rows be built up all at once (and we're doing it from the bottom up)
+    // making it possible to check the entire row below for meeting building conditions for the next row.
+    for (var row = height; row >= height - (terrainMaxHeight + 1); row--) { // row, up to the terrain height above the bottom row
+        // WRONG, maybe eventulally/NOTE: things that are just !== 0 right now will need to be TILE_SOLID_ALL or something later,
+        //      unless this function is always run on a blank map.
+        // working from the bottom up so that terrain can be built up, checking for anything solid  underneath
+         for (var col = 0; col < width; col++) { // columns
+            // making some height variations in the bottom [terrainMaxHeight] rows
+            // NOTE: we're just applying a single tile (desGround9BlockUL) to everything right now,
+            //      but a 'details' pass will mix that up later
+            if (row === height) {
+                //console.log('building ground at column', col, 'at frame', frameCounter);
+                applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // if this is the bottom row, just fill it up
+            } /*else if (
+                currentMap.composite[row + 1][col] !== 0 && // if the tile beneath isn't empty
+                ( // the tiles below and to the left and right for <minStepWidth> aren't empty
+                    currentMap.composite[row + 1][col + minStepWidth] !== 0 && // could put an || here, which is why these two are in parentheses
+                    currentMap.composite[row + 1][col - minStepWidth] !== 0
+                ) // if both of the tiles below and to the sides aren't empty
+            ) {
+                // if the tile to the left (added from left to right) isn't empty, then increased likelihood
+                //      of drawing another one next to it. Trying to get smooth, larger-scale groups.
+                if (Math.random() < 0.85) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
+                else if (Math.random() < 0.4) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // else, smaller chance
+            }*/
+        }
+    }
+    // add deatils, like adding roots, dirt, and grass to top layers, rounding corners, and creating naturally-tiling groups of variations of a basic tile type
+    makeTerrainTilesContextual(width, height, terrainMaxHeight, 0.115);
+    // setting a spawn point above the generated terrain
+    // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
+    //      is run after the entire map has been generated.
+    if (currentMap.respawnPoint.y > terrainMaxHeight * currentMap.tileSize * (height - 1 - terrainMaxHeight)) {
+        currentMap.respawnPoint.y = (height - 1 - terrainMaxHeight) * currentMap.tileSize;
     }
 }
 
@@ -95,7 +150,7 @@ function regenerateMap(width, height) {
     // clear interior of border
     clearMapRectangle(1, 1, width, height);
     // generate content
-    generateTerrain(width, height, 5, 1);
+    generateDesertTerrain(width, height, 5, 1);
     //generateGhostTownBuilding(4, height - 2, 18, 3, 2);
     // move player to spawn point
     mainCharacter.checkPoint = currentMap.respawnPoint;
@@ -119,42 +174,6 @@ function clearMapRectangle(leftColumn, topRow, width, height) {
         for (var row = 1; row < height - 1; row++) {
             applyTileToMap(currentMap, 0, [col, row]);
         }
-    }
-}
-
-function generateTerrain(mapWidth, mapHeight, terrainMaxHeight, minStepWidth) {
-    var width = mapWidth,
-        height = mapHeight;
-    // Putting the row on the outside of the nest of row/col for loops lets rows be built up all at once (and we're doing it from the bottom up)
-    // making it possible to check the entire row below for meeting building conditions for the next row.
-    for (var row = height - 2; row >= height - (terrainMaxHeight + 1); row--) { // row, not including the bottom row, up to the terrain height above the bottom row
-        // WRONG, eventulally/NOTE: things that are just !== 0 right now will need to be TILE_SOLID_ALL or something later,
-        //      unless this function is always run on a blank map.
-        // working from the bottom up so that terrain can be built up, checking for anything solid  underneath
-         for (var col = 1; col < width - 2; col++) { // columns, excluding the border columns
-            // making some height variations in the bottom four rows
-            if (
-                currentMap.composite[row + 1][col] !== 0 && // if the tile beneath isn't empty
-                ( // the tiles below and to the left and right for <minStepWidth> aren't empty
-                    currentMap.composite[row + 1][col + minStepWidth] !== 0 && // could put an || here, which is why these two are in parentheses
-                    currentMap.composite[row + 1][col - minStepWidth] !== 0
-                ) // if both of the tiles below and to the sides aren't empty
-            ) {
-                // if the tile to the left (added from left to right) isn't empty, then increased likelihood
-                // of drawing another one next to it. Trying to get smooth, larger-scale groups.
-                if (currentMap.composite[row][col - 1] !== 0 && col > 1) { // don't apply increased chance to column 1, because it will always have the left wall next to it.
-                    if (Math.random() < 0.85) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // if non-left-wall tile to the left isn't empty, bigger chance of spawning a tile
-                } else if (Math.random() < 0.4) applyTileToMap(currentMap, desGround9BlockUL, [col, row]); // else, smaller chance
-            }
-        }
-    }
-    // add deatils, like adding roots, dirt, and grass to top layers, rounding corners, and creating naturally-tiling groups of variations of a basic tile type
-    makeTerrainTilesContextual(mapWidth, mapHeight, terrainMaxHeight, 0.115);
-    // setting a spawn point above the generated terrain
-    // WRONG. Eventually this will probably be done by a function like findValidSpawnPoint(preferredCriterion, perferredCriterion...) that
-    //      is run after the entire map has been generated.
-    if (currentMap.respawnPoint.y > terrainMaxHeight * currentMap.tileSize * (height - 1 - terrainMaxHeight)) {
-        currentMap.respawnPoint.y = (height - 1 - terrainMaxHeight) * currentMap.tileSize;
     }
 }
 

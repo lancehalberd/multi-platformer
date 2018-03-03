@@ -107,7 +107,7 @@ function lightingInitializeDistancesFromIndexToIndex() {
 	}
 }
 
-initializeLighting();
+//initializeLighting();
 function removeFinishedPointLights() {
     // This just gets rid of all the point lights that have shouldBeRemoved set to true on them.
     // For now, this will work with point lights that are localSprites.
@@ -287,7 +287,8 @@ var render = () => {
         console.log(e);
         debugger;
     }
-    renderLighting();
+	// NOTE: Remember to comment-in "initializeLighting()" call
+    //renderLighting();
 };
 var drawMap = () => {
     var topRow = Math.floor((cameraY - mapTop) / currentMap.tileSize);
