@@ -117,7 +117,7 @@ function renderLighting() {
             const distance = lightingDistance[dy][dx];
             red += 768 / distance;
             green += 384 / distance;
-            blue += 64;//384 / distance;
+            blue += 256 / distance;
             alpha += 128 / distance;
 
 
