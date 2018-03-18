@@ -505,11 +505,11 @@ function moveSpriteInDirection(sprite, amount, direction) {
         }
         // When moving vertically, we only care about the row we are moving into.
         if (direction === TILE_UP || direction === TILE_DOWN) {
-            topRow = bottomRow = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+            topRow = bottomRow = Math.floor((hitBox[directionToBoundary[direction]] - mapTop) / currentMap.tileSize);
         }
         // When moving horizontally, we only care about the column we are moving into.
         if (direction === TILE_LEFT || direction === TILE_RIGHT) {
-            leftColumn = rightColumn = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+            leftColumn = rightColumn = Math.floor((hitBox[directionToBoundary[direction]] - mapLeft) / currentMap.tileSize);
         }
         // Damage that will be taken if not prevented
         var movementDamage = 0;
@@ -573,7 +573,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
                         sprite.vy = 0;
                         sprite.currentJumpDuration = sprite.maxJumpDuration;
                     }
-                    sprite.y = (topRow + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).top;
+                    sprite.y = mapTop + (topRow + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).top;
                     break;
                 case TILE_DOWN:
                     if (stop) {
@@ -581,15 +581,15 @@ function moveSpriteInDirection(sprite, amount, direction) {
                         sprite.grounded = true;
                         sprite.currentNumberOfJumps = 0;
                     }
-                    sprite.y = bottomRow * currentMap.tileSize - hitBox.height - getLocalSpriteHitBox(sprite).top;
+                    sprite.y = mapTop + bottomRow * currentMap.tileSize - hitBox.height - getLocalSpriteHitBox(sprite).top;
                     break;
                 case TILE_LEFT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = (leftColumn + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).left;
+                    sprite.x = mapLeft + (leftColumn + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).left;
                     break;
                 case TILE_RIGHT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = rightColumn * currentMap.tileSize - hitBox.width - getLocalSpriteHitBox(sprite).left;
+                    sprite.x = mapLeft + rightColumn * currentMap.tileSize - hitBox.width - getLocalSpriteHitBox(sprite).left;
                     break;
             }
         }

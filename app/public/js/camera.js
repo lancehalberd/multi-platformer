@@ -85,13 +85,13 @@ var boundCameraToMap = () => {
     // Normally we don't let the camera go past the edges of the map, but when the map is too
     // short or narrow to do this, we center the map vertically/horizontally.
     if (areaRectangle.width >= mainCanvas.width) {
-        cameraX = Math.max(0, Math.min(areaRectangle.width - mainCanvas.width, cameraX));
+        cameraX = Math.max(mapLeft, Math.min(mapLeft + areaRectangle.width - mainCanvas.width, cameraX));
     } else {
-        cameraX = -(mainCanvas.width - areaRectangle.width) / 2;
+        cameraX = -(mapLeft + mainCanvas.width - areaRectangle.width) / 2;
     }
     if (areaRectangle.height >= mainCanvas.height) {
-        cameraY = Math.max(0, Math.min(areaRectangle.height - mainCanvas.height, cameraY));
+        cameraY = Math.max(mapTop, Math.min(mapTop + areaRectangle.height - mainCanvas.height, cameraY));
     } else {
-        cameraY = -(mainCanvas.height - areaRectangle.height) / 2;
+        cameraY = -(mapTop + mainCanvas.height - areaRectangle.height) / 2;
     }
 };

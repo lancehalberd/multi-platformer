@@ -26,7 +26,7 @@ var lightingPixelsPerRow = 100,
 
 lightingCanvas.width = lightingPixelsPerRow;
 lightingCanvas.height = lightingPixelsPerColumn;
-    
+
 // distance lookup tables
 // access distances like: lightingDistanceFromIndexToIndex[indexA][indexB], or,
 //		for distance between coordinates, with accuracy at a resolution equal to that of the lighting array, like:
@@ -47,7 +47,7 @@ function initializeLighting() {
 	lightingInitializeIndexOfCoordinates();
 	lightingInitializeCoordinatesOfIndex();
 }
-	
+
 function lightingInitializeIndexOfCoordinates() {
 	for (var i = 0; i < mainCanvas.width; i++) {
 		lightingIndexOfCoordinates.push([]);
@@ -143,7 +143,7 @@ function renderLighting() {
 					if (lightY % 1 <= -0.5) lightY -= 1 + lightY % 1;
 					if (frameCounter % 15 === 0 && j === 0 && i === 0) {
 						console.log(
-							
+
 						);
 					}
 					r = 0;
@@ -166,7 +166,7 @@ function renderLighting() {
 		g += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[sun.x][sun.y]];
 		b += 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
 		a += 128 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[sun.x][sun.y]];
-		
+
 		// haze
 		var maxHaze = mainCanvas.height - lightingCoordinatesOfIndex[i].y;
 		if (maxHaze > 80) maxHaze = 80;
@@ -175,11 +175,11 @@ function renderLighting() {
 		g += 128 / maxHaze;
 		b += 64 / maxHaze;
 		a += 128 / maxHaze;
-		
+
 		// logging
 		if (frameCounter % 15 === 0 && i === 0) {
 			console.log(
-				
+
 			);
 		}
 
@@ -295,16 +295,17 @@ var drawMap = () => {
     var bottomRow = Math.ceil((cameraY - mapTop + mainCanvas.height) / currentMap.tileSize);
     var leftColumn = Math.floor((cameraX - mapLeft) / currentMap.tileSize);
     var rightColumn = Math.ceil((cameraX - mapLeft + mainCanvas.width) / currentMap.tileSize);
+    if (isKeyDown(KEY_SPACE) ) console.log({leftColumn, rightColumn});
     mainContext.save();
     mainContext.translate(Math.round(-cameraX), Math.round(-cameraY));
-    mainContext.translate(0, currentMap.tileSize * topRow + currentMap.tileSize / 2);
+    mainContext.translate(0, currentMap.tileSize * topRow + mapTop + currentMap.tileSize / 2);
     for (var row = topRow; row < bottomRow; row++) {
         if (!currentMap.composite[row]) {
             mainContext.translate(0, currentMap.tileSize);
             continue;
         }
         mainContext.save();
-        mainContext.translate(currentMap.tileSize * leftColumn + currentMap.tileSize / 2, 0);
+        mainContext.translate(currentMap.tileSize * leftColumn + mapLeft + currentMap.tileSize / 2, 0);
         for (var col = leftColumn; col < rightColumn; col++) {
             var tile = currentMap.uniqueTiles[currentMap.composite[row][col]];
             if (tile) {
