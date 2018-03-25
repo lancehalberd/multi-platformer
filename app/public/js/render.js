@@ -11,15 +11,15 @@ var bufferContext = bufferCanvas.getContext('2d');
 var pointLights = [];
 
 var lightingPixelsPerRow = 100,
-	lightingPixelsPerColumn = Math.round(
-		mainCanvas.height / mainCanvas.width * lightingPixelsPerRow
-	), // WRONG shouldn't stretch things because we get a half-cell
-	lightingPixelsPerGrid = lightingPixelsPerRow * lightingPixelsPerColumn,
-	lightingScaledPixelSize = mainCanvas.width / lightingPixelsPerRow, // WRONG not quite right if we're stretching cells vertically to avoid half-cells
+    lightingPixelsPerColumn = Math.round(
+        mainCanvas.height / mainCanvas.width * lightingPixelsPerRow
+    ), // WRONG shouldn't stretch things because we get a half-cell
+    lightingPixelsPerGrid = lightingPixelsPerRow * lightingPixelsPerColumn,
+    lightingScaledPixelSize = mainCanvas.width / lightingPixelsPerRow, // WRONG not quite right if we're stretching cells vertically to avoid half-cells
     lightingCanvas = $(`<canvas width="${lightingPixelsPerRow}" height="${lightingPixelsPerColumn}" />`)[0],
     lightingContext = lightingCanvas.getContext('2d'),
     lightingData = lightingContext.createImageData(lightingPixelsPerRow, lightingPixelsPerColumn),
-	lightingPixelArray = lightingData.data,
+    lightingPixelArray = lightingData.data,
     lightingCanvas = document.createElement('canvas'),
     lightingContext = lightingCanvas.getContext('2d'),
     pointLights = [];
@@ -27,87 +27,25 @@ var lightingPixelsPerRow = 100,
 lightingCanvas.width = lightingPixelsPerRow;
 lightingCanvas.height = lightingPixelsPerColumn;
 
-// distance lookup tables
-// access distances like: lightingDistanceFromIndexToIndex[indexA][indexB], or,
-//		for distance between coordinates, with accuracy at a resolution equal to that of the lighting array, like:
-// 		lightingDistanceFromIndexToIndex[lightingIndexOfCoordinates[xA][yA]][lightingIndexOfCoordinates[xB][yB]],
-//      in which case MAKE SURE TO SEND POSITIVE INTEGERS--you are just sending, in the end, array indicies.
-var lightingDistanceFromIndexToIndex = [],
-	lightingXDistanceFromIndexToIndex = [],
-	lightingYDistanceFromIndexToIndex = [],
-	lightingIndexOfCoordinates = [],
-	lightingCoordinatesOfIndex = [];
+// Lighting distance table. Usage:
+// const dx = Math.round(Math.abs(x1 - x2) / lightingDistanceFactor);
+// const dy = Math.round(Math.abs(y1 - y2) / lightingDistanceFactor);
+// const distance = lightingDistance[dy][dx];
+var lightingDistance = [];
+var lightingDistanceFactor = 2;
 
-// fills out distance lookup tables,
-// 		and a lookup table to convert integer coordinates into lighting array indices
+// Fill in the lighting distance table.
 function initializeLighting() {
-	lightingInitializeXDistancesFromIndexToIndex();
-	lightingInitializeYDistancesFromIndexToIndex();
-	lightingInitializeDistancesFromIndexToIndex();
-	lightingInitializeIndexOfCoordinates();
-	lightingInitializeCoordinatesOfIndex();
+    const ldf2 = lightingDistanceFactor ** 2;
+    for (var i = 0; i < mainCanvas.height / lightingDistanceFactor; i++) {
+        lightingDistance[i] = [];
+        for (var j = 0; j < mainCanvas.width / lightingDistanceFactor; j++) {
+            lightingDistance[i][j] = Math.sqrt(ldf2 * i * i + ldf2 * j * j);
+        }
+    }
 }
 
-function lightingInitializeIndexOfCoordinates() {
-	for (var i = 0; i < mainCanvas.width; i++) {
-		lightingIndexOfCoordinates.push([]);
-		for (var j = 0; j < mainCanvas.height; j++) {
-			lightingIndexOfCoordinates[i].push(
-				Math.round(
-					i / mainCanvas.height * (lightingPixelsPerRow - 1) +
-					Math.floor(j / mainCanvas.height * lightingPixelsPerColumn) * lightingPixelsPerRow
-				)
-			);
-		}
-	}
-}
-
-function lightingInitializeCoordinatesOfIndex() {
-	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-		lightingCoordinatesOfIndex.push({
-			'x': i % lightingPixelsPerRow * lightingScaledPixelSize + 0.5 * lightingScaledPixelSize,
-			'y': Math.floor(i / lightingPixelsPerRow) * lightingScaledPixelSize + 0.5 * lightingScaledPixelSize
-		});
-	}
-}
-
-function lightingInitializeXDistancesFromIndexToIndex() {
-	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-		lightingXDistanceFromIndexToIndex.push([]);
-		for (var j = 0; j < lightingPixelsPerGrid; j++) {
-			lightingXDistanceFromIndexToIndex[i].push(
-				j % lightingPixelsPerRow - i % lightingPixelsPerRow
-			);
-		}
-	}
-}
-
-function lightingInitializeYDistancesFromIndexToIndex() {
-	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-		lightingYDistanceFromIndexToIndex.push([]);
-		for (var j = 0; j < lightingPixelsPerGrid; j++) {
-			lightingYDistanceFromIndexToIndex[i].push(
-				(j - j % lightingPixelsPerRow) / lightingPixelsPerRow - (i - i % lightingPixelsPerRow) / lightingPixelsPerRow
-			);
-		}
-	}
-}
-
-function lightingInitializeDistancesFromIndexToIndex() {
-	for (var i = 0; i < lightingPixelsPerGrid; i++) {
-		lightingDistanceFromIndexToIndex.push([]);
-		for (var j = 0; j < lightingPixelsPerGrid; j++) {
-			lightingDistanceFromIndexToIndex[i].push(
-				Math.sqrt(
-				    lightingXDistanceFromIndexToIndex[i][j] * lightingXDistanceFromIndexToIndex[i][j] +
-					lightingYDistanceFromIndexToIndex[i][j] * lightingYDistanceFromIndexToIndex[i][j]
-				)
-			);
-		}
-	}
-}
-
-//initializeLighting();
+initializeLighting();
 function removeFinishedPointLights() {
     // This just gets rid of all the point lights that have shouldBeRemoved set to true on them.
     // For now, this will work with point lights that are localSprites.
@@ -117,79 +55,97 @@ function removeFinishedPointLights() {
 function renderLighting() {
     removeFinishedPointLights();
     //lightingContext.clearRect(0, 0, lightingCanvas.width, lightingCanvas.height); // Is this necessary? If we used a fadeout/decay effect and '+=' at the end (when the actual pixel values are affected) instead of '=' like I do in my "pure sim," we might get more interesting effects, like afterimages and flickering.
-	for (var i = 0; i < lightingPixelsPerGrid; i++) { // for each pixel in the lighting grid
-		// brightness decay
-		// WRONG: eventually this will need to decay toward the precalculated lightmap values, instead of toward 0
-		for (var pc = 0; pc < 4; pc++) { // 'pc' means 'pixel channel'
-			lightingPixelArray[i * 4 + pc] *= 0.88;
-		}
-		var r = 0,
-			g = 0,
-			b = 0,
-			a = 0;
-		// pointLights
-		/*if (pointLights.length > 0) { // if there are point lights active
-				for (var j = 0; j < pointLights.length; j++) { // for each point light
-					var lightX = pointLights[j].x,
-						lightY = pointLights[j].y;
-					// rounding light coordinates, which is necessary for using the distance lookup tables
-					// avoiding Math.round() function calls:
-					// maybe there's a more elegant way to do this.
-					if (lightX % 1 >= 0.5) lightX += 1 - lightX % 1;
-					if (lightX % 1 < 0.5 && lightX % 1 > -0.5) lightX -= lightX % 1;
-					if (lightX % 1 <= -0.5) lightX -= 1 + lightX % 1;
-					if (lightY % 1 >= 0.5) lightY += 1 - lightY % 1;
-					if (lightY % 1 < 0.5 && lightY % 1 > -0.5) lightY -= lightY % 1;
-					if (lightY % 1 <= -0.5) lightY -= 1 + lightY % 1;
-					if (frameCounter % 15 === 0 && j === 0 && i === 0) {
-						console.log(
 
-						);
-					}
-					r = 0;
-					g = 0;
-					b = 0;
-					a = 0;
-					// WRONG: Should express these values as proportions of the first so that all this calculation doesn't have to happen repeatedly.
-					//      The speed gain might not be worth it, but it's really important that the lighting be efficient, so maybe it really is worth it.
-					// WRONG: eventually I'll transplant my neighborsOfIndexInRadius[][] array in from my pixel project and we can set
-					//		a limited radius to which cells a point light affects.
-					r += 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
-					g += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
-					b += 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
-					a += 128 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
-				}
-			}*/
-		// sun point light
-		var sun = {x: 500, y: 150};
-		r += 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[sun.x][sun.y]];
-		g += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[sun.x][sun.y]];
-		b += 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
-		a += 128 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[sun.x][sun.y]];
+    for (var r = 0; r < lightingPixelsPerColumn; r++) {
+        const y = (r + .5) * lightingScaledPixelSize;
+        for (var c = 0; c < lightingPixelsPerRow; c++) {
+            const x = (c + .5) * lightingScaledPixelSize;
+            const i = r * lightingPixelsPerRow + c;
+            // brightness decay
+            // WRONG: eventually this will need to decay toward the precalculated lightmap values, instead of toward 0
+            for (var pc = 0; pc < 4; pc++) { // 'pc' means 'pixel channel'
+                lightingPixelArray[i * 4 + pc] *= 0.88;
+            }
+            var red = 0,
+                green = 0,
+                blue = 0,
+                alpha = 0;
+            // pointLights
+            /*if (pointLights.length > 0) { // if there are point lights active
+                    for (var j = 0; j < pointLights.length; j++) { // for each point light
+                        var lightX = pointLights[j].x,
+                            lightY = pointLights[j].y;
+                        // rounding light coordinates, which is necessary for using the distance lookup tables
+                        // avoiding Math.round() function calls:
+                        // maybe there's a more elegant way to do this.
+                        if (lightX % 1 >= 0.5) lightX += 1 - lightX % 1;
+                        if (lightX % 1 < 0.5 && lightX % 1 > -0.5) lightX -= lightX % 1;
+                        if (lightX % 1 <= -0.5) lightX -= 1 + lightX % 1;
+                        if (lightY % 1 >= 0.5) lightY += 1 - lightY % 1;
+                        if (lightY % 1 < 0.5 && lightY % 1 > -0.5) lightY -= lightY % 1;
+                        if (lightY % 1 <= -0.5) lightY -= 1 + lightY % 1;
+                        if (frameCounter % 15 === 0 && j === 0 && i === 0) {
+                            console.log(
 
-		// haze
-		var maxHaze = mainCanvas.height - lightingCoordinatesOfIndex[i].y;
-		if (maxHaze > 80) maxHaze = 80;
-		if (maxHaze < 10) maxHaze = 10;
-		r += 128 / maxHaze;
-		g += 128 / maxHaze;
-		b += 64 / maxHaze;
-		a += 128 / maxHaze;
+                            );
+                        }
+                        r = 0;
+                        g = 0;
+                        b = 0;
+                        a = 0;
+                        // WRONG: Should express these values as proportions of the first so that all this calculation doesn't have to happen repeatedly.
+                        //      The speed gain might not be worth it, but it's really important that the lighting be efficient, so maybe it really is worth it.
+                        // WRONG: eventually I'll transplant my neighborsOfIndexInRadius[][] array in from my pixel project and we can set
+                        //      a limited radius to which cells a point light affects.
+                        r += 768 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+                        g += 384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+                        b += 64;//384 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[light.x][light.y]];
+                        a += 128 / lightingDistanceFromIndexToIndex[i][lightingIndexOfCoordinates[lightX][lightY]];
+                    }
+                }*/
+            // sun point light
+            var sun = {x: mainCharacter.x - cameraX, y: mainCharacter.y - cameraY - 80};
+            // `(A + .5) << 1 >> 1;` Does the same thing as `Math.round(A)`, but is a little bit faster because
+            // it doesn't have to invoke a function.
+            var dx = ((sun.x - x) / lightingDistanceFactor + .5) << 1 >> 1;
+            var dy = ((sun.y - y) / lightingDistanceFactor + .5) << 1 >> 1;
+            if (dx < 0) dx = -dx;
+            if (dy < 0) dy = -dy;
+            // These lines should do the same as the above 4, using functions.
+            // var dx = Math.abs(Math.round((sun.x - x) / lightingDistanceFactor));
+            // var dy = Math.abs(Math.round((sun.x - y) / lightingDistanceFactor));
+            // I added a factor of 8 here because without it the sun looked too small in this version.
+            const distance = lightingDistance[dy][dx];
+            red += 768 / distance;
+            green += 384 / distance;
+            blue += 256 / distance;
+            alpha += 128 / distance;
 
-		// logging
-		if (frameCounter % 15 === 0 && i === 0) {
-			console.log(
 
-			);
-		}
+            // haze
+            var maxHaze = mainCanvas.height - y;
+            if (maxHaze > 80) maxHaze = 80;
+            if (maxHaze < 10) maxHaze = 10;
+            red += 128 / maxHaze;
+            green += 128 / maxHaze;
+            blue += 64 / maxHaze;
+            alpha += 128 / maxHaze;
 
-		// for each pixel, add the sum of all dynamic lighting this frame
-		lightingPixelArray[i * 4 + 0] += r;
-		lightingPixelArray[i * 4 + 1] += g;
-		lightingPixelArray[i * 4 + 2] += b;
-		lightingPixelArray[i * 4 + 3] += a;
-	}
-	// draw pixelArray
+            if (distance > 100) {
+                red = 0;
+                green = 0;
+                blue = 0;
+                alpha = 255 * (distance - 100) / 1000;
+            }
+
+            // for each pixel, add the sum of all dynamic lighting this frame
+            lightingPixelArray[i * 4 + 0] += red;
+            lightingPixelArray[i * 4 + 1] += green;
+            lightingPixelArray[i * 4 + 2] += blue;
+            lightingPixelArray[i * 4 + 3] += alpha;
+        }
+    }
+    // draw pixelArray
     lightingContext.putImageData(lightingData, 0, 0);
     // turn on antialiasing just for the lighting grid
     mainContext.imageSmoothingEnabled = true;
@@ -251,6 +207,8 @@ var render = () => {
         return;
     }
 
+    // renderLighting();
+
     // Draw HUD elements here like the life display for the main character.
     mainContext.save();
     mainContext.translate(10, 10);
@@ -281,14 +239,11 @@ var render = () => {
     // draw.fillRectangle(mainContext, rectangle(mainCharacter.x - 2, mainCharacter.y - 2, 4, 4), 'white');
 
 
-
     window.requestAnimationFrame(render);
     } catch (e) {
         console.log(e);
         debugger;
     }
-	// NOTE: Remember to comment-in "initializeLighting()" call
-    //renderLighting();
 };
 var drawMap = () => {
     var topRow = Math.floor((cameraY - mapTop) / currentMap.tileSize);

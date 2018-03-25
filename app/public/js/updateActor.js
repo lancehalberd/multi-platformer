@@ -667,7 +667,8 @@ function changeCharacterToAlien(actor) {
     actor.idlingAnimationLong = {};
     actor.jumpingAnimation = characterAlienJumpingAnimation;
     actor.uncontrolledFallAnimation = characterAlienUncontrolledFallAnimation;
-    actor.uncontrolledLandingAnimation = {};
+    actor.uncontrolledLandingAnimation = characterAlienUncontrolledFallAnimation;
+    actor.standingUpAnimation = characterAlienJumpingAnimation;
     actor.msBetweenWalkFrames = 200;
     actor.msBetweenWalkFramesWhileSlipping = actor.msBetweenWalkFrames / 2;
     actor.msBetweenIdleFrames = 200;
@@ -677,6 +678,8 @@ function changeCharacterToAlien(actor) {
     actor.knockDownAnimationHitBox = new Rectangle(-24, -20, 48, 20);
     actor.walkingAnimationHitBox = new Rectangle(-20, -60, 40, 60);
     actor.crouchingAnimationHitBox = new Rectangle(-20, -32, 40, 32);
+    actor.hitBox = actor.walkingAnimationHitBox;
+    actor.knockDownGroundedAnimation = characterAlienUncontrolledFallAnimation;
 }
 
 function changeCharacterToVictoria(actor) {
