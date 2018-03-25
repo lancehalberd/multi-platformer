@@ -54,8 +54,6 @@ function updateActor(actor) {
                 actor.fallingUncontrolled = false;
                 //actor.invulnerable = false; // this would be worth leaving if there wasn't an immediate knock down
                 knockDown(actor, actor.uncontrolledFallVyBeforeLanding / 20);
-                // WRONG need to add a knockdown effect on landing from an uncontrolled fall, including an animation speed decrease on the downed state and the standing up
-                //      animation based on the player's speed at impact.
         }
         // end uncontrolled fall behavior
 
@@ -440,9 +438,9 @@ function isCharacterSubjectToDisablingEffect(character) {
 
 function isPlayerUnderCeiling(player) {
     var hitBox = getGlobalSpriteHitBox(player),
-        topRow = Math.floor(hitBox.top / currentMap.tileSize),
-        leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
-        rightColumn = Math.floor((hitBox.right - 0.1) / currentMap.tileSize);
+        topRow = Math.floor((hitBox.top - mapTop) / currentMap.tileSize),
+        leftColumn = Math.floor((hitBox.left - mapLeft) / currentMap.tileSize),
+        rightColumn = Math.floor((hitBox.right - 0.1 - mapLeft) / currentMap.tileSize);
     for (var column = leftColumn; column <= rightColumn; column++) {
         if (isTileX(topRow, column, TILE_SOLID * TILE_UP)) return true;
     }
@@ -451,9 +449,9 @@ function isPlayerUnderCeiling(player) {
 
 function isPlayerOnOneWayGround(player) {
     var hitBox = getGlobalSpriteHitBox(player),
-        bottomwRow = Math.floor((hitBox.bottom + 0.1) / currentMap.tileSize),
-        leftColumn = Math.floor(hitBox.left / currentMap.tileSize),
-        rightColumn = Math.floor((hitBox.right - 0.1) / currentMap.tileSize);
+        bottomwRow = Math.floor((hitBox.bottom - mapTop + 0.1) / currentMap.tileSize),
+        leftColumn = Math.floor((hitBox.left - mapLeft) / currentMap.tileSize),
+        rightColumn = Math.floor((hitBox.right - mapLeft - 0.1) / currentMap.tileSize);
     for (var column = leftColumn; column <= rightColumn; column++) {
         // The player can jump down through ground as long as it is only
         // solid in one vertical direction.
@@ -484,10 +482,10 @@ function moveSpriteInDirection(sprite, amount, direction) {
     for (var i = 0; i < splits; i++) {
         sprite[directionToCoordinate[direction]] += amount;
         var hitBox = getGlobalSpriteHitBox(sprite);
-        var leftColumn = Math.floor(hitBox.left / currentMap.tileSize);
-        var rightColumn = Math.floor((hitBox.right - .1) / currentMap.tileSize);
-        var topRow = Math.floor(hitBox.top / currentMap.tileSize);
-        var bottomRow = Math.floor((hitBox.bottom - .1) / currentMap.tileSize);
+        var leftColumn = Math.floor((hitBox.left - mapLeft) / currentMap.tileSize);
+        var rightColumn = Math.floor((hitBox.right - mapLeft - 0.1) / currentMap.tileSize);
+        var topRow = Math.floor((hitBox.top - mapTop) / currentMap.tileSize);
+        var bottomRow = Math.floor((hitBox.bottom -  mapTop - 0.1) / currentMap.tileSize);
         // Currently we only do collision checks against the edges of tiles, so skip checks if the character
         // is only moving through the middle of a tile.
         // The +/-1 is added because without it the player could slide through the wall when moving fractional
@@ -507,11 +505,11 @@ function moveSpriteInDirection(sprite, amount, direction) {
         }
         // When moving vertically, we only care about the row we are moving into.
         if (direction === TILE_UP || direction === TILE_DOWN) {
-            topRow = bottomRow = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+            topRow = bottomRow = Math.floor((hitBox[directionToBoundary[direction]] - mapTop) / currentMap.tileSize);
         }
         // When moving horizontally, we only care about the column we are moving into.
         if (direction === TILE_LEFT || direction === TILE_RIGHT) {
-            leftColumn = rightColumn = Math.floor(hitBox[directionToBoundary[direction]] / currentMap.tileSize);
+            leftColumn = rightColumn = Math.floor((hitBox[directionToBoundary[direction]] - mapLeft) / currentMap.tileSize);
         }
         // Damage that will be taken if not prevented
         var movementDamage = 0;
@@ -575,7 +573,7 @@ function moveSpriteInDirection(sprite, amount, direction) {
                         sprite.vy = 0;
                         sprite.currentJumpDuration = sprite.maxJumpDuration;
                     }
-                    sprite.y = (topRow + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).top;
+                    sprite.y = mapTop + (topRow + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).top;
                     break;
                 case TILE_DOWN:
                     if (stop) {
@@ -583,15 +581,15 @@ function moveSpriteInDirection(sprite, amount, direction) {
                         sprite.grounded = true;
                         sprite.currentNumberOfJumps = 0;
                     }
-                    sprite.y = bottomRow * currentMap.tileSize - hitBox.height - getLocalSpriteHitBox(sprite).top;
+                    sprite.y = mapTop + bottomRow * currentMap.tileSize - hitBox.height - getLocalSpriteHitBox(sprite).top;
                     break;
                 case TILE_LEFT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = (leftColumn + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).left;
+                    sprite.x = mapLeft + (leftColumn + 1) * currentMap.tileSize - getLocalSpriteHitBox(sprite).left;
                     break;
                 case TILE_RIGHT:
                     if (stop) sprite.vx = 0;
-                    sprite.x = rightColumn * currentMap.tileSize - hitBox.width - getLocalSpriteHitBox(sprite).left;
+                    sprite.x = mapLeft + rightColumn * currentMap.tileSize - hitBox.width - getLocalSpriteHitBox(sprite).left;
                     break;
             }
         }
@@ -705,7 +703,9 @@ function changeCharacterToVictoria(actor) {
     actor.msBetweenIdleFrames = 200;
     actor.msBetweenIdleFramesWhileSlipping = actor.msBetweenIdleFrames;
     actor.attackAnimationMsPerFrame = 280;
-    actor.scale = 1.75;
+    //actor.scale = 1.75; // original scale, matches original hit bot
+    actor.scale = 2;
+    //actor.scale = 2.125; // maybe this scale is better with Lee's ghost town tiles?
     actor.type = CHARACTER_VICTORIA;
 }
 

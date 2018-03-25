@@ -356,7 +356,7 @@ var selectTileUnderMouse = () => {
 var brushIndex = 0;
 var dummyRectangle = new Rectangle(0, 0, 32, 32);
 
-var tileSources = [twilightTiles, customTiles, mansionTiles, desertTiles32, desertTiles16];
+var tileSources = [twilightTiles, customTiles, /*mansionTiles, desertTiles32, desertTiles16,*/desertTiles, ghostTownTiles];
 // Make sure all brush tile sets are preloaded.
 tileSources.forEach(tileSource => {
     requireImage(tileSource);

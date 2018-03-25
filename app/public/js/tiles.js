@@ -21,6 +21,8 @@ var customTiles = '/gfx/customBlocksA.png';
 var mansionTiles = '/gfx/tiles/tilesMansion.png';
 var desertTiles32 = '/gfx/tiles/tilesDesert32.png';
 var desertTiles16 = '/gfx/tiles/tilesDesert16.png';
+var desertTiles = '/gfx/tiles/tilesDesert.png';
+var ghostTownTiles = '/gfx/tiles/tilesGhostTownBuildings.png';
 
 var stretchNine = {
     image: twilightTiles,
@@ -78,6 +80,1002 @@ var iceBlock = {
     maxHeight: 1,
     properties: TILE_SOLID_ALL | TILE_SLIPPERY_ALL,
 };
+
+//////////////////////////////////////////
+// Lee's new Ghost Town tileset 2018 01 //
+//////////////////////////////////////////
+var gTGreySiding0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:2,
+};
+
+var gTGreySiding1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:3,
+};
+
+var gTGreySiding2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:4,
+};
+
+var gTGreySiding3 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:2,
+};
+
+var gTGreySiding4 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:3,
+};
+
+var gTGreySiding5 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:4,
+};
+
+var gTGreySidingLeftEdge0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:2,
+};
+
+var gTGreySidingLeftEdge1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:3,
+};
+
+var gTGreySidingLeftEdge2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:4,
+};
+
+var gTGreySidingRightEdge0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:2,
+};
+
+var gTGreySidingRightEdge1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:3,
+};
+
+var gTGreySidingRightEdge2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:4,
+};
+
+var gTGreySidingTopLeftEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopSupport0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopSupport1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopBlank2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:5,
+    properties: TILE_DOWN
+};
+
+var gTGreySidingTopRightEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:5,
+    properties: TILE_DOWN
+};
+
+var gTWindow2x2_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:0,
+};
+
+var gTWindow2x2_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:0,
+};
+
+var gTWindow2x2_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:1,
+};
+
+var gTWindow2x2_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:1,
+};
+
+var gTWindow2x2_1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:0,
+};
+
+var gTWindow2x2_1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:0,
+};
+
+var gTWindow2x2_1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:1,
+};
+
+var gTWindow2x2_1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:1,
+};
+
+var gTWindow2x2_2UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:0,
+};
+
+var gTWindow2x2_2UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:0,
+};
+
+var gTWindow2x2_2LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:1,
+};
+
+var gTWindow2x2_2LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:1,
+};
+
+var gTWindow2x2_3UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:0,
+};
+
+var gTWindow2x2_3UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 7, y:0,
+};
+
+var gTWindow2x2_3LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y:1,
+};
+
+var gTWindow2x2_3LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 7, y:1,
+};
+
+var gTWindow2x2ShutteredUL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:0,
+};
+
+var gTWindow2x2ShutteredUR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:0,
+};
+
+var gTWindow2x2ShutteredLL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:1,
+};
+
+var gTWindow2x2ShutteredLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:1,
+};
+
+var gTWindow4x2ShuttersOpen0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 13, y: 0,
+};
+
+var gTWindow4x2ShuttersOpen0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y: 1,
+};
+
+var gTWindow4x2ShuttersOpen0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 13, y: 1,
+};
+
+var gTWindow2x2ShutteredLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:1,
+};
+
+var gTWindow4x2ShuttersOpen1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 6,
+};
+
+var gTWindow4x2ShuttersOpen1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LMR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y: 7,
+};
+
+var gTWindow4x2ShuttersOpen1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y: 7,
+};
+
+var gTWindow2x2RoundUL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y:2,
+};
+
+var gTWindow2x2RoundUR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y:2,
+};
+
+var gTWindow2x2RoundLL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 11, y:3,
+};
+
+var gTWindow2x2RoundLR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 12, y:3,
+};
+
+var gTWindow3x2HalfShuttered0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:4,
+};
+
+var gTWindow3x2HalfShuttered0UM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:4,
+};
+
+var gTWindow3x2HalfShuttered0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y:4,
+};
+
+var gTWindow3x2HalfShuttered0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:5,
+};
+
+var gTWindow3x2HalfShuttered0LM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:5,
+};
+
+var gTWindow3x2HalfShuttered0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y:5,
+};
+
+var gTWindow3x2HalfShuttered1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:2,
+};
+
+var gTWindow3x2HalfShuttered1UM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:2,
+};
+
+var gTWindow3x2HalfShuttered1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y:2,
+};
+
+var gTWindow3x2HalfShuttered1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 8, y:3,
+};
+
+var gTWindow3x2HalfShuttered1LM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 9, y:3,
+};
+
+var gTWindow3x2HalfShuttered1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 10, y:3,
+};
+
+var gTWindow3x3Arched0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:7,
+};
+
+var gTWindow3x3Arched0UM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:7,
+};
+
+var gTWindow3x3Arched0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:7,
+};
+
+var gTWindow3x3Arched0ML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:8,
+};
+
+var gTWindow3x3Arched0MM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:8,
+};
+
+var gTWindow3x3Arched0MR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:8,
+};
+
+var gTWindow3x3Arched0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:9,
+};
+
+var gTWindow3x3Arched0LM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:9,
+};
+
+var gTWindow3x3Arched0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:9,
+};
+
+var gTDoor2x3_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:10,
+};
+
+var gTDoor2x3_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:10,
+};
+
+var gTDoor2x3_0ML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:11,
+};
+
+var gTDoor2x3_0MR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:11,
+};
+
+var gTDoor2x3_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 0, y:12,
+};
+
+var gTDoor2x3_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 1, y:12,
+};
+
+var gTSaloonDoor3x3_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:7,
+};
+
+var gTSaloonDoor3x3_0UM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:7,
+};
+
+var gTSaloonDoor3x3_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:7,
+};
+
+var gTSaloonDoor3x3_0ML = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:8,
+};
+
+var gTSaloonDoor3x3_0MM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:8,
+};
+
+var gTSaloonDoor3x3_0MR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:8,
+};
+
+var gTSaloonDoor3x3_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:9,
+};
+
+var gTSaloonDoor3x3_0LM = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:9,
+};
+
+var gTSaloonDoor3x3_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:9,
+};
+
+var gTBoardwalkLeftEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y:10,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBoardwalkBlank = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y:10,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBoardwalkSupportLeft = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y:10,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBoardwalkSupportRight = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y:10,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBoardwalkRightEdge = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y: 10,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBarrel0 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y: 8,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBarrel1 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y: 9,
+    properties: TILE_SOLID_ALL
+};
+
+var gTBarrel2 = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 6, y: 7,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 2, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_0LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 3, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1UL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1UR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y: 11,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1LL = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 4, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+var gTCrate2x2_1LR = {
+    image: ghostTownTiles,
+    size: 16,
+    x: 5, y: 12,
+    properties: TILE_SOLID_ALL
+};
+
+//////////////////////////////////////////////
+// end Lee's new Ghost Town tileset 2018 01 //
+//////////////////////////////////////////////
+
+//////////////////////////////////////////
+// Lee's new Desert tileset 2018 01 //
+//////////////////////////////////////////
+
+var desGroundSurfaceL = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundSurfaceM = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundSurfaceR = {
+    image: desertTiles,
+    size: 16,
+    x: 8, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedL = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedR = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedLR = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUL = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockUR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 0,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockML = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockMM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockMR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 1,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLL = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLM = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGround9BlockLR = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 2,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedLeft = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedRight = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGroundRoundedSingle = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 3,
+    properties: TILE_SOLID_ALL
+};
+
+var desGrass0 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 3
+};
+
+var desGrass1 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 3
+};
+
+var desGrass2 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 3
+};
+
+var desGrass3 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 4
+};
+
+var desGrass4 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 4
+};
+
+var desGrass5 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 4
+};
+
+var desGrass6 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 5
+};
+
+var desGrass7 = {
+    image: desertTiles,
+    size: 16,
+    x: 3, y: 5
+};
+
+var desGrass8 = {
+    image: desertTiles,
+    size: 16,
+    x: 4, y: 5
+};
+
+var desGrassRoundedLeft0 = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 5
+};
+
+var desGrassRoundedLeft1 = {
+    image: desertTiles,
+    size: 16,
+    x: 5, y: 6
+};
+
+var desGrassRoundedRight0 = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 5
+};
+
+var desGrassRoundedRight1 = {
+    image: desertTiles,
+    size: 16,
+    x: 6, y: 6
+};
+
+var desGrassRoundedLR0 = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 4
+};
+
+var desGrassRoundedLR1 = {
+    image: desertTiles,
+    size: 16,
+    x: 7, y: 5
+};
+
+var desCactus1x1_0 = {
+    image: desertTiles,
+    size: 16,
+    x: 2, y: 2,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0L = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 5,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0M = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 4,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0U = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus1x3_0U = {
+    image: desertTiles,
+    size: 16,
+    x: 0, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkL = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 4,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkLM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 3,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 2,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkUM = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 1,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+var desCactus3x5_0_TrunkU = {
+    image: desertTiles,
+    size: 16,
+    x: 1, y: 0,
+    properties: TILE_DAMAGE_ALL | TILE_SOLID_ALL
+};
+
+//////////////////////////////////////////
+// end Lee's new Desert tileset 2018 01 //
+//////////////////////////////////////////
 
 ///////////////////////////
 // MANSION TILESET 32x32 //
